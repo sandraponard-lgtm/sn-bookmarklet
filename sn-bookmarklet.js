@@ -180,6 +180,13 @@ const HANDLERS = {
 const STORAGE_KEY = "sn_ql_pins_v2";
 const MAX_PINS    = 50;
 
+// Pré-calcul d'un index global stable : chaque item reçoit un id unique
+const ITEM_MAP = {};
+let _idx = 0;
+data.forEach(col => col.l.forEach(item => {
+  if(item.t){ item._id = "i"+(_idx++); ITEM_MAP[item._id] = item; }
+}));
+
 function loadPins(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY)||"[]");}catch(e){return[];}}
 function savePins(p){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(p));}catch(e){}}
 
@@ -187,9 +194,8 @@ const classicUrl = p => location.origin+"/now/nav/ui/classic/params/target/"+enc
 const rawUrl     = p => location.origin+p;
 const rgba       = (hex,a) => {const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);return`rgba(${r},${g},${b},${a})`;};
 
-const STAR_SVG   = `<svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path class="sf" d="M8 1.5l1.8 4.9H15l-4.3 3.2 1.6 4.9L8 11.8l-4.3 2.7 1.6-4.9L1 6.4h5.2z" stroke-linejoin="round" stroke-width="1.4"/></svg>`;
-// ← ouvrir dans la page courante
-const SAME_SVG   = `<svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9,3 13,3 13,7"/><line x1="13" y1="3" x2="7" y2="9"/><polyline points="6,4 3,4 3,13 12,13 12,10"/></svg>`;
+const STAR_SVG = `<svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path class="sf" d="M8 1.5l1.8 4.9H15l-4.3 3.2 1.6 4.9L8 11.8l-4.3 2.7 1.6-4.9L1 6.4h5.2z" stroke-linejoin="round" stroke-width="1.4"/></svg>`;
+const SAME_SVG = `<svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9,3 13,3 13,7"/><line x1="13" y1="3" x2="7" y2="9"/><polyline points="6,4 3,4 3,13 12,13 12,10"/></svg>`;
 
 const CSS = `
 #snql-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.82);z-index:2147483647;display:flex;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto;font-family:"Segoe UI",Arial,sans-serif}
@@ -208,13 +214,14 @@ const CSS = `
 #snql-grid,#snql-home{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px;align-items:start}
 .snql-block{break-inside:avoid}
 .snql-col-title{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px;padding-bottom:6px;border-bottom:2px solid;margin-bottom:6px}
+.snql-col-bar{height:0;border-bottom:2px solid;margin-bottom:6px}
 .snql-sec{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;padding:4px 5px 3px;border-radius:4px;margin-top:4px;margin-bottom:2px;line-height:1.3}
 .snql-row{display:flex;align-items:center;padding:3px 3px;border-bottom:1px solid #f2f2f2;gap:2px;border-radius:4px}
 .snql-row:hover{background:#f7f7f7}
 .snql-row:last-child{border-bottom:none}
-.snql-link{font-size:12px;color:#333;text-decoration:none;flex:1;cursor:pointer;line-height:1.3}
+.snql-link{font-size:12px;color:#333;text-decoration:none;flex:1;cursor:pointer;line-height:1.3;background:none;border:none;text-align:left;padding:0;font-family:inherit}
 .snql-link:hover{color:#111}
-.snql-action{width:18px;height:18px;background:none;border:none;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;flex-shrink:0;opacity:0;border-radius:3px;color:#bbb}
+.snql-action{width:18px;height:18px;background:none;border:none;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;flex-shrink:0;opacity:0;border-radius:3px;color:#bbb;font-size:11px}
 .snql-row:hover .snql-action{opacity:1}
 .snql-action:hover{color:#555;background:#eee}
 .snql-star{width:18px;height:18px;background:none;border:none;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;flex-shrink:0;opacity:0;border-radius:3px;transition:opacity 0.1s}
@@ -237,148 +244,140 @@ document.head.appendChild(styleEl);
 
 const overlay = document.createElement("div");
 overlay.id = id;
-overlay.onclick = e => {if(e.target===overlay)snqlClose();};
+overlay.onclick = e => { if(e.target===overlay) close(); };
 
 let pins = loadPins();
 let activeTab = null;
 
-function close(){overlay.remove();styleEl.remove();}
+function close(){ overlay.remove(); styleEl.remove(); }
 
-function openLink(item, same){
+function openItem(itemId, same){
+  const item = ITEM_MAP[itemId];
+  if(!item) return;
   const url = item.raw ? rawUrl(item.u) : classicUrl(item.u);
-  if(same){ close(); location.href = url; }
-  else { close(); window.open(url,"_blank"); }
+  close();
+  if(same) location.href = url;
+  else window.open(url, "_blank");
 }
-function runHandler(key){close();if(HANDLERS[key])HANDLERS[key]();}
+
+function runHandler(key){ close(); if(HANDLERS[key]) HANDLERS[key](); }
 
 function togglePin(name){
-  const i=pins.indexOf(name);
-  if(i>-1) pins.splice(i,1);
-  else { pins.unshift(name); if(pins.length>MAX_PINS) pins=pins.slice(0,MAX_PINS); }
-  savePins(pins);render();
+  const i = pins.indexOf(name);
+  if(i > -1) pins.splice(i,1);
+  else { pins.unshift(name); if(pins.length > MAX_PINS) pins = pins.slice(0, MAX_PINS); }
+  savePins(pins);
+  render();
 }
 
-// Flatten data into section-blocks for the masonry grid
-function getSectionBlocks(sourceData, matchedSet){
-  // matchedSet: Set of item references that match the search, or null = all
-  const blocks=[];
-  sourceData.forEach((col,ci)=>{
-    let curSec=null, curItems=[];
-    const flush=()=>{
-      if(curItems.length) blocks.push({col,ci,sec:curSec,items:curItems});
-      curSec=null; curItems=[];
+function buildRow(item){
+  const pinned = pins.includes(item.t);
+  const safeId = item._id;
+  const safeName = item.t.replace(/'/g,"\\'");
+  let mainBtn, sameBtn="", rawBtn="";
+  if(item.h){
+    mainBtn = `<button class="snql-link" onclick="snqlRun('${item.h}')">${item.t}</button>`;
+  } else {
+    mainBtn  = `<button class="snql-link" onclick="snqlOpenItem('${safeId}',false)">${item.t}</button>`;
+    sameBtn  = `<button class="snql-action" title="Ouvrir dans cette page" onclick="snqlOpenItem('${safeId}',true)">${SAME_SVG}</button>`;
+    rawBtn   = `<button class="snql-action" title="Ouvrir (raw)" onclick="snqlOpenRaw('${item.u.replace(/'/g,"\\'")}')">&#8599;</button>`;
+  }
+  return `<div class="snql-row">
+    ${mainBtn}${sameBtn}${rawBtn}
+    <button class="snql-star${pinned?" on":""}" title="${pinned?"Désépingler":"Épingler"}" onclick="snqlTogglePin('${safeName}')">${STAR_SVG}</button>
+  </div>`;
+}
+
+// Découpe les colonnes en blocs par section, avec suivi du premier bloc par colonne
+function getSectionBlocks(sourceData, matchFn){
+  const blocks = [];
+  sourceData.forEach(col => {
+    let curSec = null, curItems = [], isFirstBlock = true;
+    const flush = () => {
+      if(curItems.length){
+        blocks.push({ col, sec: curSec, items: curItems, isFirstBlock });
+        isFirstBlock = false;
+        curSec = null; curItems = [];
+      }
     };
-    col.l.forEach((item,li)=>{
-      if(item.section){ flush(); curSec=item.section; }
-      else if(!matchedSet || matchedSet.has(item)){ curItems.push({item,li}); }
+    col.l.forEach(item => {
+      if(item.section){ flush(); curSec = item.section; }
+      else if(item.t && matchFn(item)){ curItems.push(item); }
     });
     flush();
   });
   return blocks;
 }
 
-function buildRow(item, ci, li){
-  const pinned = pins.includes(item.t);
-  const safe   = item.t.replace(/'/g,"\\'").replace(/"/g,"&quot;");
-  let mainClick, sameBtn="", rawBtn="";
-  if(item.h){
-    mainClick=`onclick="snqlRun('${item.h}')"`;
-  } else {
-    mainClick=`onclick="snqlOpen(${ci},${li},false)"`;
-    sameBtn=`<button class="snql-action" title="Ouvrir dans cette page" onclick="snqlOpen(${ci},${li},true)">${SAME_SVG}</button>`;
-    rawBtn=`<button class="snql-action" title="Ouvrir (raw)" onclick="snqlOpenRaw('${item.u.replace(/'/g,"\\'")}')">&#8599;</button>`;
-  }
-  return `<div class="snql-row">
-    <a class="snql-link" href="#" ${mainClick}>${item.t}</a>
-    ${sameBtn}${rawBtn}
-    <button class="snql-star${pinned?" on":""}" title="${pinned?"Désépingler":"Épingler"}" onclick="snqlTogglePin('${safe}')">${STAR_SVG}</button>
-  </div>`;
-}
-
 function buildBlock(block){
-  const {col,ci,sec,items}=block;
-  const rows=items.map(({item,li})=>buildRow(item,ci,li)).join("");
-  const secHtml=sec?`<div class="snql-sec" style="background:${rgba(col.c,0.08)};color:${col.c}">${sec}</div>`:"";
-  return `<div class="snql-block">
-    <div class="snql-col-title" style="color:${col.c};border-color:${col.c}">${col.f}</div>
-    ${secHtml}${rows}
-  </div>`;
+  const { col, sec, items, isFirstBlock } = block;
+  const headerHtml = isFirstBlock
+    ? `<div class="snql-col-title" style="color:${col.c};border-color:${col.c}">${col.f}</div>`
+    : `<div class="snql-col-bar" style="border-color:${col.c}"></div>`;
+  const secHtml = sec ? `<div class="snql-sec" style="background:${rgba(col.c,0.08)};color:${col.c}">${sec}</div>` : "";
+  return `<div class="snql-block">${headerHtml}${secHtml}${items.map(buildRow).join("")}</div>`;
 }
 
-function renderGrid(el, blocks){
-  if(!blocks.length){ return false; }
-  el.innerHTML=blocks.map(buildBlock).join("");
-  return true;
+function renderBlocks(el, blocks){
+  el.innerHTML = blocks.length ? blocks.map(buildBlock).join("") : "";
+  return blocks.length > 0;
 }
 
 function renderHome(){
-  const el=document.getElementById("snql-home");
+  const el = document.getElementById("snql-home");
   if(!pins.length){
-    el.innerHTML=`<div class="snql-home-empty"><span>★</span>Aucun favori pour l'instant.<br>Survolez un lien dans les onglets pour en épingler.</div>`;
+    el.innerHTML = `<div class="snql-home-empty"><span>★</span>Aucun favori pour l'instant.<br>Survolez un lien dans les onglets pour en épingler.</div>`;
     return;
   }
-  const pinSet=new Set();
-  data.forEach(col=>col.l.forEach(item=>{ if(item.t&&pins.includes(item.t)) pinSet.add(item); }));
-  const blocks=getSectionBlocks(data, pinSet);
-  renderGrid(el, blocks);
+  const pinSet = new Set(pins);
+  const blocks = getSectionBlocks(data, item => pinSet.has(item.t));
+  renderBlocks(el, blocks);
 }
 
 function renderCols(q){
-  const el=document.getElementById("snql-grid");
-  const nores=document.getElementById("snql-nores");
-  const search=q.toLowerCase().trim();
-
-  let matchedSet=null;
-  let sourceData=data;
-
-  if(search){
-    // search always across ALL data
-    matchedSet=new Set();
-    data.forEach(col=>col.l.forEach(item=>{ if(item.t&&item.t.toLowerCase().includes(search)) matchedSet.add(item); }));
-    sourceData=data;
-  } else if(activeTab!==null){
-    sourceData=[data[activeTab]];
-  }
-
-  const blocks=getSectionBlocks(sourceData, matchedSet);
-  const hasResults=renderGrid(el, blocks);
-  nores.style.display=hasResults?"none":"";
-  el.style.display=hasResults?"":"none";
+  const el    = document.getElementById("snql-grid");
+  const nores = document.getElementById("snql-nores");
+  const search = q.toLowerCase().trim();
+  const sourceData = (!search && activeTab !== null) ? [data[activeTab]] : data;
+  const matchFn = search ? item => item.t.toLowerCase().includes(search) : () => true;
+  const blocks = getSectionBlocks(sourceData, matchFn);
+  const ok = renderBlocks(el, blocks);
+  nores.style.display = ok ? "none" : "";
+  el.style.display    = ok ? ""     : "none";
 }
 
 function renderTabs(){
-  const el=document.getElementById("snql-tabs");
-  el.innerHTML=`<button class="snql-tab${activeTab===null?" active":""}" onclick="snqlSetTab(null)">★ Accueil</button>`;
-  data.forEach((col,i)=>{
-    const btn=document.createElement("button");
-    btn.className="snql-tab"+(activeTab===i?" active":"");
-    if(activeTab===i) btn.style.cssText=`background:${rgba(col.c,0.12)};border-color:${col.c};color:${col.c}`;
-    btn.textContent=col.f;
-    btn.onclick=()=>snqlSetTab(i);
+  const el = document.getElementById("snql-tabs");
+  el.innerHTML = `<button class="snql-tab${activeTab===null?" active":""}" onclick="snqlSetTab(null)">★ Accueil</button>`;
+  data.forEach((col,i) => {
+    const btn = document.createElement("button");
+    btn.className = "snql-tab" + (activeTab===i?" active":"");
+    if(activeTab===i) btn.style.cssText = `background:${rgba(col.c,0.12)};border-color:${col.c};color:${col.c}`;
+    btn.textContent = col.f;
+    btn.onclick = () => snqlSetTab(i);
     el.appendChild(btn);
   });
 }
 
 function render(){
   renderTabs();
-  const q=document.getElementById("snql-search").value;
-  const isHome=activeTab===null&&!q;
-  document.getElementById("snql-home").style.display=isHome?"":"none";
-  document.getElementById("snql-grid").style.display=isHome?"none":"";
-  document.getElementById("snql-nores").style.display="none";
-  if(isHome) renderHome();
-  else renderCols(q);
+  const q = document.getElementById("snql-search").value;
+  const isHome = activeTab===null && !q;
+  document.getElementById("snql-home").style.display = isHome ? "" : "none";
+  document.getElementById("snql-grid").style.display = isHome ? "none" : "";
+  document.getElementById("snql-nores").style.display = "none";
+  if(isHome) renderHome(); else renderCols(q);
 }
 
-window.snqlSetTab    = i=>{activeTab=i;document.getElementById("snql-search").value="";render();};
-window.snqlTogglePin = name=>togglePin(name);
-window.snqlSearch    = ()=>render();
+window.snqlSetTab    = i => { activeTab=i; document.getElementById("snql-search").value=""; render(); };
+window.snqlTogglePin = name => togglePin(name);
+window.snqlSearch    = () => render();
 window.snqlClose     = close;
-window.snqlRun       = key=>runHandler(key);
-window.snqlOpenRaw   = url=>{close();window.open(rawUrl(url),"_blank");};
-window.snqlOpen      = (ci,li,same)=>openLink(data[ci].l[li],same);
+window.snqlRun       = key => runHandler(key);
+window.snqlOpenRaw   = url => { close(); window.open(rawUrl(url),"_blank"); };
+window.snqlOpenItem  = (id, same) => openItem(id, same);
 
-overlay.innerHTML=`<div id="snql-win">
+overlay.innerHTML = `<div id="snql-win">
   <div id="snql-topbar">
     <div id="snql-search-wrap">
       <span id="snql-search-icon">&#128269;</span>
