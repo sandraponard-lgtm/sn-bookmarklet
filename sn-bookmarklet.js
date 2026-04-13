@@ -48,6 +48,7 @@ const data = [
       { t: "Debugger",                h: "debugger" },
     { section: "Quick Links" },
       { t: "Access Analyzer",         u: "/now/access-management/access-analyzer/params/selected-tab-index/1" },
+      { t: "UI Views",                u: "/sys_ui_view_list.do" },
       { t: "Plugins",                 u: "/now/app-manager/home" },
       { t: "Icons",                   u: "/styles/retina_icons/retina_icons.html" },
   ]},
