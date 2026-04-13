@@ -48,7 +48,7 @@ const data = [
       { t: "Debugger",                h: "debugger" },
     { section: "Quick Links" },
       { t: "Access Analyzer",         u: "/now/access-management/access-analyzer/params/selected-tab-index/1" },
-      { t: "UI Views",                u: "/sys_ui_view_list.do" },
+      { t: "UUI Builder",             u: "/now/builder/ui/home" },
       { t: "Plugins",                 u: "/now/app-manager/home" },
       { t: "Icons",                   u: "/styles/retina_icons/retina_icons.html" },
   ]},
@@ -80,6 +80,8 @@ const data = [
     { section: "Data Import/Export" },
       { t: "Data Sources",            u: "/sys_data_source_list.do" },
       { t: "Transform Maps",          u: "/sys_transform_entry_list.do" },
+    { section: "Others" },
+      { t: "UI Views",                u: "/sys_ui_view_list.do" },
   ]},
 
   { f: "Data Foundations", c: "#d35400", l: [
