@@ -48,7 +48,7 @@ const data = [
       { t: "Debugger",                h: "debugger" },
     { section: "Quick Links" },
       { t: "Access Analyzer",         u: "/now/access-management/access-analyzer/params/selected-tab-index/1" },
-      { t: "UUI Builder",             u: "/now/builder/ui/home" },
+      { t: "UI Builder",              u: "/now/builder/ui/home" },
       { t: "Plugins",                 u: "/now/app-manager/home" },
       { t: "Icons",                   u: "/styles/retina_icons/retina_icons.html" },
   ]},
@@ -96,7 +96,8 @@ const data = [
       { t: "Business Unit",           u: "/business_unit_list.do" },
       { t: "Departments",             u: "/cmn_department_list.do" },
     { section: "Other" },
-      { t: "Calendar",                u: "/cmn_calendar_list.do" },
+      { t: "Schedule",                u: "/cmn_schedule_list.do" },
+      { t: "Schedule Entries",        u: "/cmn_schedule_span_list.do" },
       { t: "Attachments",             u: "/sys_attachment_list.do" },
   ]},
 
