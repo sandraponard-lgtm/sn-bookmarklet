@@ -56,7 +56,7 @@ const data = [
   { f: "Development", c: "#8e44ad", l: [
     { section: "Scripts" },
       { t: "UI Actions",              u: "/sys_ui_action_list.do" },
-      { t: "Client Scripts",          u: "/ssys_script_client_list.do" },
+      { t: "Client Scripts",          u: "/sys_script_client_list.do" },
       { t: "Fix Scripts",             u: "/sys_script_fix_list.do" },
       { t: "Business Rules",          u: "/sys_script_list.do" },
     { section: "Automation" },
