@@ -1,7 +1,7 @@
 javascript:(function(){
 
 /* ============================================================
-   CONFIGURATION — zone éditable
+   CONFIGURATION — zone éditable V1.01
    ============================================================
 
    Chaque entrée de `data` est une COLONNE du menu.
