@@ -62,7 +62,7 @@ const data = [
     { section: "Automation" },
       { t: "Scheduled Jobs",          u: "/sys_trigger_list.do" },
       { t: "Scheduled Script Exec.",  u: "/sysauto_script_list.do" },
-      { t: "Running Scheduled Jobs",  u: "/v_running_scheduled_job.do" },
+      { t: "Running Scheduled Jobs",  u: "/v_running_scheduled_job_list.do" },
       { t: "Job History By Nodes",    u: "/sys_scheduler_job_history_node_list.do" },
     { section: "Remote Table" },
       { t: "Tables (scriptable)",     u: "/sys_db_object_list.do?sysparm_query=scriptable_table%3Dtrue" },
@@ -102,6 +102,12 @@ const data = [
   ]},
 
   { f: "Plateforme", c: "#27ae60", l: [
+    { section: "Platform Analytics" },
+      { t: "Vue d'ensemble de Platform Analytics",   u: "/now/platform-analytics-workspace/pages/params/library/overview" },
+      { t: "Tableau de bord",                        u: "/now/platform-analytics-workspace/pages/params/library/dashboards" },
+      { t: "Visualisation des données",              u: "/now/platform-analytics-workspace/pages/params/library/data-visualizations" },
+      { t: "Indicateurs",                            u: "/now/platform-analytics-workspace/pages/params/library/indicators" },
+      { t: "Filtres",                                u: "/now/platform-analytics-workspace/pages/params/library/filters" },
     { section: "Budget" },
       { t: "Project Funding (old)",   u: "/project_funding_list.do" },
       { t: "Project Budget",          u: "/sn_invst_pln_invst_budget_list.do" },
@@ -166,6 +172,12 @@ const data = [
       { t: "Planning Items",          u: "/sn_align_core_planning_item_list.do" },
       { t: "Portfolio Plan",          u: "/sn_align_ws_portfolio_plan_list.do" },
       { t: "Portfolio Plan View",     u: "/sn_align_ws_portfolio_plan_view_list.do" },
+    { section: "RIDAC" },
+      { t: "Risk",                    u: "/risk_list.do" },
+      { t: "Issue",                   u: "/issue_list.do" },
+      { t: "Decision",                u: "/dmn_decision_list.do" },
+      { t: "Action",                  u: "/project_action_list.do" },
+      { t: "Request Change",          u: "/project_change_request_list.do" },
   ]},
 
 ];
