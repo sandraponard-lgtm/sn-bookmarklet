@@ -61,7 +61,7 @@ const data = [
       { t: "Business Rules",          u: "/sys_script_list.do" },
     { section: "Automation" },
       { t: "Scheduled Jobs",          u: "/sys_trigger_list.do" },
-      { t: "Scheduled Script Exec.",  u: "/sysauto_script_list.do" },
+      { t: "🏁 Scheduled Script Exec.",  u: "/sysauto_script_list.do" },
       { t: "Running Scheduled Jobs",  u: "/v_running_scheduled_job_list.do" },
       { t: "Job History By Nodes",    u: "/sys_scheduler_job_history_node_list.do" },
     { section: "Remote Table" },
