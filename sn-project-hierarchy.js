@@ -30,18 +30,42 @@ function depthColor(d){
   return [C_PRJ, C_T1, C_T2, C_T3][Math.min(d, 3)];
 }
 
-/* ---------- LIENS CLASSIQUE ---------- */
+/* ---------- LIENS CLASSIQUE ----------
+   urlP = URL quand le nœud sélectionné est le projet (depth=0)
+   urlT = URL quand le nœud sélectionné est une tâche  (depth>0)
+   Si urlT absent → même URL que urlP
+------------------------------------------------------------ */
 const CL_BUTTONS = [
-  { t: "Classique UI",                  wide: true, url: (id) => `/now/nav/ui/classic/params/target/pm_project_task.do?sys_id=${id}` },
-  { t: "Cost Plan",                     url: (id) => `/cost_plan_list.do?sysparm_query=top_task%3D${id}` },
-  { t: "Cost Plan Breakdown (Task)",    url: (id) => `/cost_plan_breakdown_list.do?sysparm_query=task%3D${id}` },
-  { t: "Cost Plan Breakdown (CP.Task)", url: (id) => `/cost_plan_breakdown_list.do?sysparm_query=cost_plan.top_task%3D${id}` },
-  { t: "Time Card",                     url: (id) => `/time_card_list.do?sysparm_query=top_task%3D${id}` },
-  { t: "Time Card Dailies",             url: (id) => `/time_card_daily_list.do?sysparm_query=time_card.top_task%3D${id}` },
-  { t: "Expense Lines",        wide: true, url: (id) => `/fm_expense_line_list.do?sysparm_query=source_id%3D${id}` },
-  { t: "Resource Assignments",          url: (id) => `/sn_plng_att_core_resource_assignment_list.do?sysparm_query=top_task%3D${id}` },
-  { t: "Resource Plan",                 url: (id) => `/resource_plan_list.do?sysparm_query=top_task%3D${id}` },
-  { t: "Resource Allocation",           url: (id) => `/resource_allocation_list.do?sysparm_query=resource_plan.top_task%3D${id}` },
+  { t: "Classique UI",                  wide: true,
+    urlP: (id) => `/now/nav/ui/classic/params/target/pm_project_task.do?sys_id=${id}`,
+    urlT: (id) => `/now/nav/ui/classic/params/target/pm_project_task.do?sys_id=${id}` },
+  { t: "Cost Plan",
+    urlP: (id) => `/cost_plan_list.do?sysparm_query=top_task%3D${id}`,
+    urlT: (id) => `/cost_plan_list.do?sysparm_query=task%3D${id}` },
+  { t: "Cost Plan Breakdown (Task)",
+    urlP: (id) => `/cost_plan_breakdown_list.do?sysparm_query=task%3D${id}`,
+    urlT: (id) => `/cost_plan_breakdown_list.do?sysparm_query=task%3D${id}` },
+  { t: "Cost Plan Breakdown (CP.Task)",
+    urlP: (id) => `/cost_plan_breakdown_list.do?sysparm_query=cost_plan.top_task%3D${id}`,
+    urlT: (id) => `/cost_plan_breakdown_list.do?sysparm_query=cost_plan.task%3D${id}` },
+  { t: "Time Card",
+    urlP: (id) => `/time_card_list.do?sysparm_query=top_task%3D${id}`,
+    urlT: (id) => `/time_card_list.do?sysparm_query=task%3D${id}` },
+  { t: "Time Card Dailies",
+    urlP: (id) => `/time_card_daily_list.do?sysparm_query=time_card.top_task%3D${id}`,
+    urlT: (id) => `/time_card_daily_list.do?sysparm_query=time_card.task%3D${id}` },
+  { t: "Expense Lines",                 wide: true,
+    urlP: (id) => `/fm_expense_line_list.do?sysparm_query=source_id%3D${id}`,
+    urlT: (id) => `/fm_expense_line_list.do?sysparm_query=source_id%3D${id}` },
+  { t: "Resource Assignments",
+    urlP: (id) => `/sn_plng_att_core_resource_assignment_list.do?sysparm_query=top_task%3D${id}`,
+    urlT: (id) => `/sn_plng_att_core_resource_assignment_list.do?sysparm_query=task%3D${id}` },
+  { t: "Resource Plan",
+    urlP: (id) => `/resource_plan_list.do?sysparm_query=top_task%3D${id}`,
+    urlT: (id) => `/resource_plan_list.do?sysparm_query=task%3D${id}` },
+  { t: "Resource Allocation",
+    urlP: (id) => `/resource_allocation_list.do?sysparm_query=resource_plan.top_task%3D${id}`,
+    urlT: (id) => `/resource_allocation_list.do?sysparm_query=resource_plan.task%3D${id}` },
 ];
 
 /* ---------- STYLE ---------- */
@@ -113,6 +137,13 @@ styleEl.textContent = `
 .snphier-node.selected .snphier-node-label{color:#fff}
 .snphier-sel-badge{display:none;font-size:9px;font-weight:700;padding:1px 5px;border-radius:4px;margin-left:7px;background:${rgba(C_SEL,.2)};color:${C_SEL};border:1px solid ${rgba(C_SEL,.4)}}
 .snphier-node.selected .snphier-sel-badge{display:inline}
+/* compteurs */
+.snphier-counts{display:inline-flex;gap:4px;margin-left:8px;vertical-align:middle}
+.snphier-count{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:600;
+  padding:1px 6px;border-radius:10px;white-space:nowrap;transition:opacity .2s}
+.snphier-count.ra{background:${rgba(C_T1,.18)};color:${C_T1};border:1px solid ${rgba(C_T1,.3)}}
+.snphier-count.tc{background:${rgba(C_IN,.15)};color:${C_IN};border:1px solid ${rgba(C_IN,.28)}}
+.snphier-count.loading{opacity:.45;font-style:italic}
 
 /* bloc liens */
 #snphier-links-wrap{display:flex;flex-direction:column;gap:8px}
@@ -132,7 +163,8 @@ document.head.appendChild(styleEl);
 
 /* ---------- STATE ---------- */
 let resolvedProjectId = null;
-let selectedNode = null; // { sys_id, number, name, depth }
+let selectedNode = null;
+const _countsCache = {}; // { [sys_id]: { ra: n, tc: n, loading: bool } }
 
 /* ---------- HTML ---------- */
 const overlay = document.createElement("div");
@@ -262,7 +294,9 @@ function renderNode(node){
   const color = depthColor(node.depth);
   const indent = node.depth * 18;
   const safeId = node.sys_id;
-  return `<div class="snphier-node" data-id="${safeId}" onclick="snphierSelectNode('${safeId}')"
+  return `<div class="snphier-node" data-id="${safeId}"
+    onclick="snphierSelectNode('${safeId}')"
+    onmouseenter="snphierHoverNode('${safeId}')"
     style="padding-left:${indent}px">
     <span class="snphier-node-dot" style="color:${color};background:${color}"></span>
     <span class="snphier-node-label">
@@ -270,6 +304,7 @@ function renderNode(node){
       <span class="snphier-node-name">${node.name}</span>
       <span class="snphier-sel-badge">sélectionné</span>
     </span>
+    <span class="snphier-counts" id="snphier-counts-${safeId}"></span>
   </div>`;
 }
 
@@ -391,11 +426,74 @@ window.snphierSelectNode = (sysId) => {
   if(node) selectNode(node);
 };
 
+/* Lazy loading des compteurs au survol */
+window.snphierHoverNode = async (sysId) => {
+  if(_countsCache[sysId] !== undefined) return; // déjà chargé ou en cours
+  _countsCache[sysId] = "loading";
+
+  const el = document.getElementById(`snphier-counts-${sysId}`);
+  if(!el) return;
+  el.innerHTML = `<span class="snphier-count ra loading">…</span>`;
+
+  const node = window._snphierNodes && window._snphierNodes[sysId];
+  const isProject = node && node.depth === 0;
+
+  // Requêtes : RA et TC en parallèle
+  const raField = isProject ? `top_task` : `task`;
+  const tcField = isProject ? `top_task` : `task`;
+
+  const raUrl = `/api/now/table/sn_plng_att_core_resource_assignment?sysparm_query=${raField}=${sysId}&sysparm_fields=sys_id&sysparm_limit=1&sysparm_count=true`;
+  const tcUrl = `/api/now/table/time_card?sysparm_query=${tcField}=${sysId}&sysparm_fields=sys_id&sysparm_limit=1&sysparm_count=true`;
+
+  const token = (window.top && window.top.g_ck) || window.g_ck || "";
+  const headers = { Accept: "application/json" };
+  if(token) headers["X-UserToken"] = token;
+
+  try {
+    const [raRes, tcRes] = await Promise.all([
+      fetch(raUrl, { headers }),
+      fetch(tcUrl, { headers })
+    ]);
+    const raData = await raRes.json();
+    const tcData = await tcRes.json();
+    const ra = parseInt(raRes.headers.get("X-Total-Count") || (raData.result ? raData.result.length : 0));
+    const tc = parseInt(tcRes.headers.get("X-Total-Count") || (tcData.result ? tcData.result.length : 0));
+    _countsCache[sysId] = { ra, tc };
+    renderCounts(sysId, ra, tc);
+  } catch(e){
+    // Fallback : compter via GlideRecord
+    try {
+      const GR = (window.top && window.top.GlideRecord) || window.GlideRecord;
+      if(!GR) throw new Error();
+      let ra = 0, tc = 0, done = 0;
+      const check = () => { if(++done === 2){ _countsCache[sysId]={ra,tc}; renderCounts(sysId,ra,tc); } };
+      const grRa = new GR("sn_plng_att_core_resource_assignment");
+      grRa.addQuery(raField, sysId);
+      grRa.query(() => { while(grRa.next()) ra++; check(); });
+      const grTc = new GR("time_card");
+      grTc.addQuery(tcField, sysId);
+      grTc.query(() => { while(grTc.next()) tc++; check(); });
+    } catch(e2){
+      delete _countsCache[sysId];
+      if(el) el.innerHTML = "";
+    }
+  }
+};
+
+function renderCounts(sysId, ra, tc){
+  const el = document.getElementById(`snphier-counts-${sysId}`);
+  if(!el) return;
+  const raHtml = ra > 0 ? `<span class="snphier-count ra" title="Resource Assignments">👤 ${ra}</span>` : "";
+  const tcHtml = tc > 0 ? `<span class="snphier-count tc" title="Time Cards">⏱️ ${tc}</span>` : "";
+  el.innerHTML = raHtml + tcHtml;
+}
+
 window.snphierOpenCl = (label) => {
   if(!selectedNode) return;
   const btn = CL_BUTTONS.find(b => b.t === label);
   if(!btn) return;
-  window.open(location.origin + btn.url(selectedNode.sys_id), "_blank");
+  const urlFn = (selectedNode.depth === 0) ? btn.urlP : btn.urlT;
+  window.open(location.origin + urlFn(selectedNode.sys_id), "_blank");
 };
 
 window.snphierLoad = async () => {
