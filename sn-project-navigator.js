@@ -54,15 +54,16 @@ const WS_BUTTONS = [
 ];
 
 const CL_BUTTONS = [
-  { t: "Classique UI",        wide: true, url: (id) => `/now/nav/ui/classic/params/target/pm_project.do?sys_id=${id}` },
-  { t: "Cost Plan",           url: (id) => `/cost_plan_list.do?sysparm_query=top_task%3D${id}` },
-  { t: "Cost Plan Breakdown", url: (id) => `/cost_plan_breakdown_list.do?sysparm_query=cost_plan.top_task%3D${id}` },
-  { t: "Time Card",           url: (id) => `/time_card_list.do?sysparm_query=task%3D${id}` },
-  { t: "Time Card Dailies",   url: (id) => `/time_card_daily_list.do?sysparm_query=time_card.task%3D${id}` },
-  { t: "Expense Lines", wide: true, url: (id) => `/fm_expense_line_list.do?sysparm_query=source_task%3D${id}` },
-  { t: "Resource Assignments",url: (id) => `/sn_plng_att_core_resource_assignment_list.do?sysparm_query=top_task%3D${id}` },
-  { t: "Resource Plan",       url: (id) => `/resource_plan_list.do?sysparm_query=top_task%3D${id}` },
-  { t: "Resource Allocation", url: (id) => `/resource_allocation_list.do?sysparm_query=resource_plan.top_task%3D${id}` },
+  { t: "Classique UI",                  wide: true, url: (id) => `/now/nav/ui/classic/params/target/pm_project.do?sys_id=${id}` },
+  { t: "Cost Plan",                     url: (id) => `/cost_plan_list.do?sysparm_query=top_task%3D${id}` },
+  { t: "Cost Plan Breakdown (Task)",    url: (id) => `/cost_plan_breakdown_list.do?sysparm_query=task%3D${id}` },
+  { t: "Cost Plan Breakdown (CP.Task)", url: (id) => `/cost_plan_breakdown_list.do?sysparm_query=cost_plan.top_task%3D${id}` },
+  { t: "Time Card",                     url: (id) => `/time_card_list.do?sysparm_query=top_task%3D${id}` },
+  { t: "Time Card Dailies",             url: (id) => `/time_card_daily_list.do?sysparm_query=time_card.top_task%3D${id}` },
+  { t: "Expense Lines",        wide: true, url: (id) => `/fm_expense_line_list.do?sysparm_query=source_id%3D${id}` },
+  { t: "Resource Assignments",          url: (id) => `/sn_plng_att_core_resource_assignment_list.do?sysparm_query=top_task%3D${id}` },
+  { t: "Resource Plan",                 url: (id) => `/resource_plan_list.do?sysparm_query=top_task%3D${id}` },
+  { t: "Resource Allocation",           url: (id) => `/resource_allocation_list.do?sysparm_query=resource_plan.top_task%3D${id}` },
 ];
 
 /* ---------- COULEURS ---------- */
