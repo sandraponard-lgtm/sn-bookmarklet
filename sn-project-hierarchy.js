@@ -18,7 +18,21 @@ const C_CL="#ff4d6d", C_RA="#b06bff", C_TC="#2dd9a3", C_CP="#ff9f3a", C_EX="#ff4
 function rgba(h,a){const r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16);return `rgba(${r},${g},${b},${a})`;}
 function dc(d){return[C_PRJ,C_T1,C_T2,C_T3][Math.min(d,3)];}
 
-/* ---- BOUTONS LIENS ---- */
+/* ---- BOUTONS WORKSPACE ---- */
+const WS_BUTTONS=[
+  {t:"Project Workspace", wide:true,
+   url:(id,ts)=>`/now/workspace/project/home/sub/record/pm_project/${id}/params/page-name/details/time-stamp/${ts}/project-table/pm_project/project-id/${id}/record-status/1`},
+  {t:"Planning",   url:(id,ts)=>`/now/workspace/project/home/sub/planning/pm_project/${id}/${ts}/params/page-name/planning`},
+  {t:"Resources",  url:(id,ts)=>`/now/workspace/project/home/sub/resource_board/project_resource-${id}-pm_project-${ts}/params/timestamp/${ts}`},
+  {t:"Details",    url:(id,ts)=>`/now/workspace/project/home/sub/record/pm_project/${id}/params/page-name/details/time-stamp/${ts}/project-table/pm_project/project-id/${id}/record-status/1`},
+  {t:"Financials", url:(id,ts)=>`/now/workspace/project/home/sub/pw-financials/pm_project/${id}/${ts}/params/page-name/financials`},
+  {t:"RIDAC",      url:(id,ts)=>`/now/workspace/project/home/sub/ridac-monitor/pm_project/${id}/${ts}/params/page-name/ridac-monitor`},
+  {t:"Analytics",  url:(id,ts)=>`/now/workspace/project/home/sub/analytics/${id}/pm_project/${ts}/params/page-name/analytics`},
+  {t:"Docs",       url:(id)   =>`/now/workspace/project/home/sub/docs/pm_project/${id}/params/page-name/docs`},
+  {t:"Status Reports", url:(id,ts)=>`/now/workspace/project/home/sub/status-report/pm_project/${id}/${ts}/params/page-name/status-report`},
+];
+
+/* ---- BOUTONS LIENS CLASSIQUE ---- */
 const CL_BUTTONS=[
   {t:"Classique UI", wide:true,
    urlP:(id)=>`/now/nav/ui/classic/params/target/pm_project_task.do?sys_id=${id}`,
@@ -165,10 +179,10 @@ styleEl.textContent=`
 #snfus-autodetect{font-size:10.5px;color:${rgba(C_IN,.6)};font-style:italic;flex-shrink:0}
 
 /* layout 3 colonnes */
-#snfus-body{display:grid;grid-template-columns:220px 1fr 340px;gap:12px;flex:1;min-height:0}
+#snfus-body{display:grid;grid-template-columns:240px 280px 1fr;gap:12px;flex:1;min-height:0}
 
-/* ===== COL GAUCHE ===== */
-#snfus-left{display:flex;flex-direction:column;gap:8px;min-height:0}
+/* ===== COL GAUCHE : inputs + liens ===== */
+#snfus-left{display:flex;flex-direction:column;gap:8px;min-height:0;overflow-y:auto}
 .snfus-label{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:${rgba(C_IN,.65)};margin-bottom:3px}
 .snfus-field{padding:7px 10px;border:1px solid ${rgba(C_IN,.3)};border-radius:9px;font-size:12px;
   background:rgba(255,255,255,.06);color:#f4f5ff;outline:none;font-family:inherit;transition:border-color .14s,box-shadow .14s;width:100%;box-sizing:border-box}
@@ -180,7 +194,28 @@ styleEl.textContent=`
 #snfus-load-btn:hover{background:${rgba(C_IN,.28)};box-shadow:0 0 12px ${rgba(C_IN,.35)}}
 #snfus-load-btn:disabled{opacity:.45;cursor:default}
 
-/* arbre */
+/* boutons workspace */
+#snfus-ws-box{display:flex;flex-direction:column;gap:3px;flex-shrink:0}
+.snfus-ws-grid{display:grid;grid-template-columns:1fr 1fr;gap:3px}
+.snfus-wbtn{padding:6px 8px;border-radius:7px;font-size:10.5px;font-weight:500;cursor:pointer;
+  text-align:center;border:1px solid;transition:all .13s;font-family:inherit}
+.snfus-wbtn:disabled{opacity:.28;cursor:default}
+.snfus-wbtn.ws{background:${rgba(C_PRJ,.1)};border-color:${rgba(C_PRJ,.35)};color:${C_PRJ}}
+.snfus-wbtn.ws:hover:not(:disabled){background:${rgba(C_PRJ,.22)};box-shadow:0 0 10px ${rgba(C_PRJ,.3)}}
+.snfus-wbtn.ws.hdr{background:${rgba(C_PRJ,.18)};font-weight:700;text-transform:uppercase;font-size:9.5px;letter-spacing:.6px;grid-column:1/-1}
+
+/* boutons liens classique */
+#snfus-links-box{display:flex;flex-direction:column;gap:3px;flex-shrink:0}
+.snfus-lbtn{padding:6px 10px;border-radius:8px;font-size:11px;font-weight:500;cursor:pointer;
+  text-align:left;border:1px solid;transition:all .13s;font-family:inherit;width:100%}
+.snfus-lbtn:disabled{opacity:.28;cursor:default}
+.snfus-lbtn.cl{background:${rgba(C_CL,.1)};border-color:${rgba(C_CL,.3)};color:${C_CL}}
+.snfus-lbtn.cl:hover:not(:disabled){background:${rgba(C_CL,.2)};box-shadow:0 0 10px ${rgba(C_CL,.28)}}
+.snfus-lbtn.cl.hdr{background:${rgba(C_CL,.16)};font-weight:700;text-transform:uppercase;font-size:9.5px;letter-spacing:.6px;text-align:center}
+
+/* ===== COL CENTRE : hiérarchie ===== */
+#snfus-mid{display:flex;flex-direction:column;min-height:0}
+.snfus-col-label{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:rgba(238,240,251,.4);margin-bottom:6px;flex-shrink:0}
 #snfus-tree-box{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);
   border-radius:10px;padding:10px;overflow-y:auto;flex:1;font-size:11.5px}
 .snfus-tree-hint{color:rgba(238,240,251,.3);font-size:11px;font-style:italic}
@@ -201,17 +236,8 @@ styleEl.textContent=`
 .snfus-cnt.tc{background:${rgba(C_TC,.15)};color:${C_TC};border:1px solid ${rgba(C_TC,.28)}}
 .snfus-cnt.cp{background:${rgba(C_CP,.15)};color:${C_CP};border:1px solid ${rgba(C_CP,.28)}}
 
-/* boutons liens */
-#snfus-links-box{display:flex;flex-direction:column;gap:4px;flex-shrink:0}
-.snfus-lbtn{padding:6px 10px;border-radius:8px;font-size:11px;font-weight:500;cursor:pointer;
-  text-align:left;border:1px solid;transition:all .13s;font-family:inherit;width:100%}
-.snfus-lbtn:disabled{opacity:.28;cursor:default}
-.snfus-lbtn.cl{background:${rgba(C_CL,.1)};border-color:${rgba(C_CL,.3)};color:${C_CL}}
-.snfus-lbtn.cl:hover:not(:disabled){background:${rgba(C_CL,.2)};box-shadow:0 0 10px ${rgba(C_CL,.28)}}
-.snfus-lbtn.cl.hdr{background:${rgba(C_CL,.16)};font-weight:700;text-transform:uppercase;font-size:9.5px;letter-spacing:.6px;text-align:center}
-
-/* ===== COL CENTRE : info + listes ===== */
-#snfus-mid{display:flex;flex-direction:column;gap:10px;min-height:0;overflow-y:auto}
+/* ===== COL DROITE : info + listes ===== */
+#snfus-right{display:flex;flex-direction:column;gap:10px;min-height:0;overflow-y:auto}
 
 /* bloc info record */
 #snfus-info{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:12px;flex-shrink:0}
@@ -243,14 +269,14 @@ styleEl.textContent=`
 .snfus-ml-table{width:100%;border-collapse:collapse;font-size:11px}
 .snfus-ml-table th{padding:5px 8px;text-align:left;font-size:9px;font-weight:700;text-transform:uppercase;
   letter-spacing:.6px;color:rgba(238,240,251,.4);white-space:nowrap;border-bottom:1px solid rgba(255,255,255,.06)}
-.snfus-ml-table td{padding:5px 8px;color:#dde1f7;white-space:nowrap;border-bottom:1px solid rgba(255,255,255,.04);cursor:pointer}
+.snfus-ml-table td{padding:5px 8px;color:#dde1f7;white-space:nowrap;border-bottom:1px solid rgba(255,255,255,.04)}
 .snfus-ml-table tr:hover td{background:rgba(255,255,255,.04)}
 .snfus-ml-table td.empty{color:rgba(238,240,251,.3);font-style:italic}
+.snfus-ml-table td.ref-link{color:${C_PRJ};cursor:pointer;text-decoration:underline}
+.snfus-ml-table td.ref-link:hover{color:#90c8ff}
+.snfus-ml-table td.row-open{cursor:pointer}
 .snfus-ml-empty{padding:10px 12px;font-size:11px;color:rgba(238,240,251,.3);font-style:italic}
 .snfus-ml-loading{padding:8px 12px;font-size:11px;color:${rgba(C_IN,.6)};font-style:italic}
-
-/* ===== COL DROITE vide pour l'instant ===== */
-#snfus-right{display:none}
 `;
 document.head.appendChild(styleEl);
 
@@ -284,6 +310,16 @@ const overlay=document.createElement("div");
 overlay.id=OVERLAY_ID;
 overlay.onclick=e=>{if(e.target===overlay)close();};
 
+function wsBtnHtml(){
+  let html=`<button class="snfus-wbtn ws hdr" disabled onclick="snfusOpenWs('Project Workspace')">Project Workspace</button>`;
+  html+=`<div class="snfus-ws-grid">`;
+  WS_BUTTONS.filter(b=>!b.wide).forEach(b=>{
+    html+=`<button class="snfus-wbtn ws" disabled onclick="snfusOpenWs('${b.t.replace(/'/g,"\\'")}')"> ${b.t}</button>`;
+  });
+  html+=`</div>`;
+  return html;
+}
+
 function lbtnHtml(b){
   const cls="snfus-lbtn cl"+(b.wide?" hdr":"");
   return `<button class="${cls}" disabled onclick="snfusOpenLink('${b.t.replace(/'/g,"\\'")}')"> ${b.t}</button>`;
@@ -300,7 +336,7 @@ overlay.innerHTML=`
   </div>
 
   <div id="snfus-body">
-    <!-- ===== COL GAUCHE ===== -->
+    <!-- ===== COL GAUCHE : inputs + liens ===== -->
     <div id="snfus-left">
       <div>
         <div class="snfus-label">Numéro</div>
@@ -314,22 +350,26 @@ overlay.innerHTML=`
       </div>
       <button id="snfus-load-btn" onclick="snfusLoad()">Charger la hiérarchie</button>
 
-      <!-- Arbre -->
-      <div class="snfus-label" style="margin-top:4px">Hiérarchie</div>
-      <div id="snfus-tree-box">
-        <div class="snfus-tree-hint" id="snfus-tree-hint">Entrez un numéro ou sys_id.</div>
-        <div id="snfus-tree"></div>
-      </div>
+      <div class="snfus-label" style="margin-top:4px">Workspace</div>
+      <div id="snfus-ws-box">${wsBtnHtml()}</div>
 
-      <!-- Liens -->
-      <div class="snfus-label">Liens</div>
+      <div class="snfus-label" style="margin-top:4px">Classique UI</div>
       <div id="snfus-links-box">
         ${CL_BUTTONS.map(lbtnHtml).join("")}
       </div>
     </div>
 
-    <!-- ===== COL CENTRE ===== -->
+    <!-- ===== COL CENTRE : hiérarchie ===== -->
     <div id="snfus-mid">
+      <div class="snfus-col-label">Hiérarchie du projet</div>
+      <div id="snfus-tree-box">
+        <div class="snfus-tree-hint" id="snfus-tree-hint">Entrez un numéro ou sys_id.</div>
+        <div id="snfus-tree"></div>
+      </div>
+    </div>
+
+    <!-- ===== COL DROITE : info record + listes ===== -->
+    <div id="snfus-right">
       <!-- INFO RECORD -->
       <div id="snfus-info">
         <div id="snfus-info-title">Sélectionnez un nœud</div>
@@ -374,13 +414,21 @@ function setSt(msg,type){const el=document.getElementById("snfus-status");el.tex
 /* ============================================================
    LIENS
    ============================================================ */
-function lbtnEls(){return document.querySelectorAll("#snfus-links-box .snfus-lbtn:not(.hdr)");}
+function allWsBtns(){return document.querySelectorAll("#snfus-ws-box .snfus-wbtn");}
+function allLinkBtns(){return document.querySelectorAll("#snfus-links-box .snfus-lbtn:not(.hdr)");}
 
 window.snfusOpenLink=(label)=>{
   if(!selNode) return;
   const b=CL_BUTTONS.find(x=>x.t===label); if(!b) return;
   const fn=selNode.depth===0?b.urlP:b.urlT;
   window.open(location.origin+fn(selNode.sys_id),"_blank");
+};
+
+window.snfusOpenWs=(label)=>{
+  const pid=projId||(selNode&&selNode.sys_id); if(!pid) return;
+  const b=WS_BUTTONS.find(x=>x.t===label); if(!b) return;
+  const ts=Date.now();
+  window.open(location.origin+b.url(pid,ts),"_blank");
 };
 
 window.snfusOpenList=(listId)=>{
@@ -397,7 +445,8 @@ function selectNode(node){
   selNode=node;
   document.querySelectorAll(".snfus-tnode").forEach(e=>e.classList.remove("sel"));
   document.querySelector(`.snfus-tnode[data-id="${node.sys_id}"]`)?.classList.add("sel");
-  lbtnEls().forEach(b=>b.disabled=false);
+  allWsBtns().forEach(b=>b.disabled=false);
+  allLinkBtns().forEach(b=>b.disabled=false);
   CONN_LISTS.forEach(cl=>{
     const btn=document.querySelector(`#snfus-ml-${cl.id} .snfus-minilist-open`);
     if(btn) btn.disabled=false;
@@ -409,7 +458,8 @@ function selectNode(node){
 function deselectAll(){
   selNode=null;
   document.querySelectorAll(".snfus-tnode").forEach(e=>e.classList.remove("sel"));
-  lbtnEls().forEach(b=>b.disabled=true);
+  allWsBtns().forEach(b=>b.disabled=true);
+  allLinkBtns().forEach(b=>b.disabled=true);
   CONN_LISTS.forEach(cl=>{
     const btn=document.querySelector(`#snfus-ml-${cl.id} .snfus-minilist-open`);
     if(btn) btn.disabled=true;
@@ -516,10 +566,23 @@ function renderMiniList(cl,{rows,total},bodyEl,cntEl){
   const tdRows=rows.map(row=>{
     const sysId=row.sys_id;
     const cells=cl.cols.map(c=>{
-      const raw=row[c.f]; const val=fmtVal(raw);
+      const raw=row[c.f];
+      if(!raw&&raw!==0) return `<td class="empty">(empty)</td>`;
+      // Champ de type référence : afficher display_value avec lien vers l'enregistrement lié
+      if(c.ref && typeof raw==="object"){
+        const label=raw.display_value||raw.value||"";
+        const refId=raw.link ? raw.link.split("/").pop() : (raw.value||"");
+        if(!label) return `<td class="empty">(empty)</td>`;
+        // Déduire la table de la ref depuis le champ name (user_resource → sys_user, role → cmn_role, etc.)
+        const refUrl=raw.link ? `${location.origin}/now/nav/ui/classic/params/target/${raw.link.split("/api/now/table/")[1]||""}` : "";
+        const onclick=refUrl?`onclick="event.stopPropagation();window.open('${refUrl}','_blank')"` : "";
+        return `<td class="ref-link" ${onclick}>${label}</td>`;
+      }
+      const val=fmtVal(raw);
       return `<td class="${val?"":"empty"}">${val||"(empty)"}</td>`;
     }).join("");
-    return `<tr onclick="window.open('${location.origin}/now/nav/ui/classic/params/target/${cl.table}.do?sys_id=${sysId}','_blank')">${cells}</tr>`;
+    const rowUrl=`${location.origin}/now/nav/ui/classic/params/target/${cl.table}.do?sys_id=${sysId}`;
+    return `<tr class="row-open" onclick="window.open('${rowUrl}','_blank')">${cells}</tr>`;
   }).join("");
   bodyEl.innerHTML=`<table class="snfus-ml-table"><thead><tr>${thCells}</tr></thead><tbody>${tdRows}</tbody></table>`;
 }
