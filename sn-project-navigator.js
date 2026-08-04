@@ -291,19 +291,81 @@ window.snpnavResolve = async () => {
     btn.disabled = true;
     setStatus("Résolution…","");
     try {
-      const res  = await fetch(`/api/now/table/pm_project?sysparm_query=number=${encodeURIComponent(num)}&sysparm_fields=sys_id&sysparm_limit=1`,
-                               { headers:{ Accept:"application/json" } });
-      const data = await res.json();
-      if(data.result && data.result.length){
-        const id = data.result[0].sys_id;
-        document.getElementById("snpnav-sysid").value = id;
-        enableButtons(id);
-        setStatus("✓ "+id.slice(0,8)+"…","ok");
-      } else {
-        setStatus("Projet introuvable","err");
+      // Tentative 1 : API REST (fonctionne si le token CSRF est disponible)
+      const res = await fetch(
+        `/api/now/table/pm_project?sysparm_query=number=${encodeURIComponent(num)}&sysparm_fields=sys_id,number&sysparm_limit=1`,
+        { headers:{ Accept:"application/json", "X-UserToken": window.top && window.top.g_ck ? window.top.g_ck : "" } }
+      );
+      if(res.ok){
+        const data = await res.json();
+        if(data.result && data.result.length){
+          const id = data.result[0].sys_id;
+          document.getElementById("snpnav-sysid").value = id;
+          enableButtons(id);
+          setStatus("✓ "+id.slice(0,8)+"…","ok");
+          btn.disabled = false;
+          return;
+        } else {
+          setStatus("Projet introuvable","err");
+          btn.disabled = false;
+          return;
+        }
       }
-    } catch(e){ setStatus("Erreur API","err"); }
-    finally { btn.disabled = false; }
+    } catch(e){}
+
+    // Tentative 2 : XMLHttpRequest avec token CSRF ServiceNow
+    try {
+      const token = (window.top && window.top.g_ck) || window.g_ck || "";
+      await new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open("GET", `/api/now/table/pm_project?sysparm_query=number=${encodeURIComponent(num)}&sysparm_fields=sys_id&sysparm_limit=1`);
+        xhr.setRequestHeader("Accept","application/json");
+        if(token) xhr.setRequestHeader("X-UserToken", token);
+        xhr.onload = () => {
+          try {
+            const data = JSON.parse(xhr.responseText);
+            if(data.result && data.result.length){
+              const id = data.result[0].sys_id;
+              document.getElementById("snpnav-sysid").value = id;
+              enableButtons(id);
+              setStatus("✓ "+id.slice(0,8)+"…","ok");
+            } else {
+              setStatus("Projet introuvable","err");
+            }
+          } catch(e){ reject(e); }
+          resolve();
+        };
+        xhr.onerror = reject;
+        xhr.send();
+      });
+    } catch(e){
+      // Tentative 3 : GlideRecord JS côté client (disponible dans les iframes SN)
+      try {
+        const GR = (window.top && window.top.GlideRecord) || window.GlideRecord;
+        if(GR){
+          const gr = new GR("pm_project");
+          gr.addQuery("number", num.toUpperCase());
+          gr.setLimit(1);
+          gr.query(() => {
+            if(gr.next()){
+              const id = gr.getUniqueValue();
+              document.getElementById("snpnav-sysid").value = id;
+              enableButtons(id);
+              setStatus("✓ "+id.slice(0,8)+"…","ok");
+            } else {
+              setStatus("Projet introuvable","err");
+            }
+            btn.disabled = false;
+          });
+          return; // callback asynchrone gère la suite
+        } else {
+          setStatus("Erreur : API indisponible","err");
+        }
+      } catch(e2){
+        setStatus("Erreur de résolution","err");
+      }
+    }
+    btn.disabled = false;
   }
 };
 
