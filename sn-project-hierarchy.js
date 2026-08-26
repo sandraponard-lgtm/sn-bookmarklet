@@ -85,12 +85,19 @@ const CONN_LISTS=[
     table:"time_card",
     qP:(id)=>`top_task=${id}`, qT:(id)=>`task=${id}`,
     cols:[
-      {f:"number",label:"N°"},
-      {f:"user",label:"User",ref:true},
-      {f:"state",label:"État"},
-      {f:"start_date",label:"Début"},
-      {f:"end_date",label:"Fin"},
-      {f:"total_hours",label:"Heures"},
+      {f:"week_starts_on", label:"Week starts on"},
+      {f:"category",       label:"Category",  ref:true},
+      {f:"user",           label:"User",       ref:true},
+      {f:"task",           label:"Task",       ref:true},
+      {f:"state",          label:"State"},
+      {f:"sunday",         label:"Sun"},
+      {f:"monday",         label:"Mon"},
+      {f:"tuesday",        label:"Tue"},
+      {f:"wednesday",      label:"Wed"},
+      {f:"thursday",       label:"Thu"},
+      {f:"friday",         label:"Fri"},
+      {f:"saturday",       label:"Sat"},
+      {f:"total",          label:"Total"},
     ]
   },
   { id:"cp",  label:"Cost Plans", color:C_CP,
@@ -119,18 +126,27 @@ const CONN_LISTS=[
   },
 ];
 
-/* ---- CHAMPS INFO RECORD ---- */
+/* ---- CHAMPS INFO RECORD — grille 3 colonnes : Approved | Planned | Actual ----
+   null = cellule vide pour conserver l'alignement
+   ---- */
 const DATE_FIELDS=[
+  /* en-têtes implicites : Approved | Planned | Actual */
+  /* ligne start */
   {f:"approved_start_date", label:"Approved start"},
   {f:"start_date",          label:"Planned start"},
   {f:"work_start",          label:"Actual start"},
-  {f:"duration",            label:"Planned duration"},
-  {f:"effort",              label:"Planned effort", type:"effort"},
+  /* ligne end */
   {f:"approved_end_date",   label:"Approved end"},
   {f:"end_date",            label:"Planned end"},
   {f:"work_end",            label:"Actual end"},
+  /* ligne duration — pas d'Approved, donc cellule vide à gauche */
+  null,
+  {f:"duration",            label:"Planned duration"},
   {f:"work_duration",       label:"Actual duration"},
-  {f:"work_effort",         label:"Actual effort",  type:"effort"},
+  /* ligne effort — idem */
+  null,
+  {f:"effort",              label:"Planned effort"},
+  {f:"work_effort",         label:"Actual effort"},
 ];
 const COST_FIELDS_PRJ=[
   {f:"estimated_cost",   label:"Estimated cost"},
@@ -160,7 +176,7 @@ styleEl.textContent=`
   background:radial-gradient(circle at 20% -10%,rgba(80,60,160,.35),transparent 55%),
              radial-gradient(circle at 90% 0%,rgba(20,140,160,.25),transparent 50%),rgba(6,8,18,.91);
   backdrop-filter:blur(6px);animation:snfus-fadein .14s ease-out}
-#snfus-win{position:relative;width:100%;max-width:1500px;height:calc(100vh - 32px);display:flex;flex-direction:column;
+#snfus-win{position:relative;width:90vw;max-width:none;height:90vh;display:flex;flex-direction:column;
   color:#eef0fb;background:linear-gradient(165deg,rgba(36,38,64,.8),rgba(18,19,36,.88));
   border:1px solid rgba(255,255,255,.09);border-radius:18px;padding:16px 18px 18px;
   box-shadow:0 25px 70px -15px rgba(0,0,0,.7),0 0 0 1px rgba(255,255,255,.03) inset;
@@ -178,10 +194,31 @@ styleEl.textContent=`
 #snfus-status.ok{color:${C_IN}} #snfus-status.err{color:#ff6b7a}
 #snfus-autodetect{font-size:10.5px;color:${rgba(C_IN,.6)};font-style:italic;flex-shrink:0}
 
-/* layout 3 colonnes */
-#snfus-body{display:grid;grid-template-columns:240px 280px 1fr;gap:12px;flex:1;min-height:0}
+/* layout 3 colonnes — col centre pilotée par CSS var */
+#snfus-body{display:grid;grid-template-columns:240px var(--tree-w,320px) 1fr;gap:12px;flex:1;min-height:0;transition:grid-template-columns .2s ease}
+/* états : narrow(Num+badges) | normal(+Nom tronqué) | full(hiérachie plein écran) */
+#snfus-body.tree-narrow{grid-template-columns:240px 160px 1fr}
+#snfus-body.tree-normal{grid-template-columns:240px 320px 1fr}
+#snfus-body.tree-full  {grid-template-columns:240px 1fr 0px;pointer-events:auto}
+/* en mode full : masquer la col droite */
+#snfus-body.tree-full #snfus-right{display:none}
+/* en mode narrow : masquer la colonne Nom */
+#snfus-body.tree-narrow .col-name-hide{display:none}
 
-/* ===== COL GAUCHE : inputs + liens ===== */
+/* ===== COL CENTRE : hiérarchie en table ===== */
+#snfus-mid{display:flex;flex-direction:column;min-height:0}
+.snfus-col-label{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;
+  color:rgba(238,240,251,.4);margin-bottom:6px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between}
+/* boutons toggle */
+#snfus-tree-toggle{display:inline-flex;gap:3px}
+.snfus-ttbtn{font-size:9.5px;padding:2px 7px;border-radius:5px;border:1px solid rgba(255,255,255,.15);
+  background:rgba(255,255,255,.05);color:rgba(238,240,251,.55);cursor:pointer;font-family:inherit;transition:all .13s}
+.snfus-ttbtn:hover{background:rgba(255,255,255,.12);color:#fff}
+.snfus-ttbtn.active{background:${rgba(C_SEL,.2)};border-color:${rgba(C_SEL,.45)};color:${C_SEL}}
+#snfus-tree-box{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);
+  border-radius:10px;overflow:auto;flex:1;font-size:11.5px}
+.snfus-tree-hint{color:rgba(238,240,251,.3);font-size:11px;font-style:italic;padding:10px}
+
 #snfus-left{display:flex;flex-direction:column;gap:8px;min-height:0;overflow-y:auto}
 .snfus-label{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:${rgba(C_IN,.65)};margin-bottom:3px}
 .snfus-field{padding:7px 10px;border:1px solid ${rgba(C_IN,.3)};border-radius:9px;font-size:12px;
@@ -213,28 +250,32 @@ styleEl.textContent=`
 .snfus-lbtn.cl:hover:not(:disabled){background:${rgba(C_CL,.2)};box-shadow:0 0 10px ${rgba(C_CL,.28)}}
 .snfus-lbtn.cl.hdr{background:${rgba(C_CL,.16)};font-weight:700;text-transform:uppercase;font-size:9.5px;letter-spacing:.6px;text-align:center}
 
-/* ===== COL CENTRE : hiérarchie ===== */
-#snfus-mid{display:flex;flex-direction:column;min-height:0}
-.snfus-col-label{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:rgba(238,240,251,.4);margin-bottom:6px;flex-shrink:0}
-#snfus-tree-box{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);
-  border-radius:10px;padding:10px;overflow-y:auto;flex:1;font-size:11.5px}
-.snfus-tree-hint{color:rgba(238,240,251,.3);font-size:11px;font-style:italic}
-.snfus-tnode{display:flex;align-items:center;padding:3px 0;cursor:pointer;user-select:none;border-radius:5px}
-.snfus-tnode:hover .snfus-tnode-lbl{opacity:1}
-.snfus-tnode.sel .snfus-tnode-lbl{font-weight:600;opacity:1;color:#fff}
-.snfus-tnode.sel .snfus-tnode-dot{box-shadow:0 0 7px currentColor}
-.snfus-tnode-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-right:6px}
-.snfus-tnode-lbl{color:#dde1f7;opacity:.78;line-height:1.3}
-.snfus-tnode-num{font-size:10px;font-family:"Consolas","Courier New",monospace;margin-right:4px}
-.snfus-tnode-name{font-size:11px}
-.snfus-sel-badge{display:none;font-size:8.5px;font-weight:700;padding:1px 4px;border-radius:3px;margin-left:5px;
+/* ===== COL GAUCHE : inputs + liens ===== */
+#snfus-tree-table{width:100%;border-collapse:collapse;table-layout:fixed}
+#snfus-tree-table colgroup col.col-num{width:130px}
+#snfus-tree-table colgroup col.col-name{width:auto}
+#snfus-tree-table colgroup col.col-cnt{width:40px}
+#snfus-tree-table thead th{position:sticky;top:0;z-index:1;background:rgba(20,22,40,.97);padding:6px 8px;
+  text-align:left;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;
+  color:rgba(238,240,251,.45);border-bottom:1px solid rgba(255,255,255,.08);white-space:nowrap;overflow:hidden}
+#snfus-tree-table thead th.cnt-col{text-align:center}
+#snfus-tree-table tbody tr{cursor:pointer;transition:background .1s;border-bottom:1px solid rgba(255,255,255,.04)}
+#snfus-tree-table tbody tr:hover{background:rgba(255,255,255,.05)}
+#snfus-tree-table tbody tr.sel{background:rgba(255,210,58,.07)}
+#snfus-tree-table tbody tr.sel td{color:#fff}
+#snfus-tree-table td{padding:5px 8px;vertical-align:middle;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#snfus-tree-table td.cnt-col{text-align:center;padding:4px 2px}
+.snfus-tnode-num{font-size:10px;font-family:"Consolas","Courier New",monospace;white-space:nowrap}
+.snfus-tnode-name{font-size:11px;color:#dde1f7;opacity:.85}
+.snfus-sel-badge{display:none;font-size:8px;font-weight:700;padding:1px 3px;border-radius:3px;margin-left:4px;
   background:${rgba(C_SEL,.2)};color:${C_SEL};border:1px solid ${rgba(C_SEL,.4)}}
-.snfus-tnode.sel .snfus-sel-badge{display:inline}
-.snfus-counts{display:inline-flex;gap:3px;margin-left:5px}
-.snfus-cnt{font-size:9px;font-weight:600;padding:1px 5px;border-radius:9px}
+#snfus-tree-table tbody tr.sel .snfus-sel-badge{display:inline}
+.snfus-cnt{font-size:9px;font-weight:600;padding:1px 5px;border-radius:9px;display:inline-block}
 .snfus-cnt.ra{background:${rgba(C_RA,.18)};color:${C_RA};border:1px solid ${rgba(C_RA,.3)}}
 .snfus-cnt.tc{background:${rgba(C_TC,.15)};color:${C_TC};border:1px solid ${rgba(C_TC,.28)}}
 .snfus-cnt.cp{background:${rgba(C_CP,.15)};color:${C_CP};border:1px solid ${rgba(C_CP,.28)}}
+.snfus-cnt.empty{color:rgba(238,240,251,.2);background:none;border:none;font-weight:400}
+.snfus-node-dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:5px;flex-shrink:0;vertical-align:middle}
 
 /* ===== COL DROITE : info + listes ===== */
 #snfus-right{display:flex;flex-direction:column;gap:10px;min-height:0;overflow-y:auto}
@@ -246,8 +287,14 @@ styleEl.textContent=`
 .snfus-info-section{margin-bottom:10px}
 .snfus-info-section-title{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;
   color:rgba(238,240,251,.4);margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid rgba(255,255,255,.06)}
-.snfus-info-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px 10px}
+.snfus-info-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px 10px}
 .snfus-info-grid.cost{grid-template-columns:repeat(3,1fr)}
+/* en-têtes des colonnes Approved | Planned | Actual */
+.snfus-info-col-hdrs{display:grid;grid-template-columns:repeat(3,1fr);gap:0 10px;margin-bottom:4px}
+.snfus-info-col-hdr{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;
+  color:rgba(238,240,251,.3);text-align:center;padding:0 4px}
+.snfus-ifield-empty{background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.03);
+  border-radius:6px;padding:4px 8px;min-height:28px}
 .snfus-ifield{display:flex;flex-direction:column;gap:2px}
 .snfus-ifield-lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:rgba(238,240,251,.4)}
 .snfus-ifield-val{font-size:11.5px;color:#eef0fb;background:rgba(255,255,255,.04);
@@ -299,8 +346,35 @@ async function apiFetch(u){ return fetch(u,{headers:apiH()}); }
 
 function fmtVal(raw){
   if(raw===null||raw===undefined||raw==="") return "";
-  if(typeof raw==="object") return raw.display_value||raw.value||"";
-  return String(raw);
+  // Avec sysparm_display_value=all, les champs sont { value, display_value }
+  if(typeof raw==="object"){
+    const dv=raw.display_value;
+    if(dv!==null&&dv!==undefined&&dv!=="") return fmtDate(String(dv));
+    const v=raw.value;
+    return (v!==null&&v!==undefined&&v!=="")?fmtDate(String(v)):"";
+  }
+  return fmtDate(String(raw));
+}
+
+/* Reformate une date/datetime en JJ-MM-AAAA HH:mm:ss si le format est reconnu
+   Entrées acceptées : AAAA-MM-JJ, AAAA-MM-JJ HH:mm:ss, MM-JJ-AAAA, etc. */
+function fmtDate(s){
+  if(!s) return s;
+  // Tenter de détecter et reformater un datetime ISO (AAAA-MM-JJ...)
+  const isoFull=/^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2})(?::(\d{2}))?)?/.exec(s);
+  if(isoFull){
+    const[,Y,M,D,h,m,sec]=isoFull;
+    if(h!==undefined) return `${D}-${M}-${Y} ${h}:${m}:${sec||"00"}`;
+    return `${D}-${M}-${Y}`;
+  }
+  // Format MM-JJ-AAAA (américain) → JJ-MM-AAAA
+  const us=/^(\d{2})-(\d{2})-(\d{4})(?:\s+(\d{2}):(\d{2})(?::(\d{2}))?)?/.exec(s);
+  if(us){
+    const[,M,D,Y,h,m,sec]=us;
+    if(h!==undefined) return `${D}-${M}-${Y} ${h}:${m}:${sec||"00"}`;
+    return `${D}-${M}-${Y}`;
+  }
+  return s; // retourner tel quel si format inconnu
 }
 
 /* ============================================================
@@ -361,10 +435,35 @@ overlay.innerHTML=`
 
     <!-- ===== COL CENTRE : hiérarchie ===== -->
     <div id="snfus-mid">
-      <div class="snfus-col-label">Hiérarchie du projet</div>
+      <div class="snfus-col-label">
+        Hiérarchie du projet
+        <div id="snfus-tree-toggle">
+          <button class="snfus-ttbtn" onclick="snfusTreeSize('narrow')" title="Vue compacte (N° + badges)">⊟</button>
+          <button class="snfus-ttbtn active" onclick="snfusTreeSize('normal')" title="Vue normale">⊡</button>
+          <button class="snfus-ttbtn" onclick="snfusTreeSize('full')" title="Vue plein écran">⊞</button>
+        </div>
+      </div>
       <div id="snfus-tree-box">
         <div class="snfus-tree-hint" id="snfus-tree-hint">Entrez un numéro ou sys_id.</div>
-        <div id="snfus-tree"></div>
+        <table id="snfus-tree-table" style="display:none">
+          <colgroup>
+            <col class="col-num">
+            <col class="col-name">
+            <col class="col-cnt">
+            <col class="col-cnt">
+            <col class="col-cnt">
+          </colgroup>
+          <thead>
+            <tr>
+              <th>Numéro</th>
+              <th class="col-name-hide">Nom</th>
+              <th class="cnt-col" style="color:${C_RA}" title="Resource Assignments">RA</th>
+              <th class="cnt-col" style="color:${C_TC}" title="Time Cards">TC</th>
+              <th class="cnt-col" style="color:${C_CP}" title="Cost Plans">CP</th>
+            </tr>
+          </thead>
+          <tbody id="snfus-tree"></tbody>
+        </table>
       </div>
     </div>
 
@@ -443,8 +542,8 @@ window.snfusOpenList=(listId)=>{
    ============================================================ */
 function selectNode(node){
   selNode=node;
-  document.querySelectorAll(".snfus-tnode").forEach(e=>e.classList.remove("sel"));
-  document.querySelector(`.snfus-tnode[data-id="${node.sys_id}"]`)?.classList.add("sel");
+  document.querySelectorAll("#snfus-tree tr").forEach(e=>e.classList.remove("sel"));
+  document.querySelector(`#snfus-tree tr[data-id="${node.sys_id}"]`)?.classList.add("sel");
   allWsBtns().forEach(b=>b.disabled=false);
   allLinkBtns().forEach(b=>b.disabled=false);
   CONN_LISTS.forEach(cl=>{
@@ -457,7 +556,7 @@ function selectNode(node){
 
 function deselectAll(){
   selNode=null;
-  document.querySelectorAll(".snfus-tnode").forEach(e=>e.classList.remove("sel"));
+  document.querySelectorAll("#snfus-tree tr").forEach(e=>e.classList.remove("sel"));
   allWsBtns().forEach(b=>b.disabled=true);
   allLinkBtns().forEach(b=>b.disabled=true);
   CONN_LISTS.forEach(cl=>{
@@ -485,9 +584,9 @@ async function loadInfo(node){
   const isP=node.depth===0;
   const tbl=isP?"pm_project":"pm_project_task";
   const costFlds=isP?COST_FIELDS_PRJ:COST_FIELDS_TSK;
-  const allFlds=[...DATE_FIELDS,...costFlds].map(f=>f.f).join(",");
+  const allFlds=[...DATE_FIELDS,...costFlds].filter(f=>f!==null).map(f=>f.f).join(",");
   try{
-    const res=await apiFetch(`/api/now/table/${tbl}?sysparm_query=sys_id=${node.sys_id}&sysparm_fields=${allFlds}&sysparm_limit=1`);
+    const res=await apiFetch(`/api/now/table/${tbl}?sysparm_query=sys_id=${node.sys_id}&sysparm_fields=${allFlds}&sysparm_limit=1&sysparm_display_value=all`);
     const data=await res.json();
     const rec=data.result&&data.result[0]?data.result[0]:{};
     _info[node.sys_id]={rec,isP,costFlds};
@@ -503,10 +602,13 @@ function renderInfo(node,{rec,isP,costFlds}){
   const now=new Date();
 
   function fieldHtml(f){
+    if(f===null) return `<div class="snfus-ifield"><div class="snfus-ifield-empty"></div></div>`;
     const raw=rec[f.f]; const val=fmtVal(raw);
     let cls=val?"":"empty";
     if(val&&(f.f==="end_date"||f.f==="approved_end_date")){
-      const d=new Date(val); if(!isNaN(d)&&d<now) cls="overdue";
+      // Comparer depuis la valeur brute (format ISO) pour la détection d'overdue
+      const rawStr=raw&&typeof raw==="object"?(raw.value||raw.display_value||""):String(raw||"");
+      const d=new Date(rawStr); if(!isNaN(d)&&d<now) cls="overdue";
     }
     return `<div class="snfus-ifield">
       <span class="snfus-ifield-lbl">${f.label}</span>
@@ -514,12 +616,18 @@ function renderInfo(node,{rec,isP,costFlds}){
     </div>`;
   }
 
+  // DATE_FIELDS contient des null pour les cellules vides
   const dateHtml=DATE_FIELDS.map(fieldHtml).join("");
   const costHtml=costFlds.map(fieldHtml).join("");
 
   document.getElementById("snfus-info-content").innerHTML=`
     <div class="snfus-info-section">
       <div class="snfus-info-section-title">Dates</div>
+      <div class="snfus-info-col-hdrs">
+        <div class="snfus-info-col-hdr">Approved</div>
+        <div class="snfus-info-col-hdr">Planned</div>
+        <div class="snfus-info-col-hdr">Actual</div>
+      </div>
       <div class="snfus-info-grid">${dateHtml}</div>
     </div>
     <div class="snfus-info-section">
@@ -543,7 +651,7 @@ async function loadMiniList(cl,node){
   const q=(isP?cl.qP:cl.qT)(node.sys_id);
   const fields=cl.cols.map(c=>c.f).join(",")+",sys_id";
   try{
-    const res=await apiFetch(`/api/now/table/${cl.table}?sysparm_query=${q}&sysparm_fields=${fields}&sysparm_limit=10`);
+    const res=await apiFetch(`/api/now/table/${cl.table}?sysparm_query=${q}&sysparm_fields=${fields}&sysparm_limit=10&sysparm_display_value=all`);
     const data=await res.json();
     const rows=data.result||[];
     const total=res.headers.get("X-Total-Count");
@@ -564,24 +672,27 @@ function renderMiniList(cl,{rows,total},bodyEl,cntEl){
   if(!rows.length){bodyEl.innerHTML=`<div class="snfus-ml-empty">Aucun enregistrement.</div>`;return;}
   const thCells=cl.cols.map(c=>`<th>${c.label}</th>`).join("");
   const tdRows=rows.map(row=>{
-    const sysId=row.sys_id;
+    // sys_id peut être {value,display_value} avec sysparm_display_value=all
+    const rawId=row.sys_id;
+    const sysId=typeof rawId==="object"?(rawId.value||rawId.display_value||""):rawId;
     const cells=cl.cols.map(c=>{
       const raw=row[c.f];
       if(!raw&&raw!==0) return `<td class="empty">(empty)</td>`;
-      // Champ de type référence : afficher display_value avec lien vers l'enregistrement lié
-      if(c.ref && typeof raw==="object"){
+      // Avec display_value=all, les refs ont un champ link ; les champs simples ont display_value
+      if(typeof raw==="object"){
         const label=raw.display_value||raw.value||"";
-        const refId=raw.link ? raw.link.split("/").pop() : (raw.value||"");
         if(!label) return `<td class="empty">(empty)</td>`;
-        // Déduire la table de la ref depuis le champ name (user_resource → sys_user, role → cmn_role, etc.)
-        const refUrl=raw.link ? `${location.origin}/now/nav/ui/classic/params/target/${raw.link.split("/api/now/table/")[1]||""}` : "";
-        const onclick=refUrl?`onclick="event.stopPropagation();window.open('${refUrl}','_blank')"` : "";
-        return `<td class="ref-link" ${onclick}>${label}</td>`;
+        // Si lien de référence disponible → cellule cliquable vers l'enregistrement lié
+        if(raw.link){
+          const refUrl=`${location.origin}/now/nav/ui/classic/params/target/${raw.link.split("/api/now/table/")[1]||""}`;
+          return `<td class="ref-link" onclick="event.stopPropagation();window.open('${refUrl}','_blank')">${label}</td>`;
+        }
+        return `<td>${label}</td>`;
       }
       const val=fmtVal(raw);
       return `<td class="${val?"":"empty"}">${val||"(empty)"}</td>`;
     }).join("");
-    const rowUrl=`${location.origin}/now/nav/ui/classic/params/target/${cl.table}.do?sys_id=${sysId}`;
+    const rowUrl=sysId?`${location.origin}/now/nav/ui/classic/params/target/${cl.table}.do?sys_id=${sysId}`:"#";
     return `<tr class="row-open" onclick="window.open('${rowUrl}','_blank')">${cells}</tr>`;
   }).join("");
   bodyEl.innerHTML=`<table class="snfus-ml-table"><thead><tr>${thCells}</tr></thead><tbody>${tdRows}</tbody></table>`;
@@ -593,9 +704,11 @@ function renderMiniList(cl,{rows,total},bodyEl,cntEl){
 window.snfusHover=async(sysId)=>{
   if(_cnt[sysId]!==undefined) return;
   _cnt[sysId]="loading";
-  const el=document.getElementById(`snfus-cnt-${sysId}`);
-  if(!el) return;
-  el.innerHTML=`<span class="snfus-cnt ra">…</span>`;
+  // Afficher "…" dans les 3 cellules
+  ["ra","tc","cp"].forEach(k=>{
+    const el=document.getElementById(`snfus-cnt-${k}-${sysId}`);
+    if(el) el.innerHTML=`<span class="snfus-cnt ${k}" style="opacity:.5">…</span>`;
+  });
   const node=window._snfusNodes&&window._snfusNodes[sysId];
   const isP=node&&node.depth===0;
   const f=isP?"top_task":"task";
@@ -610,11 +723,18 @@ window.snfusHover=async(sysId)=>{
     const tc=parseInt(tcR.headers.get("X-Total-Count")||(tcD.result?tcD.result.length:0));
     const cp=parseInt(cpR.headers.get("X-Total-Count")||(cpD.result?cpD.result.length:0));
     _cnt[sysId]={ra,tc,cp};
-    if(el) el.innerHTML=
-      (ra>0?`<span class="snfus-cnt ra" title="RA">👤${ra}</span>`:"")+
-      (tc>0?`<span class="snfus-cnt tc" title="TC">⏱️${tc}</span>`:"")+
-      (cp>0?`<span class="snfus-cnt cp" title="CP">💰${cp}</span>`:"");
-  }catch(e){delete _cnt[sysId];if(el)el.innerHTML="";}
+    const fill=(k,v,cls)=>{
+      const el=document.getElementById(`snfus-cnt-${k}-${sysId}`);
+      if(el) el.innerHTML=v>0?`<span class="snfus-cnt ${cls}">${v}</span>`:`<span class="snfus-cnt empty">—</span>`;
+    };
+    fill("ra",ra,"ra"); fill("tc",tc,"tc"); fill("cp",cp,"cp");
+  }catch(e){
+    delete _cnt[sysId];
+    ["ra","tc","cp"].forEach(k=>{
+      const el=document.getElementById(`snfus-cnt-${k}-${sysId}`);
+      if(el) el.innerHTML=`<span class="snfus-cnt empty">—</span>`;
+    });
+  }
 };
 
 /* ============================================================
@@ -625,25 +745,29 @@ function flatTree(all,pid,d){
 }
 
 function renderNode(n){
-  const c=dc(n.depth),ind=n.depth*14,id=n.sys_id;
-  return `<div class="snfus-tnode" data-id="${id}"
-    onclick="snfusSelectNode('${id}')" onmouseenter="snfusHover('${id}')"
-    style="padding-left:${ind}px">
-    <span class="snfus-tnode-dot" style="background:${c}"></span>
-    <span class="snfus-tnode-lbl">
-      <span class="snfus-tnode-num" style="color:${c}">${n.number}</span>
-      <span class="snfus-tnode-name">${n.name}</span>
+  const c=dc(n.depth), id=n.sys_id;
+  const indent=n.depth*14;
+  const dotHtml=`<span class="snfus-node-dot" style="background:${c};box-shadow:0 0 4px ${rgba(c,.6)};margin-left:${indent}px"></span>`;
+  return `<tr data-id="${id}" onclick="snfusSelectNode('${id}')" onmouseenter="snfusHover('${id}')">
+    <td style="white-space:nowrap">
+      ${dotHtml}<span class="snfus-tnode-num" style="color:${c}">${n.number}</span>
       <span class="snfus-sel-badge">✓</span>
-    </span>
-    <span class="snfus-counts" id="snfus-cnt-${id}"></span>
-  </div>`;
+    </td>
+    <td class="name-cell col-name-hide"><span class="snfus-tnode-name">${n.name}</span></td>
+    <td class="cnt-col" id="snfus-cnt-ra-${id}"><span class="snfus-cnt empty">—</span></td>
+    <td class="cnt-col" id="snfus-cnt-tc-${id}"><span class="snfus-cnt empty">—</span></td>
+    <td class="cnt-col" id="snfus-cnt-cp-${id}"><span class="snfus-cnt empty">—</span></td>
+  </tr>`;
 }
 
 function renderTree(nodes){
   const tEl=document.getElementById("snfus-tree");
   const hEl=document.getElementById("snfus-tree-hint");
-  if(!nodes||!nodes.length){hEl.textContent="Aucune tâche trouvée.";tEl.innerHTML="";return;}
-  hEl.style.display="none";
+  const tableEl=document.getElementById("snfus-tree-table");
+  if(!nodes||!nodes.length){
+    hEl.textContent="Aucune tâche trouvée."; hEl.style.display=""; tableEl.style.display="none"; return;
+  }
+  hEl.style.display="none"; tableEl.style.display="";
   tEl.innerHTML=nodes.map(renderNode).join("");
 }
 
@@ -653,33 +777,67 @@ function renderTree(nodes){
 async function loadHierarchy(pid){
   const tEl=document.getElementById("snfus-tree");
   const hEl=document.getElementById("snfus-tree-hint");
+  const tableEl=document.getElementById("snfus-tree-table");
   tEl.innerHTML=""; hEl.style.display=""; hEl.textContent="Chargement…";
+  tableEl.style.display="none";
   deselectAll();
   [_cnt,_info,...CONN_LISTS.map(x=>_lists[x.id]||{})].forEach(o=>{if(o)Object.keys(o).forEach(k=>delete o[k]);});
 
-  function build(tasks,pNum,pName){
-    const root={sys_id:pid,number:pNum,name:pName,parent:null,depth:0};
-    const flat=[root,...flatTree(tasks,pid,1)];
-    renderTree(flat);
-    window._snfusNodes={};
-    flat.forEach(n=>{window._snfusNodes[n.sys_id]=n;});
+  // Récupérer les infos du projet racine ET vérifier s'il a des parents (sous-projets)
+  async function fetchProject(id){
+    const res=await apiFetch(`/api/now/table/pm_project?sysparm_query=sys_id=${id}&sysparm_fields=number,short_description,parent&sysparm_limit=1`);
+    const data=await res.json();
+    return data.result&&data.result[0]?data.result[0]:null;
+  }
+
+  async function fetchTasks(id){
+    const res=await apiFetch(`/api/now/table/pm_project_task?sysparm_query=top_task=${id}&sysparm_fields=sys_id,number,short_description,parent&sysparm_limit=2000`);
+    const data=await res.json();
+    return (data.result||[]).map(t=>({
+      sys_id:t.sys_id, number:t.number, name:t.short_description||"",
+      parent:t.parent?(t.parent.value||t.parent):id
+    }));
   }
 
   try{
-    const [pR,tR]=await Promise.all([
-      apiFetch(`/api/now/table/pm_project?sysparm_query=sys_id=${pid}&sysparm_fields=number,short_description&sysparm_limit=1`),
-      apiFetch(`/api/now/table/pm_project_task?sysparm_query=top_task=${pid}&sysparm_fields=sys_id,number,short_description,parent&sysparm_limit=2000`),
+    const [prjRec, tasks, parentChain] = await Promise.all([
+      fetchProject(pid),
+      fetchTasks(pid),
+      fetchParentChain(pid),  // [] si pas de parents
     ]);
-    const pD=await pR.json(); const tD=await tR.json();
-    const pNum=pD.result&&pD.result[0]?pD.result[0].number:"PRJ";
-    const pName=pD.result&&pD.result[0]?pD.result[0].short_description:"";
-    const tasks=(tD.result||[]).map(t=>({
-      sys_id:t.sys_id,number:t.number,name:t.short_description||"",
-      parent:t.parent?(t.parent.value||t.parent):pid
-    }));
-    build(tasks,pNum,pName); return;
+
+    const pNum  = prjRec?prjRec.number:"PRJ";
+    const pName = prjRec?prjRec.short_description||"":"";
+
+    // Construire la liste à plat :
+    // parentChain est [proche→lointain], on inverse pour avoir [racine→...→sous-projet cible]
+    const ancestors = [...parentChain].reverse();
+
+    const flat=[];
+    // Projets ancêtres (nœuds parents — depth 0,1,2... mais visuellement décalés)
+    ancestors.forEach((anc,i)=>{
+      flat.push({sys_id:anc.sys_id, number:anc.number, name:anc.name, depth:i, isProject:true});
+    });
+    // Projet courant (racine si pas de parents, sinon enfant des ancêtres)
+    const rootDepth = ancestors.length;
+    flat.push({sys_id:pid, number:pNum, name:pName, depth:rootDepth, isProject:true});
+
+    // Tâches du projet courant
+    function addTasks(parentId, d, all){
+      all.filter(t=>t.parent===parentId).forEach(t=>{
+        flat.push({...t, depth:d});
+        addTasks(t.sys_id, d+1, all);
+      });
+    }
+    addTasks(pid, rootDepth+1, tasks);
+
+    renderTree(flat);
+    window._snfusNodes={};
+    flat.forEach(n=>{window._snfusNodes[n.sys_id]=n;});
+    return;
   }catch(e){}
 
+  // Fallback GlideRecord
   try{
     const GR=(window.top&&window.top.GlideRecord)||window.GlideRecord;
     if(!GR) throw new Error();
@@ -692,17 +850,21 @@ async function loadHierarchy(pid){
       gT.query(()=>{
         const tasks=[];
         while(gT.next()) tasks.push({sys_id:gT.getUniqueValue(),number:gT.getValue("number"),
-          name:gT.getValue("short_description")||"",parent:gT.getValue("parent")||pid});
-        build(tasks,pNum,pName);
+          name:gT.getValue("short_description")||"",parent:gT.getValue("parent")||pid, depth:1});
+        const flat=[{sys_id:pid,number:pNum,name:pName,depth:0,isProject:true},...tasks];
+        renderTree(flat);
+        window._snfusNodes={};
+        flat.forEach(n=>{window._snfusNodes[n.sys_id]=n;});
       });
     });
   }catch(e){hEl.textContent="Erreur de chargement.";}
 }
 
 /* ============================================================
-   RÉSOLUTION SUB_TREE_ROOT
+   RÉSOLUTION SUB_TREE_ROOT + CHAÎNE DE PARENTS
    ============================================================ */
 async function resolveProj(sysId){
+  // Cherche d'abord si c'est une tâche avec sub_tree_root
   try{
     const res=await apiFetch(`/api/now/table/pm_project_task?sysparm_query=sys_id=${sysId}&sysparm_fields=sub_tree_root&sysparm_limit=1`);
     const data=await res.json();
@@ -715,10 +877,45 @@ async function resolveProj(sysId){
   return null;
 }
 
+// Récupère la chaîne complète des projets parents d'un sous-projet
+// en interrogeant pm_project sur le champ parent jusqu'à remonter à la racine
+async function fetchParentChain(pid){
+  const chain=[]; // [{sys_id,number,name}] du plus proche au plus lointain
+  let current=pid;
+  let safety=0;
+  while(current && safety++<10){
+    try{
+      const res=await apiFetch(`/api/now/table/pm_project?sysparm_query=sys_id=${current}&sysparm_fields=number,short_description,parent&sysparm_limit=1`);
+      const data=await res.json();
+      const rec=data.result&&data.result[0];
+      if(!rec) break;
+      const parentRef=rec.parent;
+      const parentId=parentRef?(parentRef.value||null):null;
+      if(parentId&&/^[0-9a-f]{32}$/i.test(parentId)){
+        // ce projet a un parent → l'ajouter à la chaîne et continuer
+        chain.push({sys_id:current, number:rec.number, name:rec.short_description||""});
+        current=parentId;
+      } else {
+        break; // pas de parent → on est au projet racine, on ne l'ajoute pas ici
+      }
+    }catch(e){break;}
+  }
+  return chain; // sous-projets dans l'ordre proche→lointain (excluant la racine)
+}
+
 /* ============================================================
    HANDLERS PRINCIPAUX
    ============================================================ */
 window.snfusClose=close;
+
+/* Toggle taille de la hiérarchie : narrow | normal | full */
+window.snfusTreeSize=(size)=>{
+  const body=document.getElementById("snfus-body");
+  body.className=`tree-${size}`;
+  document.querySelectorAll(".snfus-ttbtn").forEach((b,i)=>{
+    b.classList.toggle("active",["narrow","normal","full"][i]===size);
+  });
+};
 
 window.snfusOnInput=(src)=>{
   if(src==="number"&&document.getElementById("snfus-number").value.trim())
