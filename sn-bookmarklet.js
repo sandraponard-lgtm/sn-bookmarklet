@@ -1,600 +1,1094 @@
 javascript:(function(){
 
 /* ============================================================
-   CONFIGURATION — zone éditable V2.0
-   ============================================================
-
-   Chaque entrée de `data` est une COLONNE du menu.
-     f  → Titre de la colonne
-     c  → Couleur accent hex (néon)  ex: "#2980b9"
-     i  → Icône (emoji ou caractère, affiché dans le header de colonne)
-     l  → Liste des éléments
-
-   SECTION  : { section: "Titre" }
-   LIEN     : { t: "Texte", u: "/url" }
-   LIEN RAW : { t: "Texte", u: "/url", raw: true }   ← ouvre sans /now/nav/ui/classic
-   ACTION JS: { t: "Texte", h: "handler_key" }
-
-   Champs optionnels (sur n'importe quel LIEN) :
-     ic  → icône/emoji affichée devant le texte du lien   ex: "➕"
-     tbl → nom technique de la table, affiché en tooltip au survol   ex: "pm_project"
-           (si absent, déduit automatiquement de l'URL quand c'est un simple "/nom_table_list.do")
-
+   SN PROJECT NAVIGATOR — FUSION V1.0
+   Hiérarchie + Liens + Info record + Listes connexes
    ============================================================ */
 
-const data = [
+const STYLE_ID   = "snfus-style";
+const OVERLAY_ID = "snfus-overlay";
+document.getElementById(OVERLAY_ID) && document.getElementById(OVERLAY_ID).remove();
+document.getElementById(STYLE_ID)   && document.getElementById(STYLE_ID).remove();
 
-  { f: "Home, Portals & Workspaces", c: "#3aa0ff", i: "🏠", l: [
-    { section: "Home" },
-      { t: "Home",                    u: "/home.do" },
-    { section: "Portal" },
-      { t: "Service Portal",          u: "/sp",   raw: true },
-      { t: "Employee Portal",         u: "/esc",  raw: true },
-      { t: "Time Sheet Portal",       u: "/tcp",  raw: true },
-    { section: "Workspaces" },
-      { t: "SOW",                     u: "/now/sow/home" },
-      { t: "CWM",                     u: "/now/cwm/home/" },
-      { t: "Project WS",              u: "/now/workspace/project/home/" },
-      { t: "Resource WS",             u: "/now/workspace/rm/home" },
-      { t: "SPW",                     u: "/now/alignment-workspace/portfolio-plans" },
-    { section: "Quick Links" },
-      { t: "Agile Board Tracking",    u: "/$agile_board.do#/sprint_tracking" },
-  ]},
+/* ---- COULEURS ---- */
+const C_IN="#2dd9a3", C_SEL="#ffd23a", C_PRJ="#3aa0ff";
+const C_T1="#b06bff", C_T2="#ff9f3a", C_T3="#ff4d6d";
+const C_CL="#ff4d6d", C_RA="#b06bff", C_TC="#2dd9a3", C_CP="#ff9f3a", C_EX="#ff4d6d";
 
-  { f: "Admin", c: "#ff4d6d", i: "🛠️", l: [
-    { section: "Update Sets" },
-      { t: "Créer un Update Set",     u: "/sys_update_set.do?sys_id=-1",        ic: "➕", tbl: "sys_update_set" },
-      { t: "Update Sources",          u: "/sys_update_set_source_list.do",     ic: "💧", tbl: "sys_update_set_source" },
-      { t: "Local Update Sets",       u: "/sys_update_set_list.do",            ic: "📤", tbl: "sys_update_set" },
-      { t: "Retrieved Update Sets",   u: "/sys_remote_update_set_list.do",     ic: "📥", tbl: "sys_remote_update_set" },
-      { t: "Customer Updates",        u: "/sys_update_xml_list.do",            ic: "👩‍💻", tbl: "sys_update_xml" },
-    { section: "Scripting & Log" },
-      { t: "Logs 5min SPO",           u: "/syslog_list.do?sysparm_query=sys_created_onRELATIVEGT@minute@ago@5^sourceLIKESPO", tbl: "syslog" },
-      { t: "Scripts Background",      u: "/sys.scripts.do" },
-      { t: "Debugger",                h: "debugger" },
-    { section: "Quick Links" },
-      { t: "Access Analyzer",         u: "/now/access-management/access-analyzer/params/selected-tab-index/1" },
-      { t: "UI Builder",              u: "/now/builder/ui/home" },
-      { t: "Plugins",                 u: "/now/app-manager/home" },
-      { t: "Icons",                   u: "/styles/retina_icons/retina_icons.html" },
-  ]},
+function rgba(h,a){const r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16);return `rgba(${r},${g},${b},${a})`;}
+function dc(d){return[C_PRJ,C_T1,C_T2,C_T3][Math.min(d,3)];}
 
-  { f: "Development", c: "#b06bff", i: "💻", l: [
-    { section: "Scripts" },
-      { t: "UI Actions",              u: "/sys_ui_action_list.do" },
-      { t: "Client Scripts",          u: "/sys_script_client_list.do" },
-      { t: "Fix Scripts",             u: "/sys_script_fix_list.do" },
-      { t: "Business Rules",          u: "/sys_script_list.do" },
-    { section: "Automation" },
-      { t: "Scheduled Jobs",          u: "/sys_trigger_list.do",            tbl: "sys_trigger" },
-      { t: "Scheduled Script Exec.",  u: "/sysauto_script_list.do",         ic: "🏁", tbl: "sysauto_script" },
-      { t: "Running Scheduled Jobs",  u: "/v_running_scheduled_job_list.do" },
-      { t: "Job History By Nodes",    u: "/sys_scheduler_job_history_node_list.do" },
-    { section: "Remote Table" },
-      { t: "Tables (scriptable)",     u: "/sys_db_object_list.do?sysparm_query=scriptable_table%3Dtrue" },
-      { t: "Définitions",             u: "/sys_script_vtable_list.do" },
-    { section: "Translation" },
-      { t: "Debug ON",                u: "/sys.scripts.do?action=run_module&sys_id=24218d20c3031100c409fd251eba8f52" },
-      { t: "Debug OFF",               u: "/sys.scripts.do?action=run_module&sys_id=e4910160c3031100c409fd251eba8f53" },
-      { t: "TRT | Translated Texts",  u: "/sys_translated_text_list.do" },
-      { t: "TRL | Translated Names",  u: "/sys_translated_list.do" },
-      { t: "MSG | Messages",          u: "/sys_ui_message_list.do" },
-    { section: "Emails" },
-      { t: "Emails TODAY",            u: "/sys_email_list.do?sysparm_query=sys_created_onONToday@javascript:gs.beginningOfToday()@javascript:gs.endOfToday()" },
-      { t: "Notifications",           u: "/sysevent_email_action_list.do" },
-      { t: "Events Log",              u: "/sysevent_list.do" },
-    { section: "Data Import/Export" },
-      { t: "Data Sources",            u: "/sys_data_source_list.do" },
-      { t: "Transform Maps",          u: "/sys_transform_entry_list.do" },
-    { section: "Others" },
-      { t: "UI Views",                u: "/sys_ui_view_list.do" },
-  ]},
+/* ---- BOUTONS WORKSPACE ---- */
+const WS_BUTTONS=[
+  {t:"Project Workspace", wide:true,
+   url:(id,ts)=>`/now/workspace/project/home/sub/record/pm_project/${id}/params/page-name/details/time-stamp/${ts}/project-table/pm_project/project-id/${id}/record-status/1`},
+  {t:"Planning",   url:(id,ts)=>`/now/workspace/project/home/sub/planning/pm_project/${id}/${ts}/params/page-name/planning`},
+  {t:"Resources",  url:(id,ts)=>`/now/workspace/project/home/sub/resource_board/project_resource-${id}-pm_project-${ts}/params/timestamp/${ts}`},
+  {t:"Details",    url:(id,ts)=>`/now/workspace/project/home/sub/record/pm_project/${id}/params/page-name/details/time-stamp/${ts}/project-table/pm_project/project-id/${id}/record-status/1`},
+  {t:"Financials", url:(id,ts)=>`/now/workspace/project/home/sub/pw-financials/pm_project/${id}/${ts}/params/page-name/financials`},
+  {t:"RIDAC",      url:(id,ts)=>`/now/workspace/project/home/sub/ridac-monitor/pm_project/${id}/${ts}/params/page-name/ridac-monitor`},
+  {t:"Analytics",  url:(id,ts)=>`/now/workspace/project/home/sub/analytics/${id}/pm_project/${ts}/params/page-name/analytics`},
+  {t:"Docs",       url:(id)   =>`/now/workspace/project/home/sub/docs/pm_project/${id}/params/page-name/docs`},
+  {t:"Status Reports", url:(id,ts)=>`/now/workspace/project/home/sub/status-report/pm_project/${id}/${ts}/params/page-name/status-report`},
+];
 
-  { f: "Data Foundations", c: "#ff9f3a", i: "🗂️", l: [
-    { section: "Users & Groups" },
-      { t: "Employee Profiles",       u: "/sn_employee_profile_list.do" },
-      { t: "Users",                   u: "/sys_user_list.do" },
-      { t: "Groups",                  u: "/sys_user_group_list.do" },
-      { t: "Roles",                   u: "/sys_user_role_list.do" },
-    { section: "Organisation" },
-      { t: "Locations",               u: "/cmn_location_list.do" },
-      { t: "Companies",               u: "/core_company_list.do" },
-      { t: "Business Unit",           u: "/business_unit_list.do" },
-      { t: "Departments",             u: "/cmn_department_list.do" },
-    { section: "Other" },
-      { t: "Schedule",                u: "/cmn_schedule_list.do" },
-      { t: "Schedule Entries",        u: "/cmn_schedule_span_list.do" },
-      { t: "Attachments",             u: "/sys_attachment_list.do" },
-  ]},
+/* ---- BOUTONS LIENS CLASSIQUE ---- */
+const CL_BUTTONS=[
+  {t:"Classique UI", wide:true,
+   urlP:(id)=>`/now/nav/ui/classic/params/target/pm_project_task.do?sys_id=${id}`,
+   urlT:(id)=>`/now/nav/ui/classic/params/target/pm_project_task.do?sys_id=${id}`},
+  {t:"Cost Plan",
+   urlP:(id)=>`/cost_plan_list.do?sysparm_query=top_task%3D${id}`,
+   urlT:(id)=>`/cost_plan_list.do?sysparm_query=task%3D${id}`},
+  {t:"CP Breakdown (Task)",
+   urlP:(id)=>`/cost_plan_breakdown_list.do?sysparm_query=task%3D${id}`,
+   urlT:(id)=>`/cost_plan_breakdown_list.do?sysparm_query=task%3D${id}`},
+  {t:"CP Breakdown (CP.Task)",
+   urlP:(id)=>`/cost_plan_breakdown_list.do?sysparm_query=cost_plan.top_task%3D${id}`,
+   urlT:(id)=>`/cost_plan_breakdown_list.do?sysparm_query=cost_plan.task%3D${id}`},
+  {t:"Time Card",
+   urlP:(id)=>`/time_card_list.do?sysparm_query=top_task%3D${id}`,
+   urlT:(id)=>`/time_card_list.do?sysparm_query=task%3D${id}`},
+  {t:"Time Card Dailies",
+   urlP:(id)=>`/time_card_daily_list.do?sysparm_query=time_card.top_task%3D${id}`,
+   urlT:(id)=>`/time_card_daily_list.do?sysparm_query=time_card.task%3D${id}`},
+  {t:"Expense Lines", wide:true,
+   urlP:(id)=>`/fm_expense_line_list.do?sysparm_query=source_id%3D${id}`,
+   urlT:(id)=>`/fm_expense_line_list.do?sysparm_query=source_id%3D${id}`},
+  {t:"Resource Assignments",
+   urlP:(id)=>`/sn_plng_att_core_resource_assignment_list.do?sysparm_query=top_task%3D${id}`,
+   urlT:(id)=>`/sn_plng_att_core_resource_assignment_list.do?sysparm_query=task%3D${id}`},
+  {t:"Resource Plan",
+   urlP:(id)=>`/resource_plan_list.do?sysparm_query=top_task%3D${id}`,
+   urlT:(id)=>`/resource_plan_list.do?sysparm_query=task%3D${id}`},
+  {t:"Resource Allocation",
+   urlP:(id)=>`/resource_allocation_list.do?sysparm_query=resource_plan.top_task%3D${id}`,
+   urlT:(id)=>`/resource_allocation_list.do?sysparm_query=resource_plan.task%3D${id}`},
+];
 
-  { f: "Plateforme", c: "#2dd9a3", i: "📊", l: [
-    { section: "Platform Analytics" },
-      { t: "Vue d'ensemble de Platform Analytics",   u: "/now/platform-analytics-workspace/pages/params/library/overview" },
-      { t: "Tableau de bord",                        u: "/now/platform-analytics-workspace/pages/params/library/dashboards" },
-      { t: "Visualisation des données",              u: "/now/platform-analytics-workspace/pages/params/library/data-visualizations" },
-      { t: "Indicateurs",                            u: "/now/platform-analytics-workspace/pages/params/library/indicators" },
-      { t: "Filtres",                                u: "/now/platform-analytics-workspace/pages/params/library/filters" },
-    { section: "Budget" },
-      { t: "Project Funding (old)",   u: "/project_funding_list.do" },
-      { t: "Project Budget",          u: "/sn_invst_pln_invst_budget_list.do" },
-    { section: "Investment Funding" },
-      { t: "Business Case",            u: "/business_case_list.do",                                     ic: "💰", tbl: "business_case" },
-      { t: "Fund Request",             u: "/sn_invst_pln_invst_funding_base_request_list.do",           ic: "💰", tbl: "sn_invst_pln_invst_funding_base_request" },
-      { t: "Funding",                  u: "/sn_invst_pln_invst_funding_base_fund_list.do",              ic: "💰", tbl: "sn_invst_pln_invst_funding_base_fund" },
-      { t: "Funding Base",             u: "/sn_invst_pln_invst_funding_base_list.do",                   ic: "💰", tbl: "sn_invst_pln_invst_funding_base" },
-      { t: "Funding Base Breakdown",   u: "/sn_invst_pln_invst_funding_base_breakdown_list.do",         ic: "💰", tbl: "sn_invst_pln_invst_funding_base_breakdown" },
-      { t: "Funding Configuration",    u: "/sn_invst_pln_invst_funding_configuration_list.do",          ic: "💰", tbl: "sn_invst_pln_invst_funding_configuration" },
-      { t: "Investment Entity",        u: "/sn_invst_pln_invst_funding_entity_list.do",                 ic: "💰", tbl: "sn_invst_pln_invst_funding_entity" },
-      { t: "Funding State",            u: "/sn_invst_pln_invst_funding_state_list.do",                  ic: "💰", tbl: "sn_invst_pln_invst_funding_state" },
-      { t: "Investment",               u: "/sn_invst_pln_invst_investment_list.do",                     ic: "💰", tbl: "sn_invst_pln_invst_investment" },
-    { section: "Planned" },
-      { t: "Cost Plans",              u: "/cost_plan_list.do" },
-      { t: "Cost Plan Breakdowns",    u: "/cost_plan_breakdown_list.do" },
-      { t: "Cost Type (definition)",  u: "/resource_type_definition_list.do" },
-    { section: "Actuals" },
-      { t: "Expense Lines",           u: "/fm_expense_line_list.do" },
-  ]},
+/* ---- LISTES CONNEXES (max 10) ---- */
+const CONN_LISTS=[
+  { id:"ra",  label:"Resource Assignments", color:C_RA,
+    table:"sn_plng_att_core_resource_assignment",
+    qP:(id)=>`top_task=${id}`, qT:(id)=>`task=${id}`,
+    cols:[
+      {f:"number",label:"N°"},
+      {f:"user_resource",label:"Resource",ref:true},
+      {f:"role",label:"Role",ref:true},
+      {f:"effort_type",label:"Type",ref:true},
+      {f:"effort",label:"Effort"},
+      {f:"start_date",label:"Début"},
+      {f:"end_date",label:"Fin"},
+    ]
+  },
+  { id:"tc",  label:"Time Cards", color:C_TC,
+    table:"time_card",
+    qP:(id)=>`top_task=${id}`, qT:(id)=>`task=${id}`,
+    cols:[
+      {f:"week_starts_on", label:"Week starts on"},
+      {f:"category",       label:"Category",  ref:true},
+      {f:"user",           label:"User",       ref:true},
+      {f:"task",           label:"Task",       ref:true},
+      {f:"state",          label:"State"},
+      {f:"sunday",         label:"Sun"},
+      {f:"monday",         label:"Mon"},
+      {f:"tuesday",        label:"Tue"},
+      {f:"wednesday",      label:"Wed"},
+      {f:"thursday",       label:"Thu"},
+      {f:"friday",         label:"Fri"},
+      {f:"saturday",       label:"Sat"},
+      {f:"total",          label:"Total"},
+    ]
+  },
+  { id:"cp",  label:"Cost Plans", color:C_CP,
+    table:"cost_plan",
+    qP:(id)=>`top_task=${id}`, qT:(id)=>`task=${id}`,
+    hasBreakdown:true,
+    cols:[
+      {f:"short_description",    label:"Name"},
+      {f:"task",                 label:"Task",                 ref:true},
+      {f:"resource_type",        label:"Resource type",        ref:true},
+      {f:"start_fiscal_period",  label:"Start period",         ref:true},
+      {f:"end_fiscal_period",    label:"End period",           ref:true},
+      {f:"cost_default_currency",label:"Planned cost"},
+      {f:"actual_cost_default_currency",label:"Actual cost"},
+      {f:"currency",             label:"Currency"},
+      {f:"expense_type",         label:"Expense type",         ref:true},
+    ]
+  },
+  { id:"ex",  label:"Expense Lines", color:C_EX,
+    table:"fm_expense_line",
+    qP:(id)=>`source_id=${id}`, qT:(id)=>`source_id=${id}`,
+    cols:[
+      {f:"number",              label:"N°"},
+      {f:"date",                label:"Date"},
+      {f:"short_description",   label:"Description"},
+      {f:"source_id",           label:"Source ID",             ref:true},
+      {f:"amount",              label:"Amount"},
+      {f:"time_card",           label:"Time card",             ref:true},
+      {f:"time_card.total",     label:"TC Total"},
+      {f:"base_expense",        label:"Base expense",          ref:true},
+      {f:"base_expense.time_card",      label:"Base TC",       ref:true},
+      {f:"base_expense.time_card.total",label:"Base TC Total"},
+    ]
+  },
+];
 
-  { f: "CSDM", c: "#2ec5e0", i: "🧩", l: [
-    { section: "Service Delivery" },
-      { t: "Tech Mgmt Service",       u: "/cmdb_ci_service_technical_list.do",  ic: "🟠", tbl: "cmdb_ci_service_technical" },
-      { t: "Tech Svc Offering",       u: "/service_offering_list.do?sysparm_query=service_classification%3DTechnical%20Service", ic: "🟠", tbl: "service_offering" },
-      { t: "Service Instance",        u: "/cmdb_ci_service_auto_list.do",       ic: "🟠", tbl: "cmdb_ci_service_auto" },
-      { t: "Service Instance CSDM",   u: "/csdm_app_services_list.do",          ic: "🟠", tbl: "csdm_app_services" },
-      { t: "Dynamic CI Group",        u: "/cmdb_ci_query_based_service_list.do", ic: "🟠", tbl: "cmdb_ci_query_based_service" },
-    { section: "Service Consumption" },
-      { t: "Business Svc Offering",   u: "/service_offering_list.do?sysparm_query=service_classification%3DBusiness%20Service", ic: "🟢", tbl: "service_offering" },
-      { t: "Business Service",        u: "/cmdb_ci_service_business_list.do",   ic: "🟢", tbl: "cmdb_ci_service_business" },
-    { section: "Design & Planning" },
-      { t: "Business Capability",     u: "/cmdb_ci_business_capability_list.do", ic: "🔵", tbl: "cmdb_ci_business_capability" },
-      { t: "Business Application",    u: "/cmdb_ci_business_app_list.do",        ic: "🔵", tbl: "cmdb_ci_business_app" },
-  ]},
+/* Colonnes du sous-bloc breakdown d'un cost plan */
+const CP_BREAKDOWN_COLS=[
+  {f:"breakdown_type", label:"Type"},
+  {f:"expense_type",   label:"Expense type", ref:true},
+  {f:"fiscal_period",  label:"Fiscal period",ref:true},
+  {f:"task",           label:"Task",         ref:true},
+  {f:"portfolio",      label:"Portfolio",    ref:true},
+  {f:"program",        label:"Program",      ref:true},
+  {f:"cost_default_currency",label:"Planned cost"},
+];
 
-  { f: "SPM", c: "#ffd23a", i: "🎯", l: [
-    { section: "Demands" },
-      { t: "Demands",                 u: "/dmn_demand_list.do" },
-      { t: "Demand Tasks",            u: "/dmn_demand_task_list.do" },
-    { section: "Projects" },
-      { t: "Projects",                u: "/pm_project_list.do" },
-      { t: "Project Tasks",           u: "/pm_project_task_list.do" },
-    { section: "Time Tracking" },
-      { t: "Time Sheet",              u: "/time_sheet_list.do" },
-      { t: "Time Cards",              u: "/time_card_list.do" },
-      { t: "Time Card Daily",         u: "/time_card_daily_list.do" },
-    { section: "Resource Data" },
-      { t: "Resource Users",          u: "/sys_user_list.do?sysparm_query=roles%3Dpps_resource%5E&sysparm_view=resource_manager" },
-      { t: "Resource Groups",         u: "/sys_user_group_list.do?sysparm_query=roles%3Dpps_resource%5E&sysparm_view=resource_manager" },
-      { t: "Resource Plans",          u: "/resource_plan_list.do" },
-    { section: "Assignment" },
-      { t: "Resource Assignment",     u: "/sn_plng_att_core_resource_assignment_list.do" },
-      { t: "Resource Allocation",     u: "/resource_allocation_list.do" },
-      { t: "Resource Alloc. Daily",   u: "/resource_allocation_daily_list.do" },
-    { section: "Aggregates" },
-      { t: "Aggregate Monthly",       u: "/resource_aggregate_monthly_list.do" },
-      { t: "Aggregate Weekly",        u: "/resource_aggregate_monthly_list.do" },
-      { t: "DBV profile + aggregate", u: "/sn_plng_att_core_attribute_based_resource_aggregates_list.do" },
-    { section: "Goals Framework" },
-      { t: "Strategic Value",         u: "/sn_gf_strategy_value_list.do" },
-      { t: "Strategic Plan",          u: "/sn_gf_strategic_plan_list.do" },
-      { t: "Strategic Priority",      u: "/sn_gf_strategy_list.do" },
-      { t: "Goals",                   u: "/sn_gf_core_goal_list.do" },
-      { t: "Targets",                 u: "/sn_gf_goal_target_list.do" },
-    { section: "Strategic Planning" },
-      { t: "Portfolio Plan Config",   u: "/sn_align_ws_roadmap_configuration_list.do" },
-      { t: "Integrations",            u: "/sn_align_cmn_int_integrations_setup_list.do" },
-      { t: "Lens",                    u: "/sn_align_core_lens_list.do" },
-      { t: "Planning Attributes",     u: "/sn_plng_att_core_planning_attribute_list.do" },
-    { section: "Strategic Planning Data" },
-      { t: "Planning Items",          u: "/sn_align_core_planning_item_list.do" },
-      { t: "Portfolio Plan",          u: "/sn_align_ws_portfolio_plan_list.do" },
-      { t: "Portfolio Plan View",     u: "/sn_align_ws_portfolio_plan_view_list.do" },
-    { section: "RIDAC" },
-      { t: "Risk",                    u: "/risk_list.do" },
-      { t: "Issue",                   u: "/issue_list.do" },
-      { t: "Decision",                u: "/dmn_decision_list.do" },
-      { t: "Action",                  u: "/project_action_list.do" },
-      { t: "Request Change",          u: "/project_change_request_list.do" },
-  ]},
+/* ---- CHAMPS INFO RECORD — 2 colonnes Gauche (start) | Droite (end) ---- */
+const DATE_LEFT=[
+  {f:"approved_start_date", label:"Approved start date"},
+  {f:"start_date",          label:"Planned start date"},
+  {f:"work_start",          label:"Actual start date"},
+  {f:"duration",            label:"Planned duration"},
+  {f:"effort",              label:"Planned effort"},
+];
+const DATE_RIGHT=[
+  {f:"approved_end_date",   label:"Approved end date"},
+  {f:"end_date",            label:"Planned end date"},
+  {f:"work_end",            label:"Actual end date"},
+  {f:"work_duration",       label:"Actual duration"},
+  {f:"work_effort",         label:"Actual effort"},
+];
+// Garde DATE_FIELDS pour compatibilité avec loadInfo (liste des champs à requêter)
+const DATE_FIELDS=[...DATE_LEFT,...DATE_RIGHT];
 
+const COST_FIELDS_PRJ=[
+  {f:"cost",         label:"Total planned cost"},
+  {f:"capex_cost",   label:"Planned capital"},
+  {f:"opex_cost",    label:"Planned operating"},
+  {f:"budget_cost",  label:"Budget cost"},
+  {f:"work_cost",    label:"Actual cost"},
+];
+const COST_FIELDS_TSK=[
+  {f:"cost",         label:"Total planned cost"},
+  {f:"capex_cost",   label:"Planned capital"},
+  {f:"opex_cost",    label:"Planned operating"},
+  {f:"budget_cost",  label:"Budget cost"},
+  {f:"work_cost",    label:"Actual cost"},
 ];
 
 /* ============================================================
-   HANDLERS JS
+   STYLE
    ============================================================ */
+const styleEl=document.createElement("style");
+styleEl.id=STYLE_ID;
+styleEl.textContent=`
+@keyframes snfus-fadein{from{opacity:0}to{opacity:1}}
+@keyframes snfus-slideup{from{opacity:0;transform:translateY(8px) scale(.988)}to{opacity:1;transform:none}}
+#snfus-overlay{position:fixed;inset:0;z-index:2147483647;display:flex;align-items:center;justify-content:center;
+  padding:16px;font-family:"Segoe UI",Arial,sans-serif;
+  background:radial-gradient(circle at 20% -10%,rgba(80,60,160,.35),transparent 55%),
+             radial-gradient(circle at 90% 0%,rgba(20,140,160,.25),transparent 50%),rgba(6,8,18,.91);
+  backdrop-filter:blur(6px);animation:snfus-fadein .14s ease-out}
+#snfus-win{position:relative;width:90vw;max-width:none;height:90vh;display:flex;flex-direction:column;
+  color:#eef0fb;background:linear-gradient(165deg,rgba(36,38,64,.8),rgba(18,19,36,.88));
+  border:1px solid rgba(255,255,255,.09);border-radius:18px;padding:16px 18px 18px;
+  box-shadow:0 25px 70px -15px rgba(0,0,0,.7),0 0 0 1px rgba(255,255,255,.03) inset;
+  animation:snfus-slideup .17s ease-out;overflow:hidden}
 
-const HANDLERS = {
-  debugger: () => window.top.launchScriptDebugger(),
-};
+/* barre titre */
+#snfus-topbar{display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-shrink:0}
+#snfus-topbar h2{font-size:12.5px;font-weight:700;text-transform:uppercase;letter-spacing:1.1px;
+  color:${C_IN};text-shadow:0 0 12px ${rgba(C_IN,.55)};margin:0;flex-shrink:0}
+#snfus-close{cursor:pointer;font-size:18px;color:rgba(238,240,251,.5);background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.1);width:30px;height:30px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;transition:all .14s;flex-shrink:0;margin-left:auto}
+#snfus-close:hover{background:rgba(255,80,90,.18);color:#ff9aa3}
+#snfus-status{font-size:11px;color:rgba(238,240,251,.5);flex-shrink:0}
+#snfus-status.ok{color:${C_IN}} #snfus-status.err{color:#ff6b7a}
+#snfus-autodetect{font-size:10.5px;color:${rgba(C_IN,.6)};font-style:italic;flex-shrink:0}
 
-/* ============================================================
-   FIN DE CONFIGURATION
-   ============================================================ */
+/* layout 3 colonnes — col centre pilotée par CSS var */
+#snfus-body{display:grid;grid-template-columns:240px var(--tree-w,320px) 1fr;gap:12px;flex:1;min-height:0;transition:grid-template-columns .2s ease}
+/* états : narrow(Num+badges) | normal(+Nom complet) | full(hiérachie plein écran) */
+#snfus-body.tree-narrow{grid-template-columns:240px 200px 1fr}
+#snfus-body.tree-normal{grid-template-columns:240px 340px 1fr}
+#snfus-body.tree-full  {grid-template-columns:240px 1fr 0px;pointer-events:auto}
+/* en mode full : masquer la col droite */
+#snfus-body.tree-full #snfus-right{display:none}
+/* en mode narrow : masquer la colonne Nom */
+#snfus-body.tree-narrow .col-name-hide{display:none}
 
-const STORAGE_KEY   = "sn_ql_pins_v2";
-const HISTORY_KEY   = "sn_ql_history_v1";
-const MAX_PINS       = 50;
-const MAX_HISTORY    = 8;
+/* ===== COL CENTRE : hiérarchie en table ===== */
+#snfus-mid{display:flex;flex-direction:column;min-height:0}
+.snfus-col-label{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;
+  color:rgba(238,240,251,.4);margin-bottom:6px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between}
+/* boutons toggle */
+#snfus-tree-toggle{display:inline-flex;gap:3px}
+.snfus-ttbtn{font-size:9.5px;padding:2px 7px;border-radius:5px;border:1px solid rgba(255,255,255,.15);
+  background:rgba(255,255,255,.05);color:rgba(238,240,251,.55);cursor:pointer;font-family:inherit;transition:all .13s}
+.snfus-ttbtn:hover{background:rgba(255,255,255,.12);color:#fff}
+.snfus-ttbtn.active{background:${rgba(C_SEL,.2)};border-color:${rgba(C_SEL,.45)};color:${C_SEL}}
+#snfus-tree-box{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);
+  border-radius:10px;overflow:auto;flex:1;font-size:11.5px}
+.snfus-tree-hint{color:rgba(238,240,251,.3);font-size:11px;font-style:italic;padding:10px}
 
-// Pré-calcul d'un index global stable : chaque item reçoit un id unique
-const ITEM_MAP = {};
-let _idx = 0;
-data.forEach(col => col.l.forEach(item => {
-  if(item.t){
-    item._id = "i"+(_idx++); item._col = col;
-    if(!item.tbl && item.u){
-      const m = item.u.match(/^\/([a-zA-Z0-9_]+)_list\.do/);
-      if(m) item.tbl = m[1];
-    }
-    ITEM_MAP[item._id] = item;
-  }
-}));
+#snfus-left{display:flex;flex-direction:column;gap:8px;min-height:0;overflow-y:auto}
+.snfus-label{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:${rgba(C_IN,.65)};margin-bottom:3px}
+.snfus-field{padding:7px 10px;border:1px solid ${rgba(C_IN,.3)};border-radius:9px;font-size:12px;
+  background:rgba(255,255,255,.06);color:#f4f5ff;outline:none;font-family:inherit;transition:border-color .14s,box-shadow .14s;width:100%;box-sizing:border-box}
+.snfus-field::placeholder{color:rgba(238,240,251,.3)}
+.snfus-field:focus{border-color:${rgba(C_IN,.6)};box-shadow:0 0 0 3px ${rgba(C_IN,.14)}}
+.snfus-field.detected{border-color:${rgba(C_IN,.5)};background:${rgba(C_IN,.07)}}
+#snfus-load-btn{width:100%;padding:8px;border-radius:9px;font-size:12px;font-weight:600;cursor:pointer;
+  background:${rgba(C_IN,.18)};border:1px solid ${rgba(C_IN,.4)};color:${C_IN};font-family:inherit;transition:all .14s}
+#snfus-load-btn:hover{background:${rgba(C_IN,.28)};box-shadow:0 0 12px ${rgba(C_IN,.35)}}
+#snfus-load-btn:disabled{opacity:.45;cursor:default}
 
-function loadList(key){try{return JSON.parse(localStorage.getItem(key)||"[]");}catch(e){return[];}}
-function saveList(key,p){try{localStorage.setItem(key,JSON.stringify(p));}catch(e){}}
+/* boutons workspace */
+#snfus-ws-box{display:flex;flex-direction:column;gap:3px;flex-shrink:0}
+.snfus-ws-grid{display:grid;grid-template-columns:1fr 1fr;gap:3px}
+.snfus-wbtn{padding:6px 8px;border-radius:7px;font-size:10.5px;font-weight:500;cursor:pointer;
+  text-align:center;border:1px solid;transition:all .13s;font-family:inherit}
+.snfus-wbtn:disabled{opacity:.28;cursor:default}
+.snfus-wbtn.ws{background:${rgba(C_PRJ,.1)};border-color:${rgba(C_PRJ,.35)};color:${C_PRJ}}
+.snfus-wbtn.ws:hover:not(:disabled){background:${rgba(C_PRJ,.22)};box-shadow:0 0 10px ${rgba(C_PRJ,.3)}}
+.snfus-wbtn.ws.hdr{background:${rgba(C_PRJ,.18)};font-weight:700;text-transform:uppercase;font-size:9.5px;letter-spacing:.6px;grid-column:1/-1}
 
-const classicUrl = p => location.origin+"/now/nav/ui/classic/params/target/"+encodeURIComponent(p);
-const rawUrl     = p => location.origin+p;
+/* boutons liens classique */
+#snfus-links-box{display:flex;flex-direction:column;gap:3px;flex-shrink:0}
+.snfus-lbtn{padding:6px 10px;border-radius:8px;font-size:11px;font-weight:500;cursor:pointer;
+  text-align:left;border:1px solid;transition:all .13s;font-family:inherit;width:100%}
+.snfus-lbtn:disabled{opacity:.28;cursor:default}
+.snfus-lbtn.cl{background:${rgba(C_CL,.1)};border-color:${rgba(C_CL,.3)};color:${C_CL}}
+.snfus-lbtn.cl:hover:not(:disabled){background:${rgba(C_CL,.2)};box-shadow:0 0 10px ${rgba(C_CL,.28)}}
+.snfus-lbtn.cl.hdr{background:${rgba(C_CL,.16)};font-weight:700;text-transform:uppercase;font-size:9.5px;letter-spacing:.6px;text-align:center}
 
-function hexToRgb(hex){
-  const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
-  return {r,g,b};
-}
-const rgba = (hex,a) => { const {r,g,b}=hexToRgb(hex); return `rgba(${r},${g},${b},${a})`; };
+/* ===== COL GAUCHE : inputs + liens ===== */
+#snfus-tree-table{width:100%;border-collapse:collapse;table-layout:fixed}
+#snfus-tree-table colgroup col.col-num{width:120px}
+#snfus-tree-table colgroup col.col-name{width:auto}
+#snfus-tree-table colgroup col.col-cnt{width:38px}
+#snfus-tree-table thead th{position:sticky;top:0;z-index:1;background:rgba(20,22,40,.97);padding:6px 8px;
+  text-align:left;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;
+  color:rgba(238,240,251,.45);border-bottom:1px solid rgba(255,255,255,.08);white-space:nowrap;overflow:hidden}
+#snfus-tree-table thead th.cnt-col{text-align:center}
+#snfus-tree-table tbody tr{cursor:pointer;transition:background .1s;border-bottom:1px solid rgba(255,255,255,.04)}
+#snfus-tree-table tbody tr:hover{background:rgba(255,255,255,.05)}
+#snfus-tree-table tbody tr.sel{background:rgba(255,210,58,.07)}
+#snfus-tree-table tbody tr.sel td{color:#fff}
+/* col numéro : jamais tronquée */
+#snfus-tree-table td{padding:5px 8px;vertical-align:middle;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#snfus-tree-table td.num-cell{white-space:nowrap;overflow:visible;text-overflow:clip}
+/* col nom : pas de troncature, wrap autorisé en mode normal */
+#snfus-tree-table td.name-cell{white-space:normal;overflow:visible;word-break:break-word;line-height:1.35}
+#snfus-body.tree-narrow td.name-cell{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#snfus-tree-table td.cnt-col{text-align:center;padding:4px 2px}
+.snfus-tnode-num{font-size:10px;font-family:"Consolas","Courier New",monospace;white-space:nowrap}
+.snfus-tnode-name{font-size:11px;color:#dde1f7;opacity:.85}
+.snfus-sel-badge{display:none;font-size:8px;font-weight:700;padding:1px 3px;border-radius:3px;margin-left:4px;
+  background:${rgba(C_SEL,.2)};color:${C_SEL};border:1px solid ${rgba(C_SEL,.4)}}
+#snfus-tree-table tbody tr.sel .snfus-sel-badge{display:inline}
+.snfus-cnt{font-size:9px;font-weight:600;padding:1px 5px;border-radius:9px;display:inline-block}
+.snfus-cnt.ra{background:${rgba(C_RA,.18)};color:${C_RA};border:1px solid ${rgba(C_RA,.3)}}
+.snfus-cnt.tc{background:${rgba(C_TC,.15)};color:${C_TC};border:1px solid ${rgba(C_TC,.28)}}
+.snfus-cnt.cp{background:${rgba(C_CP,.15)};color:${C_CP};border:1px solid ${rgba(C_CP,.28)}}
+.snfus-cnt.empty{color:rgba(238,240,251,.2);background:none;border:none;font-weight:400}
+.snfus-node-dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:5px;flex-shrink:0;vertical-align:middle}
 
-const STAR_SVG = `<svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path class="sf" d="M8 1.5l1.8 4.9H15l-4.3 3.2 1.6 4.9L8 11.8l-4.3 2.7 1.6-4.9L1 6.4h5.2z" stroke-linejoin="round" stroke-width="1.4"/></svg>`;
-const SAME_ICON = `♻️`;
-const RAW_ICON  = `📄`;
-const RAW_BADGE_SVG = `<svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3H3v10h10v-3"/><path d="M9 3h4v4"/><line x1="13" y1="3" x2="7" y2="9"/></svg>`;
-const BOLT_SVG = `<svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M9 1L3 9h4l-1 6 6-8H8l1-6z"/></svg>`;
-const ARROW_SVG = `<svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="8" x2="13" y2="8"/><polyline points="9,4 13,8 9,12"/></svg>`;
-const CLOCK_SVG = `<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6.5"/><polyline points="8,4.5 8,8 10.5,9.5"/></svg>`;
+/* ===== COL DROITE : info + listes ===== */
+#snfus-right{display:flex;flex-direction:column;gap:10px;min-height:0;overflow-y:auto}
 
-const id = "snql-overlay";
-const styleId = "snql-style";
-document.getElementById(id) && document.getElementById(id).remove();
-document.getElementById(styleId) && document.getElementById(styleId).remove();
-const styleEl = document.createElement("style");
-styleEl.id = styleId;
+/* bloc info record */
+#snfus-info{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:12px;flex-shrink:0}
+#snfus-info-title{font-size:12.5px;font-weight:600;color:${C_SEL};margin-bottom:10px}
+#snfus-info-title span{font-size:10.5px;color:rgba(238,240,251,.45);font-weight:400;margin-left:8px}
+/* layout dates (gauche) + coûts (droite) côte à côte */
+#snfus-info-body{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:start}
+/* bloc dates 2 colonnes start | end */
+#snfus-dates-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 16px}
+.snfus-dates-col-title{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;
+  color:rgba(238,240,251,.3);margin-bottom:4px;padding-bottom:3px;border-bottom:1px solid rgba(255,255,255,.05)}
+/* bloc coûts à droite */
+#snfus-costs-col{display:flex;flex-direction:column;gap:6px;min-width:180px}
+.snfus-costs-title{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;
+  color:rgba(238,240,251,.3);margin-bottom:4px;padding-bottom:3px;border-bottom:1px solid rgba(255,255,255,.05)}
+.snfus-ifield{display:flex;flex-direction:column;gap:2px}
+.snfus-ifield-lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:rgba(238,240,251,.4)}
+.snfus-ifield-val{font-size:11.5px;color:#eef0fb;background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.07);border-radius:6px;padding:4px 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.snfus-ifield-val.empty{color:rgba(238,240,251,.25);font-style:italic}
+.snfus-ifield-val.overdue{background:${rgba(C_CL,.14)};border-color:${rgba(C_CL,.35)};color:#ff9aa3}
+#snfus-info-empty{color:rgba(238,240,251,.3);font-size:11px;font-style:italic;padding:8px 0}
+/* sous-bloc breakdown cost plan */
+.snfus-breakdown-wrap{background:rgba(255,255,255,.03);border-top:1px solid rgba(255,255,255,.06);overflow-x:auto}
+.snfus-breakdown-hdr{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;
+  color:${C_CP};padding:6px 10px;border-bottom:1px solid rgba(255,255,255,.05)}
+.snfus-breakdown-loading{padding:8px 10px;font-size:11px;color:${rgba(C_IN,.6)};font-style:italic}
+.snfus-bkd-btn{font-size:9px;padding:2px 7px;border-radius:4px;border:1px solid ${rgba(C_CP,.4)};
+  background:${rgba(C_CP,.1)};color:${C_CP};cursor:pointer;font-family:inherit;transition:all .12s;white-space:nowrap}
+.snfus-bkd-btn:hover{background:${rgba(C_CP,.22)}}
+
+/* mini-listes connexes */
+.snfus-minilist{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:12px;overflow:hidden;flex-shrink:0}
+.snfus-minilist-hdr{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-bottom:1px solid rgba(255,255,255,.06)}
+.snfus-minilist-title{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.8px}
+.snfus-minilist-meta{display:flex;align-items:center;gap:8px}
+.snfus-minilist-count{font-size:10px;color:rgba(238,240,251,.45)}
+.snfus-minilist-open{font-size:10px;cursor:pointer;padding:2px 8px;border-radius:6px;border:1px solid;
+  background:transparent;font-family:inherit;transition:all .13s}
+.snfus-minilist-open:disabled{opacity:.3;cursor:default}
+.snfus-minilist-body{overflow-x:auto}
+.snfus-ml-table{width:100%;border-collapse:collapse;font-size:11px}
+.snfus-ml-table th{padding:5px 8px;text-align:left;font-size:9px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.6px;color:rgba(238,240,251,.4);white-space:nowrap;border-bottom:1px solid rgba(255,255,255,.06)}
+.snfus-ml-table td{padding:5px 8px;color:#dde1f7;white-space:nowrap;border-bottom:1px solid rgba(255,255,255,.04)}
+.snfus-ml-table tr:hover td{background:rgba(255,255,255,.04)}
+.snfus-ml-table td.empty{color:rgba(238,240,251,.3);font-style:italic}
+.snfus-ml-table td.ref-link{color:${C_PRJ};cursor:pointer;text-decoration:underline}
+.snfus-ml-table td.ref-link:hover{color:#90c8ff}
+.snfus-ml-table td.row-open{cursor:pointer}
+.snfus-ml-empty{padding:10px 12px;font-size:11px;color:rgba(238,240,251,.3);font-style:italic}
+.snfus-ml-loading{padding:8px 12px;font-size:11px;color:${rgba(C_IN,.6)};font-style:italic}
+`;
 document.head.appendChild(styleEl);
 
-const overlay = document.createElement("div");
-overlay.id = id;
-overlay.onclick = e => { if(e.target===overlay) close(); };
+/* ============================================================
+   STATE
+   ============================================================ */
+let projId=null, selNode=null;
+const _cnt={}, _info={}, _lists={};
 
-let pins = loadList(STORAGE_KEY);
-let history = loadList(HISTORY_KEY);
-let activeTab = null;
-
-function onKeydown(e){ if(e.key === "Escape") close(); }
-
-function close(){
-  overlay.remove();
-  styleEl.remove();
-  document.removeEventListener("keydown", onKeydown);
+/* ============================================================
+   HELPERS
+   ============================================================ */
+function apiH(){
+  const tk=(window.top&&window.top.g_ck)||window.g_ck||"";
+  const h={Accept:"application/json"};
+  if(tk) h["X-UserToken"]=tk;
+  return h;
 }
+async function apiFetch(u){ return fetch(u,{headers:apiH()}); }
 
-function pushHistory(itemId){
-  history = history.filter(h => h !== itemId);
-  history.unshift(itemId);
-  if(history.length > MAX_HISTORY) history = history.slice(0, MAX_HISTORY);
-  saveList(HISTORY_KEY, history);
-}
-
-function openItem(itemId, same){
-  const item = ITEM_MAP[itemId];
-  if(!item) return;
-  pushHistory(itemId);
-  const url = item.raw ? rawUrl(item.u) : classicUrl(item.u);
-  close();
-  if(same) location.href = url;
-  else window.open(url, "_blank");
-}
-
-function runHandler(key){ close(); if(HANDLERS[key]) HANDLERS[key](); }
-
-function togglePin(name){
-  const i = pins.indexOf(name);
-  if(i > -1) pins.splice(i,1);
-  else { pins.unshift(name); if(pins.length > MAX_PINS) pins = pins.slice(0, MAX_PINS); }
-  saveList(STORAGE_KEY, pins);
-  render();
-}
-
-function typeBadge(item){
-  if(item.ic)  return `<span class="snql-badge snql-badge-custom">${item.ic}</span>`;
-  if(item.h)   return `<span class="snql-badge snql-badge-action" title="Action">${BOLT_SVG}</span>`;
-  if(item.raw) return `<span class="snql-badge snql-badge-raw" title="Lien direct (raw)">${RAW_BADGE_SVG}</span>`;
-  return `<span class="snql-badge snql-badge-link" title="Lien classique">${ARROW_SVG}</span>`;
-}
-
-function buildRow(item){
-  const pinned = pins.includes(item.t);
-  const safeId = item._id;
-  const safeName = item.t.replace(/'/g,"\\'");
-  const titleAttr = item.tbl ? ` data-tbl="${item.tbl.replace(/"/g,"&quot;")}"` : "";
-  let mainBtn, sameBtn="", rawBtn="";
-  if(item.h){
-    mainBtn = `<button class="snql-link" onclick="snqlRun('${item.h}')">${item.t}</button>`;
-  } else {
-    mainBtn  = `<button class="snql-link"${titleAttr} onmouseenter="snqlShowTip(event)" onmouseleave="snqlHideTip()" onclick="snqlOpenItem('${safeId}',false)">${item.t}</button>`;
-    sameBtn  = `<button class="snql-action" title="Ouvrir dans cette page" onclick="snqlOpenItem('${safeId}',true)">${SAME_ICON}</button>`;
-    rawBtn   = item.raw ? "" : `<button class="snql-action" title="Ouvrir (raw)" onclick="snqlOpenRaw('${item.u.replace(/'/g,"\\'")}')">${RAW_ICON}</button>`;
+function fmtVal(raw){
+  if(raw===null||raw===undefined||raw==="") return "";
+  // Avec sysparm_display_value=all, les champs sont { value, display_value }
+  if(typeof raw==="object"){
+    const dv=raw.display_value;
+    if(dv!==null&&dv!==undefined&&dv!=="") return fmtDate(String(dv));
+    const v=raw.value;
+    return (v!==null&&v!==undefined&&v!=="")?fmtDate(String(v)):"";
   }
-  return `<div class="snql-row">
-    ${typeBadge(item)}
-    ${mainBtn}${sameBtn}${rawBtn}
-    <button class="snql-star${pinned?" on":""}" title="${pinned?"Désépingler":"Épingler"}" onclick="snqlTogglePin('${safeName}')">${STAR_SVG}</button>
-  </div>`;
+  return fmtDate(String(raw));
 }
 
-// Découpe les colonnes en blocs par section, avec suivi du premier bloc par colonne
-function getSectionBlocks(sourceData, matchFn){
-  const blocks = [];
-  sourceData.forEach(col => {
-    let curSec = null, curItems = [], isFirstBlock = true;
-    const flush = () => {
-      if(curItems.length){
-        blocks.push({ col, sec: curSec, items: curItems, isFirstBlock });
-        isFirstBlock = false;
-        curSec = null; curItems = [];
-      }
-    };
-    col.l.forEach(item => {
-      if(item.section){ flush(); curSec = item.section; }
-      else if(item.t && matchFn(item)){ curItems.push(item); }
-    });
-    flush();
+/* Reformate une date/datetime en JJ-MM-AAAA HH:mm:ss si le format est reconnu
+   Entrées acceptées : AAAA-MM-JJ, AAAA-MM-JJ HH:mm:ss, MM-JJ-AAAA, etc. */
+function fmtDate(s){
+  if(!s) return s;
+  // Tenter de détecter et reformater un datetime ISO (AAAA-MM-JJ...)
+  const isoFull=/^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2})(?::(\d{2}))?)?/.exec(s);
+  if(isoFull){
+    const[,Y,M,D,h,m,sec]=isoFull;
+    if(h!==undefined) return `${D}-${M}-${Y} ${h}:${m}:${sec||"00"}`;
+    return `${D}-${M}-${Y}`;
+  }
+  // Format MM-JJ-AAAA (américain) → JJ-MM-AAAA
+  const us=/^(\d{2})-(\d{2})-(\d{4})(?:\s+(\d{2}):(\d{2})(?::(\d{2}))?)?/.exec(s);
+  if(us){
+    const[,M,D,Y,h,m,sec]=us;
+    if(h!==undefined) return `${D}-${M}-${Y} ${h}:${m}:${sec||"00"}`;
+    return `${D}-${M}-${Y}`;
+  }
+  return s; // retourner tel quel si format inconnu
+}
+
+/* ============================================================
+   HTML SKELETON
+   ============================================================ */
+const overlay=document.createElement("div");
+overlay.id=OVERLAY_ID;
+overlay.onclick=e=>{if(e.target===overlay)close();};
+
+function wsBtnHtml(){
+  let html=`<button class="snfus-wbtn ws hdr" disabled onclick="snfusOpenWs('Project Workspace')">Project Workspace</button>`;
+  html+=`<div class="snfus-ws-grid">`;
+  WS_BUTTONS.filter(b=>!b.wide).forEach(b=>{
+    html+=`<button class="snfus-wbtn ws" disabled onclick="snfusOpenWs('${b.t.replace(/'/g,"\\'")}')"> ${b.t}</button>`;
   });
-  return blocks;
+  html+=`</div>`;
+  return html;
 }
 
-function buildBlock(block, skipColHeader){
-  const { col, sec, items, isFirstBlock } = block;
-  let headerHtml = "";
-  if(skipColHeader){
-    headerHtml = "";
-  } else if(isFirstBlock){
-    headerHtml = `<div class="snql-col-title" style="background:${rgba(col.c,0.18)};border-color:${rgba(col.c,0.45)};color:${col.c};text-shadow:0 0 10px ${rgba(col.c,0.5)}"><span class="snql-col-icon">${col.i||""}</span>${col.f}</div>`;
-  } else {
-    headerHtml = `<div class="snql-col-bar" style="border-color:${rgba(col.c,0.35)}"></div>`;
-  }
-  const secHtml = sec ? `<div class="snql-sec" style="background:${rgba(col.c,0.14)};color:${col.c};border-color:${rgba(col.c,0.3)}">${sec}</div>` : "";
-  return `<div class="snql-block" style="--col-glow:${rgba(col.c,0.18)}">${headerHtml}${secHtml}${items.map(buildRow).join("")}</div>`;
+function lbtnHtml(b){
+  const cls="snfus-lbtn cl"+(b.wide?" hdr":"");
+  return `<button class="${cls}" disabled onclick="snfusOpenLink('${b.t.replace(/'/g,"\\'")}')"> ${b.t}</button>`;
 }
 
-function renderBlocks(el, blocks, skipColHeader){
-  el.innerHTML = blocks.length ? blocks.map(b => buildBlock(b, skipColHeader)).join("") : "";
-  return blocks.length > 0;
-}
-
-function buildQuickRow(itemId){
-  const item = ITEM_MAP[itemId];
-  if(!item) return "";
-  const col = item._col;
-  const pinned = pins.includes(item.t);
-  const titleAttr = item.tbl ? ` data-tbl="${item.tbl.replace(/"/g,"&quot;")}"` : "";
-  return `<div class="snql-quick-row" style="--col-glow:${rgba(col.c,0.18)}">
-    <span class="snql-quick-dot" style="background:${col.c};box-shadow:0 0 6px ${rgba(col.c,0.8)}"></span>
-    ${typeBadge(item)}
-    ${item.h
-      ? `<button class="snql-link" onclick="snqlRun('${item.h}')">${item.t}</button>`
-      : `<button class="snql-link"${titleAttr} onmouseenter="snqlShowTip(event)" onmouseleave="snqlHideTip()" onclick="snqlOpenItem('${item._id}',false)">${item.t}</button>`}
-    <span class="snql-quick-col">${col.f}</span>
-    ${item.h ? "" : `<button class="snql-star${pinned?" on":""}" title="${pinned?"Désépingler":"Épingler"}" onclick="snqlTogglePin('${item.t.replace(/'/g,"\\'")}')">${STAR_SVG}</button>`}
-  </div>`;
-}
-
-function renderHome(){
-  const el = document.getElementById("snql-home");
-  const pinSet = new Set(pins);
-  const pinBlocks = getSectionBlocks(data, item => pinSet.has(item.t));
-
-  let html = "";
-
-  if(pinBlocks.length){
-    html += `<div class="snql-home-section-title"><span class="snql-home-section-icon">★</span>Favoris</div>`;
-    html += `<div class="snql-pin-grid">${pinBlocks.map(buildBlock).join("")}</div>`;
-  } else {
-    html += `<div class="snql-home-empty"><span>★</span>Aucun favori pour l'instant.<br>Survolez un lien dans les onglets pour en épingler.</div>`;
-  }
-
-  const validHistory = history.filter(hid => ITEM_MAP[hid]);
-  if(validHistory.length){
-    html += `<div class="snql-home-section-title snql-history-title"><span class="snql-home-section-icon">${CLOCK_SVG}</span>Récemment ouverts</div>`;
-    html += `<div class="snql-quick-list">${validHistory.map(buildQuickRow).join("")}</div>`;
-  }
-
-  el.innerHTML = html;
-}
-
-function renderCols(q){
-  const el     = document.getElementById("snql-grid");
-  const nores  = document.getElementById("snql-nores");
-  const banner = document.getElementById("snql-tab-banner");
-  const search = q.toLowerCase().trim();
-  const singleTab = !search && activeTab !== null;
-  const sourceData = singleTab ? [data[activeTab]] : data;
-  const matchFn = search ? item => item.t.toLowerCase().includes(search) : () => true;
-  const blocks = getSectionBlocks(sourceData, matchFn);
-  const ok = renderBlocks(el, blocks, singleTab);
-  nores.style.display = ok ? "none" : "";
-  el.style.display    = ok ? ""     : "none";
-
-  if(singleTab){
-    const col = data[activeTab];
-    banner.style.display = "";
-    banner.style.background = rgba(col.c,0.18);
-    banner.style.borderColor = rgba(col.c,0.45);
-    banner.style.color = col.c;
-    banner.style.textShadow = `0 0 10px ${rgba(col.c,0.5)}`;
-    banner.innerHTML = `<span class="snql-col-icon">${col.i||""}</span>${col.f}`;
-  } else {
-    banner.style.display = "none";
-  }
-
-  const countEl = document.getElementById("snql-count");
-  if(search){
-    const n = blocks.reduce((s,b)=>s+b.items.length,0);
-    countEl.textContent = n + (n===1 ? " résultat" : " résultats");
-    countEl.style.display = "";
-  } else {
-    countEl.style.display = "none";
-  }
-}
-
-function renderTabs(){
-  const el = document.getElementById("snql-tabs");
-  el.innerHTML = `<button class="snql-tab${activeTab===null?" active":""}" onclick="snqlSetTab(null)"><span class="snql-tab-icon">★</span>Accueil</button>`;
-  data.forEach((col,i) => {
-    const btn = document.createElement("button");
-    btn.className = "snql-tab" + (activeTab===i?" active":"");
-    if(activeTab===i) btn.style.cssText = `background:${rgba(col.c,0.16)};border-color:${rgba(col.c,0.55)};color:${col.c};box-shadow:0 0 14px ${rgba(col.c,0.35)}`;
-    btn.innerHTML = `<span class="snql-tab-icon">${col.i||""}</span>${col.f}`;
-    btn.onclick = () => snqlSetTab(i);
-    el.appendChild(btn);
-  });
-}
-
-function render(){
-  renderTabs();
-  const q = document.getElementById("snql-search").value;
-  const isHome = activeTab===null && !q;
-  document.getElementById("snql-home").style.display = isHome ? "" : "none";
-  document.getElementById("snql-grid").style.display = isHome ? "none" : "";
-  document.getElementById("snql-nores").style.display = "none";
-  if(isHome){
-    document.getElementById("snql-count").style.display="none";
-    document.getElementById("snql-tab-banner").style.display="none";
-    renderHome();
-  }
-  else renderCols(q);
-}
-
-window.snqlSetTab    = i => { activeTab=i; document.getElementById("snql-search").value=""; render(); };
-window.snqlTogglePin = name => togglePin(name);
-window.snqlSearch    = () => render();
-window.snqlClose     = close;
-window.snqlRun       = key => runHandler(key);
-window.snqlOpenRaw   = url => { close(); window.open(rawUrl(url),"_blank"); };
-window.snqlOpenItem  = (id, same) => openItem(id, same);
-window.snqlShowTip   = e => {
-  const tbl = e.currentTarget.getAttribute("data-tbl");
-  if(!tbl) return;
-  const tip = document.getElementById("snql-tip");
-  tip.textContent = tbl;
-  tip.style.display = "block";
-  const r = e.currentTarget.getBoundingClientRect();
-  const winRect = document.getElementById("snql-win").getBoundingClientRect();
-  tip.style.left = (r.left - winRect.left) + "px";
-  tip.style.top  = (r.bottom - winRect.top + 6) + "px";
-};
-window.snqlHideTip = () => { document.getElementById("snql-tip").style.display = "none"; };
-
-styleEl.textContent = `
-@keyframes snql-fadein{from{opacity:0}to{opacity:1}}
-@keyframes snql-slideup{from{opacity:0;transform:translateY(10px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
-#snql-overlay{position:fixed;inset:0;z-index:2147483647;display:flex;align-items:flex-start;justify-content:center;padding:32px 20px;overflow-y:auto;font-family:"Segoe UI",Arial,sans-serif;
-  background:radial-gradient(circle at 20% -10%, rgba(80,60,160,0.35), transparent 55%),
-             radial-gradient(circle at 90% 0%, rgba(20,140,160,0.25), transparent 50%),
-             rgba(6,8,18,0.86);
-  backdrop-filter:blur(6px);animation:snql-fadein .15s ease-out}
-#snql-win{position:relative;width:100%;max-width:1440px;color:#eef0fb;
-  background:linear-gradient(165deg, rgba(36,38,64,0.72), rgba(18,19,36,0.78));
-  border:1px solid rgba(255,255,255,0.09);
-  border-radius:18px;padding:22px 24px 26px;
-  box-shadow:0 25px 70px -15px rgba(0,0,0,0.65), 0 0 0 1px rgba(255,255,255,0.03) inset, 0 1px 0 rgba(255,255,255,0.06) inset;
-  animation:snql-slideup .18s ease-out}
-#snql-topbar{display:flex;align-items:center;gap:12px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid rgba(255,255,255,0.08)}
-#snql-search-wrap{flex:1;position:relative}
-#snql-search-wrap input{width:100%;padding:10px 14px 10px 38px;border:1px solid rgba(255,255,255,0.12);border-radius:11px;font-size:14px;
-  background:rgba(255,255,255,0.06);color:#f4f5ff;outline:none;transition:border-color .15s,background .15s,box-shadow .15s}
-#snql-search-wrap input::placeholder{color:rgba(238,240,251,0.4)}
-#snql-search-wrap input:focus{border-color:rgba(120,170,255,0.55);background:rgba(255,255,255,0.09);box-shadow:0 0 0 3px rgba(80,130,255,0.18)}
-#snql-search-icon{position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:14px;pointer-events:none;color:rgba(238,240,251,0.45)}
-#snql-count{font-size:11.5px;color:rgba(238,240,251,0.55);white-space:nowrap;padding:0 4px}
-#snql-close{cursor:pointer;font-size:20px;color:rgba(238,240,251,0.55);background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);width:34px;height:34px;border-radius:9px;line-height:1;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s,color .15s}
-#snql-close:hover{background:rgba(255,80,90,0.18);color:#ff9aa3;border-color:rgba(255,80,90,0.35)}
-#snql-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px}
-.snql-tab{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;padding:7px 14px;border-radius:20px;cursor:pointer;
-  border:1px solid rgba(255,255,255,0.09);color:rgba(238,240,251,0.65);background:rgba(255,255,255,0.04);transition:all .15s}
-.snql-tab-icon{font-size:13px;line-height:1}
-.snql-tab:hover{background:rgba(255,255,255,0.09);color:#fff;border-color:rgba(255,255,255,0.18)}
-.snql-tab.active{font-weight:600}
-#snql-tab-banner{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:700;text-transform:uppercase;letter-spacing:1px;
-  padding:12px 18px;border-radius:12px;border:1px solid;margin-bottom:20px;box-sizing:border-box}
-#snql-tab-banner .snql-col-icon{font-size:18px}
-#snql-grid,#snql-pin-grid,.snql-pin-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:18px 20px;align-items:start}
-#snql-home{display:block}
-.snql-block{break-inside:avoid;position:relative;padding:2px 2px 6px 10px;border-radius:10px;transition:background .15s}
-.snql-block:hover{background:var(--col-glow, rgba(255,255,255,0.03))}
-.snql-col-title{display:flex;align-items:center;gap:7px;font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;
-  padding:8px 12px;border-radius:9px;border:1px solid;margin:-2px -2px 11px -10px;width:calc(100% + 12px);box-sizing:border-box;line-height:1.3}
-.snql-col-icon{font-size:14px;filter:drop-shadow(0 0 4px currentColor);flex-shrink:0}
-.snql-col-bar{height:0;border-bottom:1.5px solid;margin-bottom:9px;opacity:.55}
-.snql-sec{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.9px;padding:5px 9px;border-radius:7px;border:1px solid;
-  margin-top:10px;margin-bottom:6px;line-height:1.3;display:inline-block}
-.snql-row{display:flex;align-items:center;padding:6px 4px;border-radius:8px;gap:5px;transition:background .12s}
-.snql-row:hover{background:rgba(255,255,255,0.07)}
-.snql-link{font-size:13px;color:#dfe2f5;text-decoration:none;flex:1;cursor:pointer;line-height:1.35;background:none;border:none;text-align:left;
-  padding:0;font-family:inherit;transition:color .12s}
-.snql-link:hover{color:#fff}
-.snql-link-icon{display:inline-block;margin-right:6px}
-#snql-tip{position:absolute;z-index:10;font-size:11.5px;color:#d8e6ff;padding:5px 10px;border-radius:7px;
-  background:rgba(20,22,42,0.92);border:1px solid rgba(120,170,255,0.35);box-shadow:0 6px 18px -4px rgba(0,0,0,0.5);
-  backdrop-filter:blur(4px);font-family:"Consolas","Courier New",monospace;pointer-events:none;white-space:nowrap}
-.snql-badge{width:18px;height:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0;border-radius:5px;opacity:.85}
-.snql-badge-link{color:#7fb0ff;background:rgba(127,176,255,0.12)}
-.snql-badge-raw{color:#3ae0c4;background:rgba(58,224,196,0.12)}
-.snql-badge-action{color:#ffcf5c;background:rgba(255,207,92,0.14)}
-.snql-badge-custom{background:rgba(255,255,255,0.06);font-size:12px}
-.snql-action{width:20px;height:20px;background:rgba(255,255,255,0.05);border:none;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;
-  flex-shrink:0;opacity:0;border-radius:5px;color:rgba(238,240,251,0.55);font-size:11px;transition:opacity .12s,background .12s,color .12s}
-.snql-row:hover .snql-action{opacity:1}
-.snql-action:hover{color:#fff;background:rgba(255,255,255,0.14)}
-.snql-star{width:20px;height:20px;background:none;border:none;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;
-  flex-shrink:0;opacity:0;border-radius:5px;transition:opacity .12s}
-.snql-row:hover .snql-star,.snql-star.on,.snql-quick-row:hover .snql-star{opacity:1}
-.snql-star svg .sf{fill:none;stroke:rgba(238,240,251,0.35);stroke-width:1.4}
-.snql-star.on svg .sf{fill:#ffc94d;stroke:#ffc94d;filter:drop-shadow(0 0 4px rgba(255,201,77,0.7))}
-.snql-star:hover:not(.on) svg .sf{stroke:#fff}
-.snql-star svg{transition:transform .12s}
-.snql-star:hover svg{transform:scale(1.15)}
-.snql-home-empty{color:rgba(238,240,251,0.4);font-size:13px;text-align:center;padding:50px 20px}
-.snql-home-empty span{display:block;font-size:26px;margin-bottom:10px;color:rgba(255,201,77,0.5)}
-.snql-home-section-title{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;
-  color:rgba(238,240,251,0.45);margin:4px 0 14px}
-.snql-history-title{margin-top:26px;padding-top:18px;border-top:1px solid rgba(255,255,255,0.08)}
-.snql-home-section-icon{color:#ffc94d;display:flex;align-items:center}
-.snql-quick-list{display:flex;flex-direction:column;gap:3px}
-.snql-quick-row{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:9px;transition:background .12s}
-.snql-quick-row:hover{background:var(--col-glow, rgba(255,255,255,0.05))}
-.snql-quick-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
-.snql-quick-col{font-size:10.5px;color:rgba(238,240,251,0.4);flex-shrink:0;padding:2px 8px;border-radius:20px;background:rgba(255,255,255,0.05)}
-#snql-nores{display:none;text-align:center;padding:50px 20px;color:rgba(238,240,251,0.4);font-size:13px}
-#snql-win::-webkit-scrollbar,#snql-overlay::-webkit-scrollbar{width:10px}
-#snql-overlay::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.15);border-radius:6px}
-`;
-
-overlay.innerHTML = `<div id="snql-win">
-  <div id="snql-topbar">
-    <div id="snql-search-wrap">
-      <span id="snql-search-icon">&#128269;</span>
-      <input id="snql-search" type="text" placeholder="Rechercher dans tous les liens..." oninput="snqlSearch()" autocomplete="off">
-    </div>
-    <span id="snql-count" style="display:none"></span>
-    <button id="snql-close" title="Fermer (Échap)" onclick="snqlClose()">&#215;</button>
+overlay.innerHTML=`
+<div id="snfus-win">
+  <!-- TOP BAR -->
+  <div id="snfus-topbar">
+    <h2>🗂️ Project Navigator</h2>
+    <span id="snfus-autodetect"></span>
+    <span id="snfus-status"></span>
+    <button id="snfus-close" onclick="snfusClose()">&#215;</button>
   </div>
-  <div id="snql-tabs"></div>
-  <div id="snql-tab-banner" style="display:none"></div>
-  <div id="snql-home"></div>
-  <div id="snql-grid" style="display:none"></div>
-  <div id="snql-nores">Aucun résultat pour cette recherche.</div>
-  <div id="snql-tip" style="display:none"></div>
+
+  <div id="snfus-body">
+    <!-- ===== COL GAUCHE : inputs + liens ===== -->
+    <div id="snfus-left">
+      <div>
+        <div class="snfus-label">Numéro</div>
+        <input class="snfus-field" id="snfus-number" placeholder="PRJ0001234"
+          oninput="snfusOnInput('number')" onkeydown="if(event.key==='Enter')snfusLoad()">
+      </div>
+      <div>
+        <div class="snfus-label">sys_id</div>
+        <input class="snfus-field" id="snfus-sysid" placeholder="f041cb6a..."
+          oninput="snfusOnInput('sysid')" onkeydown="if(event.key==='Enter')snfusLoad()">
+      </div>
+      <button id="snfus-load-btn" onclick="snfusLoad()">Charger la hiérarchie</button>
+
+      <div class="snfus-label" style="margin-top:4px">Workspace</div>
+      <div id="snfus-ws-box">${wsBtnHtml()}</div>
+
+      <div class="snfus-label" style="margin-top:4px">Classique UI</div>
+      <div id="snfus-links-box">
+        ${CL_BUTTONS.map(lbtnHtml).join("")}
+      </div>
+    </div>
+
+    <!-- ===== COL CENTRE : hiérarchie ===== -->
+    <div id="snfus-mid">
+      <div class="snfus-col-label">
+        Hiérarchie du projet
+        <div id="snfus-tree-toggle">
+          <button class="snfus-ttbtn" onclick="snfusTreeSize('narrow')" title="Vue compacte (N° + badges)">⊟</button>
+          <button class="snfus-ttbtn active" onclick="snfusTreeSize('normal')" title="Vue normale">⊡</button>
+          <button class="snfus-ttbtn" onclick="snfusTreeSize('full')" title="Vue plein écran">⊞</button>
+        </div>
+      </div>
+      <div id="snfus-tree-box">
+        <div class="snfus-tree-hint" id="snfus-tree-hint">Entrez un numéro ou sys_id.</div>
+        <table id="snfus-tree-table" style="display:none">
+          <colgroup>
+            <col class="col-num">
+            <col class="col-name">
+            <col class="col-cnt">
+            <col class="col-cnt">
+            <col class="col-cnt">
+          </colgroup>
+          <thead>
+            <tr>
+              <th>Numéro</th>
+              <th class="col-name-hide">Nom</th>
+              <th class="cnt-col" style="color:${C_RA}" title="Resource Assignments">RA</th>
+              <th class="cnt-col" style="color:${C_TC}" title="Time Cards">TC</th>
+              <th class="cnt-col" style="color:${C_CP}" title="Cost Plans">CP</th>
+            </tr>
+          </thead>
+          <tbody id="snfus-tree"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ===== COL DROITE : info record + listes ===== -->
+    <div id="snfus-right">
+      <!-- INFO RECORD -->
+      <div id="snfus-info">
+        <div id="snfus-info-title">Sélectionnez un nœud</div>
+        <div id="snfus-info-content"><div id="snfus-info-empty">—</div></div>
+      </div>
+
+      <!-- MINI-LISTES -->
+      ${CONN_LISTS.map(cl=>`
+      <div class="snfus-minilist" id="snfus-ml-${cl.id}">
+        <div class="snfus-minilist-hdr">
+          <span class="snfus-minilist-title" style="color:${cl.color}">${cl.label}</span>
+          <div class="snfus-minilist-meta">
+            <span class="snfus-minilist-count" id="snfus-ml-${cl.id}-count">—</span>
+            <button class="snfus-minilist-open" disabled
+              style="color:${cl.color};border-color:${rgba(cl.color,.4)}"
+              onclick="snfusOpenList('${cl.id}')">↗ Liste complète</button>
+          </div>
+        </div>
+        <div class="snfus-minilist-body" id="snfus-ml-${cl.id}-body">
+          <div class="snfus-ml-empty">Sélectionnez un nœud.</div>
+        </div>
+      </div>`).join("")}
+    </div>
+  </div>
 </div>`;
 
 document.body.appendChild(overlay);
-document.addEventListener("keydown", onKeydown);
-render();
-document.getElementById("snql-search").focus();
+
+/* ============================================================
+   CLOSE / KEYBOARD
+   ============================================================ */
+function close(){
+  document.getElementById(OVERLAY_ID)?.remove();
+  document.getElementById(STYLE_ID)?.remove();
+  document.removeEventListener("keydown",onKey);
+}
+function onKey(e){if(e.key==="Escape")close();}
+document.addEventListener("keydown",onKey);
+
+function setSt(msg,type){const el=document.getElementById("snfus-status");el.textContent=msg;el.className=type||"";}
+
+/* ============================================================
+   LIENS
+   ============================================================ */
+function allWsBtns(){return document.querySelectorAll("#snfus-ws-box .snfus-wbtn");}
+function allLinkBtns(){return document.querySelectorAll("#snfus-links-box .snfus-lbtn:not(.hdr)");}
+
+window.snfusOpenLink=(label)=>{
+  if(!selNode) return;
+  const b=CL_BUTTONS.find(x=>x.t===label); if(!b) return;
+  const fn=selNode.depth===0?b.urlP:b.urlT;
+  window.open(location.origin+fn(selNode.sys_id),"_blank");
+};
+
+window.snfusOpenWs=(label)=>{
+  const pid=projId||(selNode&&selNode.sys_id); if(!pid) return;
+  const b=WS_BUTTONS.find(x=>x.t===label); if(!b) return;
+  const ts=Date.now();
+  window.open(location.origin+b.url(pid,ts),"_blank");
+};
+
+window.snfusOpenList=(listId)=>{
+  if(!selNode) return;
+  const cl=CONN_LISTS.find(x=>x.id===listId); if(!cl) return;
+  const fn=selNode.depth===0?cl.qP:cl.qT;
+  window.open(`${location.origin}/${cl.table}_list.do?sysparm_query=${fn(selNode.sys_id)}`,"_blank");
+};
+
+/* ============================================================
+   SÉLECTION NŒUD
+   ============================================================ */
+function selectNode(node){
+  selNode=node;
+  document.querySelectorAll("#snfus-tree tr").forEach(e=>e.classList.remove("sel"));
+  document.querySelector(`#snfus-tree tr[data-id="${node.sys_id}"]`)?.classList.add("sel");
+  allWsBtns().forEach(b=>b.disabled=false);
+  allLinkBtns().forEach(b=>b.disabled=false);
+  CONN_LISTS.forEach(cl=>{
+    const btn=document.querySelector(`#snfus-ml-${cl.id} .snfus-minilist-open`);
+    if(btn) btn.disabled=false;
+  });
+  loadInfo(node);
+  CONN_LISTS.forEach(cl=>loadMiniList(cl,node));
+}
+
+function deselectAll(){
+  selNode=null;
+  document.querySelectorAll("#snfus-tree tr").forEach(e=>e.classList.remove("sel"));
+  allWsBtns().forEach(b=>b.disabled=true);
+  allLinkBtns().forEach(b=>b.disabled=true);
+  CONN_LISTS.forEach(cl=>{
+    const btn=document.querySelector(`#snfus-ml-${cl.id} .snfus-minilist-open`);
+    if(btn) btn.disabled=true;
+    document.getElementById(`snfus-ml-${cl.id}-body`).innerHTML=`<div class="snfus-ml-empty">Sélectionnez un nœud.</div>`;
+    document.getElementById(`snfus-ml-${cl.id}-count`).textContent="—";
+  });
+  document.getElementById("snfus-info-title").textContent="Sélectionnez un nœud";
+  document.getElementById("snfus-info-content").innerHTML=`<div id="snfus-info-empty">—</div>`;
+}
+
+window.snfusSelectNode=(sysId)=>{
+  const n=window._snfusNodes&&window._snfusNodes[sysId];
+  if(n) selectNode(n);
+};
+
+/* ============================================================
+   INFO RECORD (dates + coûts)
+   ============================================================ */
+async function loadInfo(node){
+  if(_info[node.sys_id]){renderInfo(node,_info[node.sys_id]);return;}
+  document.getElementById("snfus-info-title").textContent=`${node.number} — ${node.name}`;
+  document.getElementById("snfus-info-content").innerHTML=`<div class="snfus-ml-loading">Chargement…</div>`;
+  const isP=node.depth===0;
+  const tbl=isP?"pm_project":"pm_project_task";
+  const costFlds=isP?COST_FIELDS_PRJ:COST_FIELDS_TSK;
+  const allFlds=[...DATE_FIELDS,...costFlds].filter(f=>f!==null).map(f=>f.f).join(",");
+  try{
+    const res=await apiFetch(`/api/now/table/${tbl}?sysparm_query=sys_id=${node.sys_id}&sysparm_fields=${allFlds}&sysparm_limit=1&sysparm_display_value=all`);
+    const data=await res.json();
+    const rec=data.result&&data.result[0]?data.result[0]:{};
+    _info[node.sys_id]={rec,isP,costFlds};
+    renderInfo(node,_info[node.sys_id]);
+  }catch(e){
+    document.getElementById("snfus-info-content").innerHTML=`<div class="snfus-ml-empty">Erreur de chargement.</div>`;
+  }
+}
+
+function renderInfo(node,{rec,isP,costFlds}){
+  document.getElementById("snfus-info-title").innerHTML=
+    `${node.number} <span>— ${node.name}</span>`;
+  const now=new Date();
+
+  function fieldHtml(f){
+    const raw=rec[f.f]; const val=fmtVal(raw);
+    let cls=val?"":"empty";
+    if(val&&(f.f==="end_date"||f.f==="approved_end_date")){
+      const rawStr=raw&&typeof raw==="object"?(raw.value||raw.display_value||""):String(raw||"");
+      const d=new Date(rawStr); if(!isNaN(d)&&d<now) cls="overdue";
+    }
+    return `<div class="snfus-ifield">
+      <span class="snfus-ifield-lbl">${f.label}</span>
+      <div class="snfus-ifield-val ${cls}">${val||"—"}</div>
+    </div>`;
+  }
+
+  const leftHtml =DATE_LEFT.map(fieldHtml).join("");
+  const rightHtml=DATE_RIGHT.map(fieldHtml).join("");
+  const costHtml =costFlds.map(fieldHtml).join("");
+
+  document.getElementById("snfus-info-content").innerHTML=`
+    <div id="snfus-info-body">
+      <!-- Dates : 2 colonnes gauche/droite -->
+      <div id="snfus-dates-grid">
+        <div>
+          <div class="snfus-dates-col-title">Start</div>
+          <div style="display:flex;flex-direction:column;gap:6px">${leftHtml}</div>
+        </div>
+        <div>
+          <div class="snfus-dates-col-title">End</div>
+          <div style="display:flex;flex-direction:column;gap:6px">${rightHtml}</div>
+        </div>
+      </div>
+      <!-- Coûts à droite -->
+      <div id="snfus-costs-col">
+        <div class="snfus-costs-title">Coûts</div>
+        ${costHtml}
+      </div>
+    </div>`;
+}
+
+/* ============================================================
+   MINI-LISTES
+   ============================================================ */
+async function loadMiniList(cl,node){
+  const bodyEl=document.getElementById(`snfus-ml-${cl.id}-body`);
+  const cntEl =document.getElementById(`snfus-ml-${cl.id}-count`);
+  if(_lists[cl.id]&&_lists[cl.id][node.sys_id]){
+    renderMiniList(cl,_lists[cl.id][node.sys_id],bodyEl,cntEl); return;
+  }
+  bodyEl.innerHTML=`<div class="snfus-ml-loading">Chargement…</div>`;
+  cntEl.textContent="…";
+  const isP=node.depth===0;
+  const q=(isP?cl.qP:cl.qT)(node.sys_id);
+  const fields=cl.cols.map(c=>c.f).join(",")+",sys_id";
+  try{
+    const res=await apiFetch(`/api/now/table/${cl.table}?sysparm_query=${q}&sysparm_fields=${fields}&sysparm_limit=10&sysparm_display_value=all`);
+    const data=await res.json();
+    const rows=data.result||[];
+    const total=res.headers.get("X-Total-Count");
+    if(!_lists[cl.id]) _lists[cl.id]={};
+    _lists[cl.id][node.sys_id]={rows,total};
+    renderMiniList(cl,{rows,total},bodyEl,cntEl);
+  }catch(e){
+    bodyEl.innerHTML=`<div class="snfus-ml-empty">Erreur de chargement.</div>`;
+    cntEl.textContent="err";
+  }
+}
+
+function renderMiniList(cl,{rows,total},bodyEl,cntEl){
+  const shown=rows.length;
+  const tot=total?parseInt(total):shown;
+  cntEl.textContent=tot>shown?`${shown} / ${tot} (limité à 10)`:
+                    tot===1?"1 enregistrement":`${tot} enregistrements`;
+  if(!rows.length){bodyEl.innerHTML=`<div class="snfus-ml-empty">Aucun enregistrement.</div>`;return;}
+  const thCells=cl.cols.map(c=>`<th>${c.label}</th>`).join("")
+    + (cl.hasBreakdown?`<th style="width:80px"></th>`:"");
+  const tdRows=rows.map(row=>{
+    const rawId=row.sys_id;
+    const sysId=typeof rawId==="object"?(rawId.value||rawId.display_value||""):rawId;
+    const cells=cl.cols.map(c=>{
+      const raw=row[c.f];
+      if(!raw&&raw!==0) return `<td class="empty">(empty)</td>`;
+      if(typeof raw==="object"){
+        const label=raw.display_value||raw.value||"";
+        if(!label) return `<td class="empty">(empty)</td>`;
+        if(raw.link){
+          const refUrl=`${location.origin}/now/nav/ui/classic/params/target/${raw.link.split("/api/now/table/")[1]||""}`;
+          return `<td class="ref-link" onclick="event.stopPropagation();window.open('${refUrl}','_blank')">${label}</td>`;
+        }
+        return `<td>${label}</td>`;
+      }
+      const val=fmtVal(raw);
+      return `<td class="${val?"":"empty"}">${val||"(empty)"}</td>`;
+    }).join("");
+    const bkdCell=cl.hasBreakdown
+      ? `<td onclick="event.stopPropagation()"><button class="snfus-bkd-btn" onclick="snfusToggleBreakdown(this,'${sysId}')">▶ Breakdown</button></td>`
+      : "";
+    const rowUrl=sysId?`${location.origin}/now/nav/ui/classic/params/target/${cl.table}.do?sys_id=${sysId}`:"#";
+    return `<tr class="row-open" onclick="window.open('${rowUrl}','_blank')">${cells}${bkdCell}</tr>
+      <tr class="snfus-breakdown-row" id="snfus-bkd-${sysId}" style="display:none">
+        <td colspan="${cl.cols.length+1}" style="padding:0">
+          <div class="snfus-breakdown-wrap">
+            <div class="snfus-breakdown-hdr">Cost Plan Breakdowns</div>
+            <div id="snfus-bkd-body-${sysId}" class="snfus-breakdown-loading">Cliquez sur ▶ Breakdown pour charger.</div>
+          </div>
+        </td>
+      </tr>`;
+  }).join("");
+  bodyEl.innerHTML=`<table class="snfus-ml-table"><thead><tr>${thCells}</tr></thead><tbody>${tdRows}</tbody></table>`;
+}
+
+/* ============================================================
+   COMPTEURS AU SURVOL
+   ============================================================ */
+window.snfusHover=async(sysId)=>{
+  if(_cnt[sysId]!==undefined) return;
+  _cnt[sysId]="loading";
+  // Afficher "…" dans les 3 cellules
+  ["ra","tc","cp"].forEach(k=>{
+    const el=document.getElementById(`snfus-cnt-${k}-${sysId}`);
+    if(el) el.innerHTML=`<span class="snfus-cnt ${k}" style="opacity:.5">…</span>`;
+  });
+  const node=window._snfusNodes&&window._snfusNodes[sysId];
+  const isP=node&&node.depth===0;
+  const f=isP?"top_task":"task";
+  try{
+    const [raR,tcR,cpR]=await Promise.all([
+      apiFetch(`/api/now/table/sn_plng_att_core_resource_assignment?sysparm_query=${f}=${sysId}&sysparm_fields=sys_id&sysparm_limit=1&sysparm_count=true`),
+      apiFetch(`/api/now/table/time_card?sysparm_query=${f}=${sysId}&sysparm_fields=sys_id&sysparm_limit=1&sysparm_count=true`),
+      apiFetch(`/api/now/table/cost_plan?sysparm_query=${f}=${sysId}&sysparm_fields=sys_id&sysparm_limit=1&sysparm_count=true`),
+    ]);
+    const [raD,tcD,cpD]=await Promise.all([raR.json(),tcR.json(),cpR.json()]);
+    const ra=parseInt(raR.headers.get("X-Total-Count")||(raD.result?raD.result.length:0));
+    const tc=parseInt(tcR.headers.get("X-Total-Count")||(tcD.result?tcD.result.length:0));
+    const cp=parseInt(cpR.headers.get("X-Total-Count")||(cpD.result?cpD.result.length:0));
+    _cnt[sysId]={ra,tc,cp};
+    const fill=(k,v,cls)=>{
+      const el=document.getElementById(`snfus-cnt-${k}-${sysId}`);
+      if(el) el.innerHTML=v>0?`<span class="snfus-cnt ${cls}">${v}</span>`:`<span class="snfus-cnt empty">—</span>`;
+    };
+    fill("ra",ra,"ra"); fill("tc",tc,"tc"); fill("cp",cp,"cp");
+  }catch(e){
+    delete _cnt[sysId];
+    ["ra","tc","cp"].forEach(k=>{
+      const el=document.getElementById(`snfus-cnt-${k}-${sysId}`);
+      if(el) el.innerHTML=`<span class="snfus-cnt empty">—</span>`;
+    });
+  }
+};
+
+/* ============================================================
+   ARBRE
+   ============================================================ */
+function flatTree(all,pid,d){
+  return all.filter(t=>t.parent===pid).flatMap(t=>[{...t,depth:d},...flatTree(all,t.sys_id,d+1)]);
+}
+
+function renderNode(n){
+  const c=dc(n.depth), id=n.sys_id;
+  const indent=n.depth*14;
+  const dotHtml=`<span class="snfus-node-dot" style="background:${c};box-shadow:0 0 4px ${rgba(c,.6)};margin-left:${indent}px"></span>`;
+  return `<tr data-id="${id}" onclick="snfusSelectNode('${id}')" onmouseenter="snfusHover('${id}')">
+    <td class="num-cell" style="white-space:nowrap">
+      ${dotHtml}<span class="snfus-tnode-num" style="color:${c}">${n.number}</span>
+      <span class="snfus-sel-badge">✓</span>
+    </td>
+    <td class="name-cell col-name-hide"><span class="snfus-tnode-name">${n.name}</span></td>
+    <td class="cnt-col" id="snfus-cnt-ra-${id}"><span class="snfus-cnt empty">—</span></td>
+    <td class="cnt-col" id="snfus-cnt-tc-${id}"><span class="snfus-cnt empty">—</span></td>
+    <td class="cnt-col" id="snfus-cnt-cp-${id}"><span class="snfus-cnt empty">—</span></td>
+  </tr>`;
+}
+
+function renderTree(nodes){
+  const tEl=document.getElementById("snfus-tree");
+  const hEl=document.getElementById("snfus-tree-hint");
+  const tableEl=document.getElementById("snfus-tree-table");
+  if(!nodes||!nodes.length){
+    hEl.textContent="Aucune tâche trouvée."; hEl.style.display=""; tableEl.style.display="none"; return;
+  }
+  hEl.style.display="none"; tableEl.style.display="";
+  tEl.innerHTML=nodes.map(renderNode).join("");
+}
+
+/* ============================================================
+   CHARGEMENT
+   ============================================================ */
+async function loadHierarchy(pid){
+  const tEl=document.getElementById("snfus-tree");
+  const hEl=document.getElementById("snfus-tree-hint");
+  const tableEl=document.getElementById("snfus-tree-table");
+  tEl.innerHTML=""; hEl.style.display=""; hEl.textContent="Chargement…";
+  tableEl.style.display="none";
+  deselectAll();
+  [_cnt,_info,...CONN_LISTS.map(x=>_lists[x.id]||{})].forEach(o=>{if(o)Object.keys(o).forEach(k=>delete o[k]);});
+
+  // Récupérer les infos du projet racine ET vérifier s'il a des parents (sous-projets)
+  async function fetchProject(id){
+    const res=await apiFetch(`/api/now/table/pm_project?sysparm_query=sys_id=${id}&sysparm_fields=number,short_description,parent&sysparm_limit=1`);
+    const data=await res.json();
+    return data.result&&data.result[0]?data.result[0]:null;
+  }
+
+  async function fetchTasks(id){
+    const res=await apiFetch(`/api/now/table/pm_project_task?sysparm_query=top_task=${id}&sysparm_fields=sys_id,number,short_description,parent&sysparm_limit=2000`);
+    const data=await res.json();
+    return (data.result||[]).map(t=>({
+      sys_id:t.sys_id, number:t.number, name:t.short_description||"",
+      parent:t.parent?(t.parent.value||t.parent):id
+    }));
+  }
+
+  try{
+    const [prjRec, tasks, parentChain] = await Promise.all([
+      fetchProject(pid),
+      fetchTasks(pid),
+      fetchParentChain(pid),  // [] si pas de parents
+    ]);
+
+    const pNum  = prjRec?prjRec.number:"PRJ";
+    const pName = prjRec?prjRec.short_description||"":"";
+
+    // Construire la liste à plat :
+    // parentChain est [proche→lointain], on inverse pour avoir [racine→...→sous-projet cible]
+    const ancestors = [...parentChain].reverse();
+
+    const flat=[];
+    // Projets ancêtres (nœuds parents — depth 0,1,2... mais visuellement décalés)
+    ancestors.forEach((anc,i)=>{
+      flat.push({sys_id:anc.sys_id, number:anc.number, name:anc.name, depth:i, isProject:true});
+    });
+    // Projet courant (racine si pas de parents, sinon enfant des ancêtres)
+    const rootDepth = ancestors.length;
+    flat.push({sys_id:pid, number:pNum, name:pName, depth:rootDepth, isProject:true});
+
+    // Tâches du projet courant
+    function addTasks(parentId, d, all){
+      all.filter(t=>t.parent===parentId).forEach(t=>{
+        flat.push({...t, depth:d});
+        addTasks(t.sys_id, d+1, all);
+      });
+    }
+    addTasks(pid, rootDepth+1, tasks);
+
+    renderTree(flat);
+    window._snfusNodes={};
+    flat.forEach(n=>{window._snfusNodes[n.sys_id]=n;});
+    return;
+  }catch(e){}
+
+  // Fallback GlideRecord
+  try{
+    const GR=(window.top&&window.top.GlideRecord)||window.GlideRecord;
+    if(!GR) throw new Error();
+    const gP=new GR("pm_project");
+    gP.get(pid,()=>{
+      const pNum=gP.getValue("number")||"PRJ";
+      const pName=gP.getValue("short_description")||"";
+      const gT=new GR("pm_project_task");
+      gT.addQuery("top_task",pid);
+      gT.query(()=>{
+        const tasks=[];
+        while(gT.next()) tasks.push({sys_id:gT.getUniqueValue(),number:gT.getValue("number"),
+          name:gT.getValue("short_description")||"",parent:gT.getValue("parent")||pid, depth:1});
+        const flat=[{sys_id:pid,number:pNum,name:pName,depth:0,isProject:true},...tasks];
+        renderTree(flat);
+        window._snfusNodes={};
+        flat.forEach(n=>{window._snfusNodes[n.sys_id]=n;});
+      });
+    });
+  }catch(e){hEl.textContent="Erreur de chargement.";}
+}
+
+/* ============================================================
+   RÉSOLUTION SUB_TREE_ROOT + CHAÎNE DE PARENTS
+   ============================================================ */
+async function resolveProj(sysId){
+  // Cherche d'abord si c'est une tâche avec sub_tree_root
+  try{
+    const res=await apiFetch(`/api/now/table/pm_project_task?sysparm_query=sys_id=${sysId}&sysparm_fields=sub_tree_root&sysparm_limit=1`);
+    const data=await res.json();
+    if(data.result&&data.result[0]){
+      const v=data.result[0].sub_tree_root;
+      const id=v?(v.value||v):null;
+      if(id&&/^[0-9a-f]{32}$/i.test(id)) return id;
+    }
+  }catch(e){}
+  return null;
+}
+
+// Récupère la chaîne complète des projets parents d'un sous-projet
+// en interrogeant pm_project sur le champ parent jusqu'à remonter à la racine
+async function fetchParentChain(pid){
+  const chain=[]; // [{sys_id,number,name}] du plus proche au plus lointain
+  let current=pid;
+  let safety=0;
+  while(current && safety++<10){
+    try{
+      const res=await apiFetch(`/api/now/table/pm_project?sysparm_query=sys_id=${current}&sysparm_fields=number,short_description,parent&sysparm_limit=1`);
+      const data=await res.json();
+      const rec=data.result&&data.result[0];
+      if(!rec) break;
+      const parentRef=rec.parent;
+      const parentId=parentRef?(parentRef.value||null):null;
+      if(parentId&&/^[0-9a-f]{32}$/i.test(parentId)){
+        // ce projet a un parent → l'ajouter à la chaîne et continuer
+        chain.push({sys_id:current, number:rec.number, name:rec.short_description||""});
+        current=parentId;
+      } else {
+        break; // pas de parent → on est au projet racine, on ne l'ajoute pas ici
+      }
+    }catch(e){break;}
+  }
+  return chain; // sous-projets dans l'ordre proche→lointain (excluant la racine)
+}
+
+/* ============================================================
+   HANDLERS PRINCIPAUX
+   ============================================================ */
+window.snfusClose=close;
+
+/* Toggle et chargement des breakdowns d'un cost plan */
+window.snfusToggleBreakdown=async(btn,cpSysId)=>{
+  const row=document.getElementById(`snfus-bkd-${cpSysId}`);
+  const bodyDiv=document.getElementById(`snfus-bkd-body-${cpSysId}`);
+  if(!row) return;
+  const isOpen=row.style.display!=="none";
+  if(isOpen){ row.style.display="none"; btn.textContent="▶ Breakdown"; return; }
+  row.style.display="";
+  btn.textContent="▼ Breakdown";
+  // Déjà chargé ?
+  if(bodyDiv.dataset.loaded==="1") return;
+  bodyDiv.className="snfus-breakdown-loading";
+  bodyDiv.textContent="Chargement…";
+  const fields=CP_BREAKDOWN_COLS.map(c=>c.f).join(",");
+  try{
+    const res=await apiFetch(`/api/now/table/cost_plan_breakdown?sysparm_query=cost_plan=${cpSysId}&sysparm_fields=${fields},sys_id&sysparm_limit=50&sysparm_display_value=all`);
+    const data=await res.json();
+    const rows=data.result||[];
+    if(!rows.length){ bodyDiv.textContent="Aucun breakdown."; bodyDiv.className="snfus-breakdown-loading"; bodyDiv.dataset.loaded="1"; return; }
+    const thCells=CP_BREAKDOWN_COLS.map(c=>`<th>${c.label}</th>`).join("");
+    const tdRows=rows.map(row=>{
+      const rawId=row.sys_id;
+      const sysId=typeof rawId==="object"?(rawId.value||""):rawId;
+      const cells=CP_BREAKDOWN_COLS.map(c=>{
+        const raw=row[c.f];
+        if(!raw&&raw!==0) return `<td class="empty">(empty)</td>`;
+        if(typeof raw==="object"){
+          const label=raw.display_value||raw.value||"";
+          if(!label) return `<td class="empty">(empty)</td>`;
+          if(raw.link){
+            const refUrl=`${location.origin}/now/nav/ui/classic/params/target/${raw.link.split("/api/now/table/")[1]||""}`;
+            return `<td class="ref-link" onclick="event.stopPropagation();window.open('${refUrl}','_blank')">${label}</td>`;
+          }
+          return `<td>${label}</td>`;
+        }
+        return `<td>${fmtVal(raw)||"(empty)"}</td>`;
+      }).join("");
+      const url=sysId?`${location.origin}/now/nav/ui/classic/params/target/cost_plan_breakdown.do?sys_id=${sysId}`:"#";
+      return `<tr style="cursor:pointer" onclick="window.open('${url}','_blank')">${cells}</tr>`;
+    }).join("");
+    bodyDiv.className="";
+    bodyDiv.innerHTML=`<table class="snfus-ml-table"><thead><tr>${thCells}</tr></thead><tbody>${tdRows}</tbody></table>`;
+    bodyDiv.dataset.loaded="1";
+  }catch(e){
+    bodyDiv.className="snfus-breakdown-loading";
+    bodyDiv.textContent="Erreur de chargement.";
+  }
+};
+
+/* Toggle taille de la hiérarchie : narrow | normal | full */
+window.snfusTreeSize=(size)=>{
+  const body=document.getElementById("snfus-body");
+  body.className=`tree-${size}`;
+  document.querySelectorAll(".snfus-ttbtn").forEach((b,i)=>{
+    b.classList.toggle("active",["narrow","normal","full"][i]===size);
+  });
+};
+
+window.snfusOnInput=(src)=>{
+  if(src==="number"&&document.getElementById("snfus-number").value.trim())
+    document.getElementById("snfus-sysid").value="";
+  if(src==="sysid"&&document.getElementById("snfus-sysid").value.trim())
+    document.getElementById("snfus-number").value="";
+};
+
+window.snfusLoad=async()=>{
+  const num=document.getElementById("snfus-number").value.trim();
+  const sid=document.getElementById("snfus-sysid").value.trim();
+  const btn=document.getElementById("snfus-load-btn");
+  const hexRe=/^[0-9a-f]{32}$/i;
+  if(!num&&!sid){setSt("Remplis un champ","err");return;}
+
+  if(sid&&hexRe.test(sid)){
+    btn.disabled=true; setSt("Chargement…","");
+    const pid=await resolveProj(sid);
+    const id=pid||sid;
+    if(pid){document.getElementById("snfus-sysid").value=pid; setSt("↑ Projet via sub_tree_root","ok");}
+    projId=id; await loadHierarchy(id); setSt("✓ Chargé","ok"); btn.disabled=false; return;
+  }
+  if(sid&&!hexRe.test(sid)){setSt("Format invalide","err");return;}
+
+  if(num){
+    btn.disabled=true; setSt("Résolution…","");
+    try{
+      const res=await apiFetch(`/api/now/table/pm_project?sysparm_query=number=${encodeURIComponent(num)}&sysparm_fields=sys_id&sysparm_limit=1`);
+      if(res.ok){
+        const data=await res.json();
+        if(data.result&&data.result.length){
+          const id=data.result[0].sys_id;
+          document.getElementById("snfus-sysid").value=id;
+          projId=id; await loadHierarchy(id); setSt("✓ Chargé","ok"); btn.disabled=false; return;
+        }
+      }
+    }catch(e){}
+    try{
+      const GR=(window.top&&window.top.GlideRecord)||window.GlideRecord;
+      if(GR){
+        const gr=new GR("pm_project");
+        gr.addQuery("number",num.toUpperCase()); gr.setLimit(1);
+        gr.query(async()=>{
+          if(gr.next()){
+            const id=gr.getUniqueValue();
+            document.getElementById("snfus-sysid").value=id;
+            projId=id; await loadHierarchy(id); setSt("✓ Chargé","ok");
+          }else setSt("Introuvable","err");
+          btn.disabled=false;
+        }); return;
+      }
+    }catch(e){}
+    setSt("Erreur","err"); btn.disabled=false;
+  }
+};
+
+/* ============================================================
+   DÉTECTION AUTO
+   ============================================================ */
+function detectSysId(){
+  const url=decodeURIComponent(location.href);
+  const m=url.match(/\/pm_project\/([0-9a-f]{32})/i)||url.match(/project-id\/([0-9a-f]{32})/i)
+         ||url.match(/project_resource-([0-9a-f]{32})-pm_project/i)
+         ||url.match(/[?&]sys_id=([0-9a-f]{32})/i)||url.match(/[?&]sysparm_sys_id=([0-9a-f]{32})/i);
+  if(m) return m[1];
+  try{const gf=(window.top&&window.top.g_form)||window.g_form;
+    if(gf&&typeof gf.getUniqueValue==="function"){const v=gf.getUniqueValue();if(v&&/^[0-9a-f]{32}$/i.test(v))return v;}}catch(e){}
+  const inp=document.querySelector('input[name="sys_id"],input[name="sysparm_sys_id"]');
+  if(inp&&/^[0-9a-f]{32}$/i.test(inp.value))return inp.value;
+  return null;
+}
+
+(async()=>{
+  const autoId=detectSysId();
+  if(autoId){
+    const f=document.getElementById("snfus-sysid");
+    f.value=autoId; f.classList.add("detected"); setSt("Résolution…","");
+    const pid=await resolveProj(autoId);
+    const id=pid||autoId;
+    if(pid){f.value=pid; document.getElementById("snfus-autodetect").textContent="⚡ Projet via tâche (sub_tree_root)";}
+    else document.getElementById("snfus-autodetect").textContent="⚡ sys_id détecté";
+    projId=id; await loadHierarchy(id); setSt("✓ Chargé","ok");
+  }else{
+    setTimeout(()=>document.getElementById("snfus-number").focus(),100);
+  }
+})();
 
 })();void(0);
