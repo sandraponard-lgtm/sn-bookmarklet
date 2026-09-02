@@ -86,15 +86,18 @@ const CONN_LISTS=[
   { id:"tc", label:"Time Cards", color:C_TC,
     table:"time_card",
     qP:(id)=>`top_task=${id}`, qT:(id)=>`task=${id}`,
+    hasHJH:true, // bouton toggle H/JH
+    numericCols:["sunday","monday","tuesday","wednesday","thursday","friday","saturday","total"],
     cols:[
       {f:"week_starts_on",label:"Week starts on"},
       {f:"category",label:"Category",ref:true},
       {f:"user",label:"User",ref:true},
       {f:"task",label:"Task",ref:true},
+      {f:"resource_assignment",label:"RA",ref:true},
       {f:"state",label:"State"},
-      {f:"sunday",label:"Sun"},{f:"monday",label:"Mon"},{f:"tuesday",label:"Tue"},
-      {f:"wednesday",label:"Wed"},{f:"thursday",label:"Thu"},{f:"friday",label:"Fri"},
-      {f:"saturday",label:"Sat"},{f:"total",label:"Total"},
+      {f:"sunday",label:"Sun",num:true},{f:"monday",label:"Mon",num:true},{f:"tuesday",label:"Tue",num:true},
+      {f:"wednesday",label:"Wed",num:true},{f:"thursday",label:"Thu",num:true},{f:"friday",label:"Fri",num:true},
+      {f:"saturday",label:"Sat",num:true},{f:"total",label:"Total",num:true},
     ]
   },
   { id:"cp", label:"Cost Plans", color:C_CP,
@@ -194,8 +197,11 @@ const ORDY_TC_COLS=[
   {f:"week_starts_on",label:"Week starts on"},
   {f:"user",label:"User",ref:true},
   {f:"task",label:"Task",ref:true},
+  {f:"resource_assignment",label:"RA",ref:true},
   {f:"state",label:"State"},
-  {f:"total",label:"Total"},
+  {f:"sunday",label:"Sun",num:true},{f:"monday",label:"Mon",num:true},{f:"tuesday",label:"Tue",num:true},
+  {f:"wednesday",label:"Wed",num:true},{f:"thursday",label:"Thu",num:true},{f:"friday",label:"Fri",num:true},
+  {f:"saturday",label:"Sat",num:true},{f:"total",label:"Total",num:true},
 ];
 const ORDY_TC_DAILY_COLS=[
   {f:"date",label:"Date"},
@@ -391,6 +397,14 @@ styleEl.textContent=`
 .snfus-ml-table td.ref-link:hover{color:#90c8ff}
 .snfus-ml-table tr.ra-clickable:hover td{background:${rgba(C_RA,.1)};cursor:pointer}
 .snfus-ml-table tr.ra-clickable.ra-sel td{background:${rgba(C_RA,.18)};color:#fff}
+/* ligne de somme */
+.snfus-ml-table tfoot tr td{padding:5px 8px;border-top:1px solid rgba(255,255,255,.12);
+  font-weight:700;color:#eef0fb;background:rgba(255,255,255,.04);font-size:11px}
+.snfus-ml-table tfoot tr td.sum-label{color:${C_IN};font-size:10px;text-transform:uppercase;letter-spacing:.6px}
+/* bouton toggle H/JH */
+.snfus-hjh-btn{font-size:9px;padding:2px 7px;border-radius:5px;border:1px solid ${rgba(C_TC,.4)};
+  background:${rgba(C_TC,.12)};color:${C_TC};cursor:pointer;font-family:inherit;transition:all .13s;white-space:nowrap}
+.snfus-hjh-btn:hover{background:${rgba(C_TC,.25)}}
 .snfus-ml-empty{padding:10px 12px;font-size:11px;color:rgba(238,240,251,.3);font-style:italic}
 .snfus-ml-loading{padding:8px 12px;font-size:11px;color:${rgba(C_IN,.6)};font-style:italic}
 /* breakdown */
@@ -811,28 +825,68 @@ async function loadMiniList(cl,node){
   }catch(e){bodyEl.innerHTML=`<div class="snfus-ml-empty">Erreur.</div>`;cntEl.textContent="err";}
 }
 
+// État du toggle H/JH par liste
+const _hjhMode={};
+
+function numVal(raw){
+  const s=typeof raw==="object"?(raw.display_value||raw.value||"0"):String(raw||"0");
+  return parseFloat(s.replace(/[^\d.\-]/g,""))||0;
+}
+
 function renderMiniList(cl,{rows,total},bodyEl,cntEl){
   const shown=rows.length,tot=total?parseInt(total):shown;
   cntEl.textContent=tot>shown?`${shown}/${tot} (limité à 10)`:tot===1?"1 enregistrement":`${tot} enregistrements`;
   if(!rows.length){bodyEl.innerHTML=`<div class="snfus-ml-empty">Aucun enregistrement.</div>`;return;}
-  const thCells=cl.cols.map(c=>`<th>${c.label}</th>`).join("")
+  const isJH=cl.hasHJH&&_hjhMode[cl.id]===true;
+  const toggleBtn=cl.hasHJH
+    ?`<button class="snfus-hjh-btn" onclick="snfusToggleHJH('${cl.id}')">${isJH?"→ H":"→ JH"}</button>`:"";
+  const thCells=cl.cols.map(c=>`<th>${c.num?(c.label+(isJH?" (JH)":" (H)")):c.label}</th>`).join("")
     +(cl.id==="ra"?`<th style="width:30px"></th>`:"")
     +(cl.hasBreakdown?`<th style="width:80px"></th>`:"");
+  // Sommes
+  const sums={};
+  if(cl.hasHJH) cl.cols.filter(c=>c.num).forEach(c=>{sums[c.f]=0;});
   const tdRows=rows.map(row=>{
     const sysId=getSysId(row.sys_id);
-    const cells=cl.cols.map(c=>cellHtml(row[c.f])).join("");
+    const cells=cl.cols.map(c=>{
+      if(c.num){
+        const v=numVal(row[c.f]);
+        if(cl.hasHJH) sums[c.f]+=v;
+        const disp=isJH?(v/8).toFixed(2):v%1===0?String(v):v.toFixed(2);
+        return `<td style="text-align:right">${disp}</td>`;
+      }
+      return cellHtml(row[c.f]);
+    }).join("");
     const bkdCell=cl.hasBreakdown?`<td onclick="event.stopPropagation()"><button class="snfus-bkd-btn" onclick="snfusToggleBreakdown(this,'${sysId}')">▶ Breakdown</button></td>`:"";
-    const rowUrl=sysId?`${location.origin}/now/nav/ui/classic/params/target/${cl.table}.do?sys_id=${sysId}`:"#";
-    // Pour RA : bouton robot en fin de ligne, le reste de la ligne ouvre l'enregistrement
     const raBtn=cl.id==="ra"
-      ? `<td onclick="event.stopPropagation()"><button style="background:none;border:none;cursor:pointer;font-size:14px;padding:0 4px;opacity:.8;transition:opacity .12s" title="Ouvrir dans ORDY" onclick="snfusSelectRA('${sysId}',this.closest('tr'))">🤖</button></td>`
-      : "";
+      ?`<td onclick="event.stopPropagation()"><button style="background:none;border:none;cursor:pointer;font-size:14px;padding:0 4px;opacity:.8" title="ORDY" onclick="snfusSelectRA('${sysId}',this.closest('tr'))">🤖</button></td>`:"";
+    const rowUrl=sysId?`${location.origin}/now/nav/ui/classic/params/target/${cl.table}.do?sys_id=${sysId}`:"#";
     const colspan=cl.hasBreakdown?cl.cols.length+1:cl.cols.length;
-    return `<tr onclick="window.open('${rowUrl}','_blank')">${cells}${cl.id==="ra"?raBtn:""}${cl.hasBreakdown?bkdCell:""}</tr>`
+    return `<tr onclick="window.open('${rowUrl}','_blank')">${cells}${raBtn}${cl.hasBreakdown?bkdCell:""}</tr>`
       +(cl.hasBreakdown?`<tr class="snfus-breakdown-row" id="snfus-bkd-${sysId}" style="display:none"><td colspan="${colspan}" style="padding:0"><div class="snfus-breakdown-wrap"><div class="snfus-breakdown-hdr">Cost Plan Breakdowns</div><div id="snfus-bkd-body-${sysId}" class="snfus-breakdown-loading">Cliquez sur ▶ pour charger.</div></div></td></tr>`:"");
   }).join("");
-  bodyEl.innerHTML=`<table class="snfus-ml-table"><thead><tr>${thCells}</tr></thead><tbody>${tdRows}</tbody></table>`;
+  // Ligne de somme
+  let tfootHtml="";
+  if(cl.hasHJH&&Object.keys(sums).length){
+    const sumCells=cl.cols.map((c,i)=>{
+      if(c.num){const v=sums[c.f];const disp=isJH?(v/8).toFixed(2):v%1===0?String(v):v.toFixed(2);return `<td style="text-align:right;font-weight:700">${disp}</td>`;}
+      return i===0?`<td class="sum-label" style="color:${C_IN};font-size:10px;font-weight:700">Σ</td>`:`<td></td>`;
+    }).join("")+(cl.id==="ra"?`<td></td>`:"");
+    tfootHtml=`<tfoot><tr>${sumCells}</tr></tfoot>`;
+  }
+  bodyEl.innerHTML=
+    (cl.hasHJH?`<div style="display:flex;align-items:center;gap:8px;padding:5px 10px;border-bottom:1px solid rgba(255,255,255,.05)"><span style="font-size:10px;color:rgba(238,240,251,.4)">Unité :</span>${toggleBtn}</div>`:"")
+    +`<table class="snfus-ml-table"><thead><tr>${thCells}</tr></thead><tbody>${tdRows}</tbody>${tfootHtml}</table>`;
 }
+
+window.snfusToggleHJH=(listId)=>{
+  _hjhMode[listId]=!_hjhMode[listId];
+  const node=selNode;if(!node||!_lists[listId]||!_lists[listId][node.sys_id])return;
+  const cl=CONN_LISTS.find(x=>x.id===listId);if(!cl)return;
+  renderMiniList(cl,_lists[listId][node.sys_id],
+    document.getElementById(`snfus-ml-${listId}-body`),
+    document.getElementById(`snfus-ml-${listId}-count`));
+};
 
 /* Breakdown cost plan */
 window.snfusToggleBreakdown=async(btn,cpSysId)=>{
@@ -864,30 +918,43 @@ window.snfusToggleBreakdown=async(btn,cpSysId)=>{
    ONGLET ORDY
    ============================================================ */
 window.snfusSelectRA=async(raSysId, trEl)=>{
-  // Forcer une string propre au cas où
   raSysId=String(raSysId).trim();
   if(!raSysId||!/^[0-9a-f]{32}$/i.test(raSysId)){
     console.warn("ORDY: raSysId invalide:", raSysId);return;
   }
-  // Désélectionner l'ancienne ligne RA
   document.querySelectorAll(".ra-sel").forEach(r=>r.classList.remove("ra-sel"));
   trEl.classList.add("ra-sel");
   selRaSysId=raSysId;
   snfusSetTab("ordy");
   renderOrdyLoading();
-  // Charger toutes les données en parallèle
-  const fields_alloc=ORDY_ALLOC_COLS.map(c=>c.f).join(",")+",sys_id,resource_plan";
-  const fields_rplan=ORDY_RPLAN_COLS.map(c=>c.f).join(",")+",sys_id";
+
+  const fields_alloc=ORDY_ALLOC_COLS.map(c=>c.f).join(",")+",sys_id";
   const fields_tc=ORDY_TC_COLS.map(c=>c.f).join(",")+",sys_id";
+  // Pour resource_plan : récupérer le champ resource_plan sur le RA lui-même
+  const fields_ra="resource_plan,sys_id";
+
   try{
-    const [allocRes, rplanRes, tcRes]=await Promise.all([
+    // 1. Récupérer le RA pour avoir le resource_plan lié
+    const [raRes, allocRes, tcRes]=await Promise.all([
+      apiFetch(`/api/now/table/sn_plng_att_core_resource_assignment?sysparm_query=sys_id=${raSysId}&sysparm_fields=${fields_ra}&sysparm_limit=1&sysparm_display_value=all`),
       apiFetch(`/api/now/table/resource_allocation?sysparm_query=resource_assignment=${raSysId}&sysparm_fields=${fields_alloc}&sysparm_limit=50&sysparm_display_value=all`),
-      apiFetch(`/api/now/table/resource_plan?sysparm_query=resource_assignment=${raSysId}&sysparm_fields=${fields_rplan}&sysparm_limit=5&sysparm_display_value=all`),
       apiFetch(`/api/now/table/time_card?sysparm_query=resource_assignment=${raSysId}&sysparm_fields=${fields_tc}&sysparm_limit=50&sysparm_display_value=all`),
     ]);
+    const raData=(await raRes.json()).result||[];
     const allocs=(await allocRes.json()).result||[];
-    const rplans=(await rplanRes.json()).result||[];
     const tcs=(await tcRes.json()).result||[];
+
+    // 2. Récupérer le resource_plan via le sys_id trouvé dans le RA
+    let rplans=[];
+    if(raData.length&&raData[0].resource_plan){
+      const rpRef=raData[0].resource_plan;
+      const rpId=typeof rpRef==="object"?(rpRef.value||rpRef.display_value||""):String(rpRef||"");
+      if(rpId&&/^[0-9a-f]{32}$/i.test(rpId)){
+        const fields_rplan=ORDY_RPLAN_COLS.map(c=>c.f).join(",")+",sys_id";
+        const rpRes=await apiFetch(`/api/now/table/resource_plan?sysparm_query=sys_id=${rpId}&sysparm_fields=${fields_rplan}&sysparm_limit=1&sysparm_display_value=all`);
+        rplans=(await rpRes.json()).result||[];
+      }
+    }
     renderOrdy(raSysId, allocs, rplans, tcs);
   }catch(e){
     document.getElementById("snfus-tab-ordy").innerHTML=`<div class="snfus-ordy-empty">Erreur de chargement.</div>`;
@@ -898,18 +965,50 @@ function renderOrdyLoading(){
   document.getElementById("snfus-tab-ordy").innerHTML=`<div class="snfus-ordy-empty snfus-ml-loading">Chargement des données ORDY…</div>`;
 }
 
-function ordyTableHtml(cols, rows, table, expandFn){
+function ordyTableHtml(cols, rows, table, expandFn, hasHJH){
   if(!rows.length) return `<div class="snfus-ml-empty">Aucun enregistrement.</div>`;
-  const thCells=cols.map(c=>`<th>${c.label}</th>`).join("")+(expandFn?`<th style="width:30px"></th>`:"");
+  const isJH=hasHJH&&_hjhMode["ordy-tc"]===true;
+  const toggleBtn=hasHJH?`<button class="snfus-hjh-btn" onclick="snfusOrdyToggleHJH()">${isJH?"→ H":"→ JH"}</button>`:"";
+  const thCells=cols.map(c=>`<th>${c.num?(c.label+(isJH?" (JH)":" (H)")):c.label}</th>`).join("")+(expandFn?`<th style="width:30px"></th>`:"");
+  const sums={};
+  if(hasHJH) cols.filter(c=>c.num).forEach(c=>{sums[c.f]=0;});
   const tdRows=rows.map(row=>{
     const sysId=getSysId(row.sys_id);
-    const cells=cols.map(c=>cellHtml(row[c.f])).join("");
+    const cells=cols.map(c=>{
+      if(c.num){
+        const v=numVal(row[c.f]);
+        if(hasHJH) sums[c.f]+=v;
+        const disp=isJH?(v/8).toFixed(2):v%1===0?String(v):v.toFixed(2);
+        return `<td style="text-align:right">${disp}</td>`;
+      }
+      return cellHtml(row[c.f]);
+    }).join("");
     const expandCell=expandFn?`<td onclick="event.stopPropagation();${expandFn}('${sysId}',this)" style="cursor:pointer;text-align:center;color:${C_ORDY}">▶</td>`:"";
     const url=`${location.origin}/now/nav/ui/classic/params/target/${table}.do?sys_id=${sysId}`;
     return `<tr class="${expandFn?"snfus-ordy-row-click":""}" onclick="window.open('${url}','_blank')">${cells}${expandCell}</tr>`;
   }).join("");
-  return `<table class="snfus-ml-table"><thead><tr>${thCells}</tr></thead><tbody>${tdRows}</tbody></table>`;
+  let tfootHtml="";
+  if(hasHJH&&Object.keys(sums).length){
+    const sumCells=cols.map((c,i)=>{
+      if(c.num){const v=sums[c.f];const disp=isJH?(v/8).toFixed(2):v%1===0?String(v):v.toFixed(2);return `<td style="text-align:right;font-weight:700">${disp}</td>`;}
+      return i===0?`<td class="sum-label" style="color:${C_IN};font-size:10px;font-weight:700">Σ</td>`:`<td></td>`;
+    }).join("")+(expandFn?`<td></td>`:"");
+    tfootHtml=`<tfoot><tr>${sumCells}</tr></tfoot>`;
+  }
+  return (hasHJH?`<div style="display:flex;align-items:center;gap:8px;padding:5px 10px;border-bottom:1px solid rgba(255,255,255,.05)"><span style="font-size:10px;color:rgba(238,240,251,.4)">Unité :</span>${toggleBtn}</div>`:"")
+    +`<table class="snfus-ml-table"><thead><tr>${thCells}</tr></thead><tbody>${tdRows}</tbody>${tfootHtml}</table>`;
 }
+
+window.snfusOrdyToggleHJH=()=>{
+  _hjhMode["ordy-tc"]=!_hjhMode["ordy-tc"];
+  // Re-rendre la section TC ORDY
+  if(!window._ordyTCs||!window._ordyRaSysId) return;
+  const tcHtml=ordyTableHtml(ORDY_TC_COLS,window._ordyTCs,"time_card","snfusOrdyExpandTC",true);
+  const body=document.querySelector("#snfus-ordy-tc .snfus-ordy-section-body");
+  if(body){body.innerHTML=tcHtml;}
+  const meta=document.querySelector("#snfus-ordy-tc .snfus-ordy-section-meta span:first-child");
+  if(meta) meta.textContent=`${window._ordyTCs.length} enregistrement${window._ordyTCs.length!==1?"s":""}`;
+};
 
 function ordySection(id, title, count, bodyHtml){
   return `<div class="snfus-ordy-section" id="snfus-ordy-${id}">
@@ -927,11 +1026,9 @@ function ordySection(id, title, count, bodyHtml){
 function renderOrdy(raSysId, allocs, rplans, tcs){
   const tab=document.getElementById("snfus-tab-ordy");
   // Resource Plan (premier trouvé)
-  const rplanHtml=ordyTableHtml(ORDY_RPLAN_COLS, rplans, "resource_plan", null);
-  // Resource Allocations
-  const allocHtml=ordyTableHtml(ORDY_ALLOC_COLS, allocs, "resource_allocation","snfusOrdyExpandAlloc");
-  // Time Cards
-  const tcHtml=ordyTableHtml(ORDY_TC_COLS, tcs, "time_card","snfusOrdyExpandTC");
+  const rplanHtml=ordyTableHtml(ORDY_RPLAN_COLS, rplans, "resource_plan", null, false);
+  const allocHtml=ordyTableHtml(ORDY_ALLOC_COLS, allocs, "resource_allocation","snfusOrdyExpandAlloc", false);
+  const tcHtml=ordyTableHtml(ORDY_TC_COLS, tcs, "time_card","snfusOrdyExpandTC", true);
 
   tab.innerHTML=
     ordySection("rplan","Resource Plan",rplans.length,rplanHtml)+
