@@ -1,1 +1,1254 @@
-javascript:!function(){const e="snfus-style",n="snfus-overlay";document.getElementById(n)&&document.getElementById(n).remove(),document.getElementById(e)&&document.getElementById(e).remove();const t="#2dd9a3",s="#ffd23a",a="#3aa0ff",o="#ff4d6d",r="#b06bff",l="#2dd9a3",i="#ff9f3a",d="#ff4d6d",c="#3aa0ff",u="#e040fb";function p(e,n){return`rgba(${parseInt(e.slice(1,3),16)},${parseInt(e.slice(3,5),16)},${parseInt(e.slice(5,7),16)},${n})`}const f=[{t:"Project Workspace",url:(e,n)=>`/now/workspace/project/home/sub/record/pm_project/${e}/params/page-name/details/time-stamp/${n}/project-table/pm_project/project-id/${e}/record-status/1`},{t:"Planning",url:(e,n)=>`/now/workspace/project/home/sub/planning/pm_project/${e}/${n}/params/page-name/planning`},{t:"Resources",url:(e,n)=>`/now/workspace/project/home/sub/resource_board/project_resource-${e}-pm_project-${n}/params/timestamp/${n}`},{t:"Details",url:(e,n)=>`/now/workspace/project/home/sub/record/pm_project/${e}/params/page-name/details/time-stamp/${n}/project-table/pm_project/project-id/${e}/record-status/1`},{t:"Financials",url:(e,n)=>`/now/workspace/project/home/sub/pw-financials/pm_project/${e}/${n}/params/page-name/financials`},{t:"RIDAC",url:(e,n)=>`/now/workspace/project/home/sub/ridac-monitor/pm_project/${e}/${n}/params/page-name/ridac-monitor`},{t:"Analytics",url:(e,n)=>`/now/workspace/project/home/sub/analytics/${e}/pm_project/${n}/params/page-name/analytics`},{t:"Docs",url:e=>`/now/workspace/project/home/sub/docs/pm_project/${e}/params/page-name/docs`},{t:"Status Reports",url:(e,n)=>`/now/workspace/project/home/sub/status-report/pm_project/${e}/${n}/params/page-name/status-report`}],m=[{t:"Classique UI",grp:"cl",urlP:e=>`/now/nav/ui/classic/params/target/pm_project_task.do?sys_id=${e}`,urlT:e=>`/now/nav/ui/classic/params/target/pm_project_task.do?sys_id=${e}`},{t:"Cost Plan",grp:"cp",urlP:e=>`/cost_plan_list.do?sysparm_query=top_task%3D${e}`,urlT:e=>`/cost_plan_list.do?sysparm_query=task%3D${e}`},{t:"CP Breakdown (Task)",grp:"cp",urlP:e=>`/cost_plan_breakdown_list.do?sysparm_query=task%3D${e}`,urlT:e=>`/cost_plan_breakdown_list.do?sysparm_query=task%3D${e}`},{t:"CP Breakdown (CP.Task)",grp:"cp",urlP:e=>`/cost_plan_breakdown_list.do?sysparm_query=cost_plan.top_task%3D${e}`,urlT:e=>`/cost_plan_breakdown_list.do?sysparm_query=cost_plan.task%3D${e}`},{t:"Expense Lines",grp:"ex",urlP:e=>`/fm_expense_line_list.do?sysparm_query=source_id%3D${e}`,urlT:e=>`/fm_expense_line_list.do?sysparm_query=source_id%3D${e}`},{t:"Resource Assignments",grp:"ra",urlP:e=>`/sn_plng_att_core_resource_assignment_list.do?sysparm_query=top_task%3D${e}`,urlT:e=>`/sn_plng_att_core_resource_assignment_list.do?sysparm_query=task%3D${e}`},{t:"Resource Plan",grp:"ra",urlP:e=>`/resource_plan_list.do?sysparm_query=top_task%3D${e}`,urlT:e=>`/resource_plan_list.do?sysparm_query=task%3D${e}`},{t:"Resource Allocation",grp:"ra",urlP:e=>`/resource_allocation_list.do?sysparm_query=resource_plan.top_task%3D${e}`,urlT:e=>`/resource_allocation_list.do?sysparm_query=resource_plan.task%3D${e}`},{t:"Time Card",grp:"tc",urlP:e=>`/time_card_list.do?sysparm_query=top_task%3D${e}`,urlT:e=>`/time_card_list.do?sysparm_query=task%3D${e}`},{t:"Time Card Dailies",grp:"tc",urlP:e=>`/time_card_daily_list.do?sysparm_query=time_card.top_task%3D${e}`,urlT:e=>`/time_card_daily_list.do?sysparm_query=time_card.task%3D${e}`}],b=[{id:"ra",label:"Resource Assignments",color:r,table:"sn_plng_att_core_resource_assignment",qP:e=>`top_task=${e}`,qT:e=>`task=${e}`,clickable:!0,cols:[{f:"number",label:"N°"},{f:"user_resource",label:"Resource",ref:!0},{f:"role",label:"Role",ref:!0},{f:"effort_type",label:"Type",ref:!0},{f:"effort",label:"Effort"},{f:"start_date",label:"Début"},{f:"end_date",label:"Fin"}]},{id:"tc",label:"Time Cards",color:l,table:"time_card",qP:e=>`top_task=${e}`,qT:e=>`task=${e}`,cols:[{f:"week_starts_on",label:"Week starts on"},{f:"category",label:"Category",ref:!0},{f:"user",label:"User",ref:!0},{f:"task",label:"Task",ref:!0},{f:"state",label:"State"},{f:"sunday",label:"Sun"},{f:"monday",label:"Mon"},{f:"tuesday",label:"Tue"},{f:"wednesday",label:"Wed"},{f:"thursday",label:"Thu"},{f:"friday",label:"Fri"},{f:"saturday",label:"Sat"},{f:"total",label:"Total"}]},{id:"cp",label:"Cost Plans",color:i,table:"cost_plan",qP:e=>`top_task=${e}`,qT:e=>`task=${e}`,hasBreakdown:!0,cols:[{f:"short_description",label:"Name"},{f:"task",label:"Task",ref:!0},{f:"resource_type",label:"Resource type",ref:!0},{f:"start_fiscal_period",label:"Start period",ref:!0},{f:"end_fiscal_period",label:"End period",ref:!0},{f:"cost_default_currency",label:"Planned cost"},{f:"actual_cost_default_currency",label:"Actual cost"},{f:"currency",label:"Currency"},{f:"expense_type",label:"Expense type",ref:!0}]},{id:"ex",label:"Expense Lines",color:d,table:"fm_expense_line",qP:e=>`source_id=${e}`,qT:e=>`source_id=${e}`,cols:[{f:"number",label:"N°"},{f:"date",label:"Date"},{f:"short_description",label:"Description"},{f:"source_id",label:"Source ID",ref:!0},{f:"amount",label:"Amount"},{f:"time_card",label:"Time card",ref:!0},{f:"time_card.total",label:"TC Total"},{f:"base_expense",label:"Base expense",ref:!0},{f:"base_expense.time_card",label:"Base TC",ref:!0},{f:"base_expense.time_card.total",label:"Base TC Total"}]}],y=[{f:"breakdown_type",label:"Type"},{f:"expense_type",label:"Expense type",ref:!0},{f:"fiscal_period",label:"Fiscal period",ref:!0},{f:"task",label:"Task",ref:!0},{f:"portfolio",label:"Portfolio",ref:!0},{f:"program",label:"Program",ref:!0},{f:"cost_default_currency",label:"Planned cost"}],g=[{f:"approved_start_date",label:"Approved start date"},{f:"start_date",label:"Planned start date"},{f:"work_start",label:"Actual start date"},{f:"duration",label:"Planned duration"},{f:"effort",label:"Planned effort"}],x=[{f:"approved_end_date",label:"Approved end date"},{f:"end_date",label:"Planned end date"},{f:"work_end",label:"Actual end date"},{f:"work_duration",label:"Actual duration"},{f:"work_effort",label:"Actual effort"}],_=[...g,...x],w=[{f:"cost",label:"Total planned cost"},{f:"capex_cost",label:"Planned capital"},{f:"opex_cost",label:"Planned operating"},{f:"budget_cost",label:"Budget cost"},{f:"work_cost",label:"Actual cost"}],h=[{f:"number",label:"N°"},{f:"resource_plan",label:"Resource Plan",ref:!0},{f:"resource",label:"Resource",ref:!0},{f:"start_date",label:"Début"},{f:"end_date",label:"Fin"},{f:"allocation_percent",label:"Alloc %"},{f:"state",label:"State"}],v=[{f:"date",label:"Date"},{f:"allocation",label:"Allocation",ref:!0},{f:"resource",label:"Resource",ref:!0},{f:"hours",label:"Heures"},{f:"state",label:"State"}],$=[{f:"number",label:"N°"},{f:"task",label:"Task",ref:!0},{f:"resource",label:"Resource",ref:!0},{f:"start_date",label:"Début"},{f:"end_date",label:"Fin"},{f:"state",label:"State"}],k=[{f:"week_starts_on",label:"Week starts on"},{f:"user",label:"User",ref:!0},{f:"task",label:"Task",ref:!0},{f:"state",label:"State"},{f:"total",label:"Total"}],E=[{f:"date",label:"Date"},{f:"time_card",label:"Time Card",ref:!0},{f:"hours",label:"Heures"},{f:"state",label:"State"},{f:"task",label:"Task",ref:!0}],j=document.createElement("style");j.id=e,j.textContent=`\n@keyframes snfus-fadein{from{opacity:0}to{opacity:1}}\n@keyframes snfus-slideup{from{opacity:0;transform:translateY(8px) scale(.988)}to{opacity:1;transform:none}}\n\n/* ===== OVERLAY ===== */\n#snfus-overlay{position:fixed;inset:0;z-index:2147483647;display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;\n  font-family:"Segoe UI",Arial,sans-serif;\n  background:radial-gradient(circle at 20% -10%,rgba(80,60,160,.35),transparent 55%),\n             radial-gradient(circle at 90% 0%,rgba(20,140,160,.25),transparent 50%),rgba(6,8,18,.96);\n  backdrop-filter:blur(6px);animation:snfus-fadein .14s ease-out;padding:10px;gap:8px}\n\n/* ===== TOPBAR ===== */\n#snfus-topbar{display:flex;align-items:center;gap:12px;flex-shrink:0}\n#snfus-title{display:flex;align-items:center;gap:8px;flex-shrink:0}\n#snfus-title h2{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;\n  color:${t};text-shadow:0 0 12px ${p(t,.55)};margin:0}\n#snfus-autodetect{font-size:10px;color:${p(t,.6)};font-style:italic}\n#snfus-status{font-size:11px;color:rgba(238,240,251,.5)}\n#snfus-status.ok{color:${t}} #snfus-status.err{color:#ff6b7a}\n#snfus-topbar-right{display:flex;align-items:center;gap:8px;margin-left:auto}\n#snfus-close{cursor:pointer;font-size:18px;color:rgba(238,240,251,.5);background:rgba(255,255,255,.05);\n  border:1px solid rgba(255,255,255,.1);width:28px;height:28px;border-radius:7px;\n  display:flex;align-items:center;justify-content:center;transition:all .14s;flex-shrink:0}\n#snfus-close:hover{background:rgba(255,80,90,.18);color:#ff9aa3}\n\n/* inputs dans topbar */\n.snfus-top-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;\n  color:rgba(238,240,251,.4);margin-bottom:2px}\n.snfus-top-input-wrap{display:flex;flex-direction:column}\n.snfus-field{padding:6px 10px;border:1px solid ${p(t,.3)};border-radius:8px;font-size:12px;\n  background:rgba(255,255,255,.06);color:#f4f5ff;outline:none;font-family:inherit;\n  transition:border-color .14s,box-shadow .14s;min-width:160px}\n.snfus-field::placeholder{color:rgba(238,240,251,.3)}\n.snfus-field:focus{border-color:${p(t,.6)};box-shadow:0 0 0 3px ${p(t,.14)}}\n.snfus-field.detected{border-color:${p(t,.5)};background:${p(t,.07)}}\n#snfus-load-btn{padding:7px 16px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;\n  background:${p(t,.2)};border:1px solid ${p(t,.5)};color:${t};font-family:inherit;\n  transition:all .14s;white-space:nowrap}\n#snfus-load-btn:hover{background:${p(t,.32)};box-shadow:0 0 12px ${p(t,.4)}}\n#snfus-load-btn:disabled{opacity:.45;cursor:default}\n\n/* ===== NAVIGATION HORIZONTALE compacte ===== */\n#snfus-nav{display:flex;align-items:center;gap:6px;flex-shrink:0;\n  background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);\n  border-radius:10px;padding:6px 10px;flex-wrap:nowrap;overflow-x:auto}\n\n/* Section workspace en ligne */\n#snfus-nav-ws{display:flex;align-items:center;gap:4px;flex-shrink:0}\n.snfus-nav-section-title{display:none}\n#snfus-ws-grid-main{display:flex;gap:3px;flex-wrap:nowrap}\n.snfus-wbtn{padding:4px 8px;border-radius:6px;font-size:9.5px;font-weight:500;cursor:pointer;\n  text-align:center;border:1px solid ${p(c,.35)};background:${p(c,.1)};\n  color:${c};transition:all .13s;font-family:inherit;white-space:nowrap}\n.snfus-wbtn:disabled{opacity:.28;cursor:default}\n.snfus-wbtn:hover:not(:disabled){background:${p(c,.22)};box-shadow:0 0 8px ${p(c,.3)}}\n.snfus-wbtn.ws-full{font-weight:700;font-size:9px;text-transform:uppercase;letter-spacing:.5px;\n  background:${p(c,.18)}}\n\n/* séparateur vertical */\n.snfus-nav-sep{width:1px;height:24px;background:rgba(255,255,255,.12);margin:0 4px;flex-shrink:0}\n\n/* Section classique UI — groupes sur une ligne */\n#snfus-nav-cl{display:flex;align-items:center;gap:6px;flex:1;flex-wrap:nowrap}\n.snfus-cl-group{display:flex;align-items:center;gap:2px;flex-shrink:0}\n.snfus-cl-group-title{display:none}\n.snfus-cl-group-btns{display:flex;gap:2px;flex-wrap:nowrap}\n.snfus-lbtn{padding:4px 8px;border-radius:6px;font-size:9.5px;font-weight:500;cursor:pointer;\n  border:1px solid ${p(o,.35)};background:${p(o,.1)};color:${o};\n  transition:all .13s;font-family:inherit;white-space:nowrap;text-align:left}\n.snfus-lbtn:disabled{opacity:.28;cursor:default}\n.snfus-lbtn:hover:not(:disabled){background:${p(o,.22)};box-shadow:0 0 8px ${p(o,.28)}}\n\n/* ===== ONGLETS ===== */\n#snfus-tabs-bar{display:flex;gap:6px;flex-shrink:0}\n.snfus-tab{padding:6px 18px;border-radius:8px 8px 0 0;font-size:11.5px;font-weight:600;cursor:pointer;\n  border:1px solid rgba(255,255,255,.1);border-bottom:none;\n  background:rgba(255,255,255,.04);color:rgba(238,240,251,.55);\n  transition:all .14s;font-family:inherit}\n.snfus-tab.active{background:rgba(255,255,255,.08);color:#fff;border-color:rgba(255,255,255,.18)}\n.snfus-tab-content{display:none;overflow:hidden}\n.snfus-tab-content.active{display:flex;flex:1;flex-direction:column;min-height:0}\n\n/* ===== LAYOUT PRINCIPAL ===== */\n#snfus-main{flex:1;min-height:0;display:flex;flex-direction:column;\n  background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:0 10px 10px 10px;overflow:hidden}\n\n/* Tab informations : hiérarchie | données côte à côte */\n#snfus-tab-info{flex-direction:row !important;align-items:stretch;overflow:hidden}\n#snfus-body{display:grid;grid-template-columns:var(--tree-w,30%) 1fr;gap:0;flex:1;align-self:stretch;overflow:hidden;min-height:0}\n#snfus-body.tree-narrow{--tree-w:200px}\n#snfus-body.tree-normal{--tree-w:30%}\n#snfus-body.tree-full  {grid-template-columns:1fr}\n#snfus-body.tree-full #snfus-data-col{display:none}\n\n/* col hiérarchie */\n#snfus-tree-col{display:flex;flex-direction:column;border-right:1px solid rgba(255,255,255,.07);min-height:0;overflow:hidden}\n#snfus-tree-header{display:flex;align-items:center;justify-content:space-between;\n  padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.06);flex-shrink:0}\n.snfus-tree-title{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:rgba(238,240,251,.4)}\n#snfus-tree-toggle{display:inline-flex;gap:3px}\n.snfus-ttbtn{font-size:9.5px;padding:2px 7px;border-radius:5px;border:1px solid rgba(255,255,255,.15);\n  background:rgba(255,255,255,.05);color:rgba(238,240,251,.55);cursor:pointer;font-family:inherit;transition:all .13s}\n.snfus-ttbtn:hover{background:rgba(255,255,255,.12);color:#fff}\n.snfus-ttbtn.active{background:${p(s,.2)};border-color:${p(s,.45)};color:${s}}\n#snfus-tree-box{overflow:auto;flex:1;font-size:11.5px;min-height:0}\n.snfus-tree-hint{color:rgba(238,240,251,.3);font-size:11px;font-style:italic;padding:10px}\n\n/* table hiérarchie */\n#snfus-tree-table{width:100%;border-collapse:collapse;table-layout:fixed}\n#snfus-tree-table colgroup col.col-num{width:130px}\n#snfus-tree-table colgroup col.col-name{min-width:200px;width:200px}\n#snfus-tree-table colgroup col.col-cnt{width:38px}\n#snfus-tree-table thead th{position:sticky;top:0;z-index:1;background:rgba(18,20,38,.97);padding:6px 8px;\n  text-align:left;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;\n  color:rgba(238,240,251,.45);border-bottom:1px solid rgba(255,255,255,.08);white-space:nowrap}\n#snfus-tree-table thead th.cnt-col{text-align:center}\n#snfus-tree-table tbody tr{cursor:pointer;transition:background .1s;border-bottom:1px solid rgba(255,255,255,.04)}\n#snfus-tree-table tbody tr:hover{background:rgba(255,255,255,.05)}\n#snfus-tree-table tbody tr.sel{background:rgba(255,210,58,.07)}\n#snfus-tree-table tbody tr.sel td{color:#fff}\n#snfus-tree-table td{padding:5px 8px;vertical-align:middle;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}\n#snfus-tree-table td.num-cell{white-space:nowrap;overflow:visible}\n/* col nom : ellipsis à 350px, tooltip au survol */\n#snfus-tree-table td.name-cell{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px}\n/* en narrow : masquer complètement la colonne nom */\n#snfus-body.tree-narrow .col-name-hide{display:none}\n#snfus-tree-table td.cnt-col{text-align:center;padding:4px 2px}\n.snfus-tnode-num{font-size:10px;font-family:"Consolas","Courier New",monospace;white-space:nowrap}\n.snfus-tnode-name{font-size:11px;color:#dde1f7;opacity:.85}\n.snfus-sel-badge{display:none;font-size:8px;font-weight:700;padding:1px 3px;border-radius:3px;margin-left:4px;\n  background:${p(s,.2)};color:${s};border:1px solid ${p(s,.4)}}\n#snfus-tree-table tbody tr.sel .snfus-sel-badge{display:inline}\n.snfus-cnt{font-size:9px;font-weight:600;padding:1px 5px;border-radius:9px;display:inline-block}\n.snfus-cnt.ra{background:${p(r,.18)};color:${r};border:1px solid ${p(r,.3)}}\n.snfus-cnt.tc{background:${p(l,.15)};color:${l};border:1px solid ${p(l,.28)}}\n.snfus-cnt.cp{background:${p(i,.15)};color:${i};border:1px solid ${p(i,.28)}}\n.snfus-cnt.ex{background:${p(d,.15)};color:${d};border:1px solid ${p(d,.28)}}\n.snfus-cnt.empty{color:rgba(238,240,251,.2);background:none;border:none;font-weight:400}\n.snfus-node-dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:5px;vertical-align:middle}\n\n#snfus-data-col{overflow-y:auto;overflow-x:hidden;flex:1;min-height:0;display:flex;flex-direction:column;gap:0}\n\n/* info record */\n#snfus-info{padding:12px;flex-shrink:0;border-bottom:1px solid rgba(255,255,255,.06)}\n#snfus-info-title{font-size:12.5px;font-weight:600;color:${s};margin-bottom:10px}\n#snfus-info-title span{font-size:10.5px;color:rgba(238,240,251,.45);font-weight:400;margin-left:8px}\n#snfus-info-body{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:start}\n#snfus-dates-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 16px}\n.snfus-dates-col-title{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;\n  color:rgba(238,240,251,.3);margin-bottom:4px;padding-bottom:3px;border-bottom:1px solid rgba(255,255,255,.05)}\n#snfus-costs-col{display:flex;flex-direction:column;gap:6px;min-width:180px}\n.snfus-costs-title{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;\n  color:rgba(238,240,251,.3);margin-bottom:4px;padding-bottom:3px;border-bottom:1px solid rgba(255,255,255,.05)}\n.snfus-ifield{display:flex;flex-direction:column;gap:2px}\n.snfus-ifield-lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:rgba(238,240,251,.4)}\n.snfus-ifield-val{font-size:11.5px;color:#eef0fb;background:rgba(255,255,255,.04);\n  border:1px solid rgba(255,255,255,.07);border-radius:6px;padding:4px 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}\n.snfus-ifield-val.empty{color:rgba(238,240,251,.25);font-style:italic}\n.snfus-ifield-val.overdue{background:${p(o,.14)};border-color:${p(o,.35)};color:#ff9aa3}\n#snfus-info-empty{color:rgba(238,240,251,.3);font-size:11px;font-style:italic;padding:8px 0}\n\n/* mini-listes */\n.snfus-minilist{border-top:1px solid rgba(255,255,255,.05);flex-shrink:0}\n.snfus-minilist-hdr{display:flex;align-items:center;justify-content:space-between;padding:8px 12px}\n.snfus-minilist-title{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.8px}\n.snfus-minilist-meta{display:flex;align-items:center;gap:8px}\n.snfus-minilist-count{font-size:10px;color:rgba(238,240,251,.45)}\n.snfus-minilist-open{font-size:10px;cursor:pointer;padding:2px 8px;border-radius:6px;border:1px solid;\n  background:transparent;font-family:inherit;transition:all .13s}\n.snfus-minilist-open:disabled{opacity:.3;cursor:default}\n.snfus-minilist-body{overflow-x:auto}\n.snfus-ml-table{width:100%;border-collapse:collapse;font-size:11px}\n.snfus-ml-table th{padding:5px 8px;text-align:left;font-size:9px;font-weight:700;text-transform:uppercase;\n  letter-spacing:.6px;color:rgba(238,240,251,.4);white-space:nowrap;border-bottom:1px solid rgba(255,255,255,.06)}\n.snfus-ml-table td{padding:5px 8px;color:#dde1f7;white-space:nowrap;border-bottom:1px solid rgba(255,255,255,.04)}\n.snfus-ml-table tr:hover td{background:rgba(255,255,255,.04)}\n.snfus-ml-table td.empty{color:rgba(238,240,251,.3);font-style:italic}\n.snfus-ml-table td.ref-link{color:${a};cursor:pointer;text-decoration:underline}\n.snfus-ml-table td.ref-link:hover{color:#90c8ff}\n.snfus-ml-table tr.ra-clickable:hover td{background:${p(r,.1)};cursor:pointer}\n.snfus-ml-table tr.ra-clickable.ra-sel td{background:${p(r,.18)};color:#fff}\n.snfus-ml-empty{padding:10px 12px;font-size:11px;color:rgba(238,240,251,.3);font-style:italic}\n.snfus-ml-loading{padding:8px 12px;font-size:11px;color:${p(t,.6)};font-style:italic}\n/* breakdown */\n.snfus-breakdown-wrap{background:rgba(255,255,255,.03);border-top:1px solid rgba(255,255,255,.06);overflow-x:auto}\n.snfus-breakdown-hdr{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;\n  color:${i};padding:6px 10px;border-bottom:1px solid rgba(255,255,255,.05)}\n.snfus-breakdown-loading{padding:8px 10px;font-size:11px;color:${p(t,.6)};font-style:italic}\n.snfus-bkd-btn{font-size:9px;padding:2px 7px;border-radius:4px;border:1px solid ${p(i,.4)};\n  background:${p(i,.1)};color:${i};cursor:pointer;font-family:inherit;transition:all .12s;white-space:nowrap}\n.snfus-bkd-btn:hover{background:${p(i,.22)}}\n\n/* ===== ONGLET ORDY ===== */\n#snfus-tab-ordy{overflow-y:auto;overflow-x:hidden;gap:0}\n#snfus-ordy-empty{color:rgba(238,240,251,.35);font-size:12px;font-style:italic;\n  padding:40px;text-align:center;flex:1}\n.snfus-ordy-section{border-top:1px solid rgba(255,255,255,.06);flex-shrink:0}\n.snfus-ordy-section-hdr{display:flex;align-items:center;justify-content:space-between;\n  padding:8px 12px;cursor:pointer;user-select:none;transition:background .12s}\n.snfus-ordy-section-hdr:hover{background:rgba(255,255,255,.04)}\n.snfus-ordy-section-title{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:${u}}\n.snfus-ordy-section-meta{display:flex;align-items:center;gap:8px;font-size:10px;color:rgba(238,240,251,.45)}\n.snfus-ordy-chevron{transition:transform .15s;font-size:10px}\n.snfus-ordy-section.collapsed .snfus-ordy-chevron{transform:rotate(-90deg)}\n.snfus-ordy-section-body{overflow-x:auto}\n.snfus-ordy-section.collapsed .snfus-ordy-section-body{display:none}\n/* ligne cliquable dans alloc/tc pour afficher daily */\n.snfus-ordy-row-click:hover td{background:${p(u,.08)};cursor:pointer}\n.snfus-ordy-row-click.expanded td{background:${p(u,.14)}}\n.snfus-ordy-daily-row{background:rgba(255,255,255,.02)}\n.snfus-ordy-daily-row td{font-size:10.5px;color:rgba(238,240,251,.7);padding:4px 8px 4px 24px}\n`,document.head.appendChild(j);let T=null,C=null,I="info",q=null;const L={},P={},B={};function S(){const e=window.top&&window.top.g_ck||window.g_ck||"",n={Accept:"application/json"};return e&&(n["X-UserToken"]=e),n}async function z(e){return fetch(e,{headers:S()})}function A(e){if(null==e||""===e)return"";if("object"==typeof e){const n=e.display_value;if(null!=n&&""!==n)return R(String(n));const t=e.value;return null!=t&&""!==t?R(String(t)):""}return R(String(e))}function R(e){if(!e)return e;const n=/^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2})(?::(\d{2}))?)?/.exec(e);if(n){const[,e,t,s,a,o,r]=n;return void 0!==a?`${s}-${t}-${e} ${a}:${o}:${r||"00"}`:`${s}-${t}-${e}`}const t=/^(\d{2})-(\d{2})-(\d{4})(?:\s+(\d{2}):(\d{2})(?::(\d{2}))?)?/.exec(e);if(t){const[,e,n,s,a,o,r]=t;return void 0!==a?`${n}-${e}-${s} ${a}:${o}:${r||"00"}`:`${n}-${e}-${s}`}return e}function H(e){return"object"==typeof e?e.value||e.display_value||"":e}function D(e){if(!e&&0!==e)return'<td class="empty">(empty)</td>';if("object"==typeof e){const n=e.display_value||e.value||"";if(!n)return'<td class="empty">(empty)</td>';if(e.link){return`<td class="ref-link" onclick="event.stopPropagation();window.open('${`${location.origin}/now/nav/ui/classic/params/target/${e.link.split("/api/now/table/")[1]||""}`}','_blank')">${n}</td>`}return`<td>${n}</td>`}const n=A(e);return`<td class="${n?"":"empty"}">${n||"(empty)"}</td>`}const N=document.createElement("div");N.id=n,N.onclick=e=>{e.target===N&&Q()};const M={cp:{title:"Cost Plans",btns:[]},ex:{title:"Expense Lines",btns:[]},ra:{title:"Resource",btns:[]},tc:{title:"Time Cards",btns:[]},cl:{title:"Classique",btns:[]}};m.forEach(e=>M[e.grp].btns.push(e)),N.innerHTML='\n<div id="snfus-overlay" style="position:static;padding:0;background:none;backdrop-filter:none;animation:none">\n<div id="snfus-overlay" style="display:contents">\n</div>',N.innerHTML="";const O=document.createElement("div");O.id="snfus-topbar",O.innerHTML='\n  <div id="snfus-title">\n    <h2>🗂️ Project Navigator</h2>\n    <span id="snfus-autodetect"></span>\n    <span id="snfus-status"></span>\n  </div>\n  <div id="snfus-topbar-right">\n    <div class="snfus-top-input-wrap">\n      <div class="snfus-top-label">Numéro</div>\n      <input class="snfus-field" id="snfus-number" placeholder="PRJ0001234"\n        oninput="snfusOnInput(\'number\')" onkeydown="if(event.key===\'Enter\')snfusLoad()" style="min-width:130px">\n    </div>\n    <div class="snfus-top-input-wrap">\n      <div class="snfus-top-label">SYS_ID</div>\n      <input class="snfus-field" id="snfus-sysid" placeholder="f041cb6a..."\n        oninput="snfusOnInput(\'sysid\')" onkeydown="if(event.key===\'Enter\')snfusLoad()" style="min-width:220px">\n    </div>\n    <button id="snfus-load-btn" onclick="snfusLoad()" style="align-self:flex-end">Charger la hiérarchie</button>\n    <button id="snfus-close" onclick="snfusClose()">&#215;</button>\n  </div>',N.appendChild(O);const U=document.createElement("div");U.id="snfus-nav",U.innerHTML=`<div id="snfus-nav-ws">\n    <div class="snfus-nav-section-title">Workspace</div>\n    <button class="snfus-wbtn ws-full" disabled onclick="snfusOpenWs('Project Workspace')">Project Workspace</button>\n    <div id="snfus-ws-grid-main">${f.filter(e=>"Project Workspace"!==e.t).map(e=>`<button class="snfus-wbtn" disabled onclick="snfusOpenWs('${e.t.replace(/'/g,"\\'")}')">${e.t}</button>`).join("")}</div>\n  </div><div class="snfus-nav-sep"></div><div id="snfus-nav-cl">${Object.entries(M).map(([,e])=>{const n=e.btns.map(e=>`<button class="snfus-lbtn" disabled onclick="snfusOpenLink('${e.t.replace(/'/g,"\\'")}')">${e.t}</button>`).join("");return`<div class="snfus-cl-group">\n      <div class="snfus-cl-group-title">${e.title}</div>\n      <div class="snfus-cl-group-btns">${n}</div>\n    </div>`}).join("")}</div>`,N.appendChild(U);const F=document.createElement("div");F.id="snfus-tabs-bar",F.innerHTML='\n  <button class="snfus-tab active" onclick="snfusSetTab(\'info\')">Informations</button>\n  <button class="snfus-tab" onclick="snfusSetTab(\'ordy\')">🤖 ORDY</button>',N.appendChild(F);const W=document.createElement("div");W.id="snfus-main";const Y=document.createElement("div");Y.id="snfus-tab-info",Y.className="snfus-tab-content active";const X=document.createElement("div");X.id="snfus-split",X.setAttribute("id","snfus-body");const G=document.createElement("div");G.id="snfus-tree-col",G.innerHTML=`\n  <div id="snfus-tree-header">\n    <span class="snfus-tree-title">Hiérarchie du projet</span>\n    <div id="snfus-tree-toggle">\n      <button class="snfus-ttbtn" onclick="snfusTreeSize('narrow')" title="Compact">⊟</button>\n      <button class="snfus-ttbtn active" onclick="snfusTreeSize('normal')" title="Normal">⊡</button>\n      <button class="snfus-ttbtn" onclick="snfusTreeSize('full')" title="Plein écran">⊞</button>\n    </div>\n  </div>\n  <div id="snfus-tree-box">\n    <div class="snfus-tree-hint" id="snfus-tree-hint">Entrez un numéro ou sys_id.</div>\n    <table id="snfus-tree-table" style="display:none">\n      <colgroup><col class="col-num"><col class="col-name"><col class="col-cnt"><col class="col-cnt"><col class="col-cnt"><col class="col-cnt"></colgroup>\n      <thead><tr>\n        <th>Numéro</th>\n        <th class="col-name-hide">Nom</th>\n        <th class="cnt-col" style="color:${r}" title="Resource Assignments">RA</th>\n        <th class="cnt-col" style="color:${l}" title="Time Cards">TC</th>\n        <th class="cnt-col" style="color:${i}" title="Cost Plans">CP</th>\n        <th class="cnt-col" style="color:${d}" title="Expense Lines">EX</th>\n      </tr></thead>\n      <tbody id="snfus-tree"></tbody>\n    </table>\n  </div>`;const V=document.createElement("div");V.id="snfus-data-col",V.innerHTML=`\n  <div id="snfus-info">\n    <div id="snfus-info-title">Sélectionnez un nœud</div>\n    <div id="snfus-info-content"><div id="snfus-info-empty">—</div></div>\n  </div>\n  ${b.map(e=>`\n  <div class="snfus-minilist" id="snfus-ml-${e.id}">\n    <div class="snfus-minilist-hdr">\n      <span class="snfus-minilist-title" style="color:${e.color}">${e.label}</span>\n      <div class="snfus-minilist-meta">\n        <span class="snfus-minilist-count" id="snfus-ml-${e.id}-count">—</span>\n        <button class="snfus-minilist-open" disabled style="color:${e.color};border-color:${p(e.color,.4)}"\n          onclick="snfusOpenList('${e.id}')">↗ Liste complète</button>\n      </div>\n    </div>\n    <div class="snfus-minilist-body" id="snfus-ml-${e.id}-body">\n      <div class="snfus-ml-empty">Sélectionnez un nœud.</div>\n    </div>\n  </div>`).join("")}`,X.appendChild(G),X.appendChild(V),Y.appendChild(X);const J=document.createElement("div");function Q(){document.getElementById(n)?.remove(),document.getElementById(e)?.remove(),document.removeEventListener("keydown",Z)}function Z(e){"Escape"===e.key&&Q()}function K(e,n){const t=document.getElementById("snfus-status");t.textContent=e,t.className=n||""}function ee(){return document.querySelectorAll("#snfus-nav-ws .snfus-wbtn")}function ne(){return document.querySelectorAll("#snfus-nav-cl .snfus-lbtn")}function te(){return document.querySelectorAll(".snfus-minilist-open")}function se(e){C=e,document.querySelectorAll("#snfus-tree tr").forEach(e=>e.classList.remove("sel")),document.querySelector(`#snfus-tree tr[data-id="${e.sys_id}"]`)?.classList.add("sel"),ee().forEach(e=>e.disabled=!1),ne().forEach(e=>e.disabled=!1),te().forEach(e=>e.disabled=!1),async function(e){if(P[e.sys_id])return void ae(e,P[e.sys_id]);document.getElementById("snfus-info-title").textContent=`${e.number} — ${e.name}`,document.getElementById("snfus-info-content").innerHTML='<div class="snfus-ml-loading">Chargement…</div>';const n=0===e.depth||e.isProject,t=n?"pm_project":"pm_project_task",s=[..._,...w].map(e=>e.f).join(",");try{const a=await z(`/api/now/table/${t}?sysparm_query=sys_id=${e.sys_id}&sysparm_fields=${s}&sysparm_limit=1&sysparm_display_value=all`),o=await a.json(),r=o.result&&o.result[0]?o.result[0]:{};P[e.sys_id]={rec:r,isP:n},ae(e,P[e.sys_id])}catch(e){document.getElementById("snfus-info-content").innerHTML='<div class="snfus-ml-empty">Erreur.</div>'}}(e),b.forEach(n=>async function(e,n){const t=document.getElementById(`snfus-ml-${e.id}-body`),s=document.getElementById(`snfus-ml-${e.id}-count`);if(B[e.id]&&B[e.id][n.sys_id])return void oe(e,B[e.id][n.sys_id],t,s);t.innerHTML='<div class="snfus-ml-loading">Chargement…</div>',s.textContent="…";const a=0===n.depth||n.isProject,o=(a?e.qP:e.qT)(n.sys_id),r=e.cols.map(e=>e.f).join(",")+",sys_id";try{const a=await z(`/api/now/table/${e.table}?sysparm_query=${o}&sysparm_fields=${r}&sysparm_limit=10&sysparm_display_value=all`),l=(await a.json()).result||[],i=a.headers.get("X-Total-Count");B[e.id]||(B[e.id]={}),B[e.id][n.sys_id]={rows:l,total:i},oe(e,{rows:l,total:i},t,s)}catch(e){t.innerHTML='<div class="snfus-ml-empty">Erreur.</div>',s.textContent="err"}}(n,e))}function ae(e,{rec:n,isP:t}){document.getElementById("snfus-info-title").innerHTML=`${e.number} <span>— ${e.name}</span>`;const s=new Date;function a(e){const t=n[e.f]||null,a=A(t);let o=a?"":"empty";if(a&&("end_date"===e.f||"approved_end_date"===e.f)){const e=t&&"object"==typeof t?t.value||"":String(t||""),n=new Date(e);!isNaN(n)&&n<s&&(o="overdue")}return`<div class="snfus-ifield"><span class="snfus-ifield-lbl">${e.label}</span>\n      <div class="snfus-ifield-val ${o}">${a||"—"}</div></div>`}const o=g.map(a).join(""),r=x.map(a).join(""),l=w.map(a).join("");document.getElementById("snfus-info-content").innerHTML=`\n    <div id="snfus-info-body">\n      <div id="snfus-dates-grid">\n        <div><div class="snfus-dates-col-title">Start</div><div style="display:flex;flex-direction:column;gap:6px">${o}</div></div>\n        <div><div class="snfus-dates-col-title">End</div><div style="display:flex;flex-direction:column;gap:6px">${r}</div></div>\n      </div>\n      <div id="snfus-costs-col"><div class="snfus-costs-title">Coûts</div>${l}</div>\n    </div>`}function oe(e,{rows:n,total:t},s,a){const o=n.length,r=t?parseInt(t):o;if(a.textContent=r>o?`${o}/${r} (limité à 10)`:1===r?"1 enregistrement":`${r} enregistrements`,!n.length)return void(s.innerHTML='<div class="snfus-ml-empty">Aucun enregistrement.</div>');const l=e.cols.map(e=>`<th>${e.label}</th>`).join("")+("ra"===e.id?'<th style="width:30px"></th>':"")+(e.hasBreakdown?'<th style="width:80px"></th>':""),i=n.map(n=>{const t=H(n.sys_id),s=e.cols.map(e=>D(n[e.f])).join(""),a=e.hasBreakdown?`<td onclick="event.stopPropagation()"><button class="snfus-bkd-btn" onclick="snfusToggleBreakdown(this,'${t}')">▶ Breakdown</button></td>`:"",o=t?`${location.origin}/now/nav/ui/classic/params/target/${e.table}.do?sys_id=${t}`:"#",r="ra"===e.id?`<td onclick="event.stopPropagation()"><button style="background:none;border:none;cursor:pointer;font-size:14px;padding:0 4px;opacity:.8;transition:opacity .12s" title="Ouvrir dans ORDY" onclick="snfusSelectRA('${t}',this.closest('tr'))">🤖</button></td>`:"",l=e.hasBreakdown?e.cols.length+1:e.cols.length;return`<tr onclick="window.open('${o}','_blank')">${s}${"ra"===e.id?r:""}${e.hasBreakdown?a:""}</tr>`+(e.hasBreakdown?`<tr class="snfus-breakdown-row" id="snfus-bkd-${t}" style="display:none"><td colspan="${l}" style="padding:0"><div class="snfus-breakdown-wrap"><div class="snfus-breakdown-hdr">Cost Plan Breakdowns</div><div id="snfus-bkd-body-${t}" class="snfus-breakdown-loading">Cliquez sur ▶ pour charger.</div></div></td></tr>`:"")}).join("");s.innerHTML=`<table class="snfus-ml-table"><thead><tr>${l}</tr></thead><tbody>${i}</tbody></table>`}function re(e,n,t,s){if(!n.length)return'<div class="snfus-ml-empty">Aucun enregistrement.</div>';return`<table class="snfus-ml-table"><thead><tr>${e.map(e=>`<th>${e.label}</th>`).join("")+(s?'<th style="width:30px"></th>':"")}</tr></thead><tbody>${n.map(n=>{const a=H(n.sys_id),o=e.map(e=>D(n[e.f])).join(""),r=s?`<td onclick="event.stopPropagation();${s}('${a}',this)" style="cursor:pointer;text-align:center;color:${u}">▶</td>`:"",l=`${location.origin}/now/nav/ui/classic/params/target/${t}.do?sys_id=${a}`;return`<tr class="${s?"snfus-ordy-row-click":""}" onclick="window.open('${l}','_blank')">${o}${r}</tr>`}).join("")}</tbody></table>`}function le(e,n,t,s){return`<div class="snfus-ordy-section" id="snfus-ordy-${e}">\n    <div class="snfus-ordy-section-hdr" onclick="snfusOrdyToggle('${e}')">\n      <span class="snfus-ordy-section-title">${n}</span>\n      <div class="snfus-ordy-section-meta">\n        <span>${t} enregistrement${1!==t?"s":""}</span>\n        <span class="snfus-ordy-chevron">▾</span>\n      </div>\n    </div>\n    <div class="snfus-ordy-section-body">${s}</div>\n  </div>`}function ie(e){const n=(o=e.depth,[a,"#b06bff","#ff9f3a","#ff4d6d"][Math.min(o,3)]),t=14*e.depth,s=e.sys_id;var o;return`<tr data-id="${s}" onclick="snfusSelectNode('${s}')" onmouseenter="snfusHover('${s}')">\n    <td class="num-cell" style="white-space:nowrap">${`<span class="snfus-node-dot" style="background:${n};box-shadow:0 0 4px ${p(n,.6)};margin-left:${t}px"></span>`}<span class="snfus-tnode-num" style="color:${n}">${e.number}</span><span class="snfus-sel-badge">✓</span></td>\n    <td class="name-cell col-name-hide" title="${e.name}"><span class="snfus-tnode-name">${e.name}</span></td>\n    <td class="cnt-col" id="snfus-cnt-ra-${s}"><span class="snfus-cnt empty">—</span></td>\n    <td class="cnt-col" id="snfus-cnt-tc-${s}"><span class="snfus-cnt empty">—</span></td>\n    <td class="cnt-col" id="snfus-cnt-cp-${s}"><span class="snfus-cnt empty">—</span></td>\n    <td class="cnt-col" id="snfus-cnt-ex-${s}"><span class="snfus-cnt empty">—</span></td>\n  </tr>`}async function de(e){const n=[];let t=e,s=0;for(;t&&s++<10;)try{const e=await z(`/api/now/table/pm_project?sysparm_query=sys_id=${t}&sysparm_fields=number,short_description,parent&sysparm_limit=1`),s=await e.json(),a=s.result&&s.result[0];if(!a)break;const o=a.parent,r=o&&o.value||null;if(!r||!/^[0-9a-f]{32}$/i.test(r))break;n.push({sys_id:t,number:a.number,name:a.short_description||""}),t=r}catch(e){break}return n}async function ce(e){const n=document.getElementById("snfus-tree"),t=document.getElementById("snfus-tree-hint"),s=document.getElementById("snfus-tree-table");n.innerHTML="",t.style.display="",t.textContent="Chargement…",s.style.display="none",C=null,document.querySelectorAll("#snfus-tree tr").forEach(e=>e.classList.remove("sel")),ee().forEach(e=>e.disabled=!0),ne().forEach(e=>e.disabled=!0),te().forEach(e=>e.disabled=!0),b.forEach(e=>{document.getElementById(`snfus-ml-${e.id}-body`).innerHTML='<div class="snfus-ml-empty">Sélectionnez un nœud.</div>',document.getElementById(`snfus-ml-${e.id}-count`).textContent="—"}),document.getElementById("snfus-info-title").textContent="Sélectionnez un nœud",document.getElementById("snfus-info-content").innerHTML='<div id="snfus-info-empty">—</div>',[L,P,...b.map(e=>B[e.id]||{})].forEach(e=>{e&&Object.keys(e).forEach(n=>delete e[n])});try{const[n,t,s]=await Promise.all([async function(e){const n=await z(`/api/now/table/pm_project?sysparm_query=sys_id=${e}&sysparm_fields=number,short_description,parent&sysparm_limit=1`),t=await n.json();return t.result&&t.result[0]?t.result[0]:null}(e),async function(e){const n=await z(`/api/now/table/pm_project_task?sysparm_query=top_task=${e}&sysparm_fields=sys_id,number,short_description,parent&sysparm_limit=2000`);return((await n.json()).result||[]).map(n=>({sys_id:n.sys_id,number:n.number,name:n.short_description||"",parent:n.parent?n.parent.value||n.parent:e}))}(e),de(e)]),a=n?n.number:"PRJ",o=n&&n.short_description||"",r=[...s].reverse(),l=[];r.forEach((e,n)=>l.push({sys_id:e.sys_id,number:e.number,name:e.name,depth:n,isProject:!0}));const i=r.length;return l.push({sys_id:e,number:a,name:o,depth:i,isProject:!0}),function e(n,t,s){s.filter(e=>e.parent===n).forEach(n=>{l.push({...n,depth:t}),e(n.sys_id,t+1,s)})}(e,i+1,t),function(e){const n=document.getElementById("snfus-tree"),t=document.getElementById("snfus-tree-hint"),s=document.getElementById("snfus-tree-table");if(!e||!e.length)return t.textContent="Aucune tâche trouvée.",t.style.display="",void(s.style.display="none");t.style.display="none",s.style.display="",n.innerHTML=e.map(ie).join("")}(l),window._snfusNodes={},void l.forEach(e=>{window._snfusNodes[e.sys_id]=e})}catch(e){}t.textContent="Erreur de chargement."}async function ue(e){try{const n=await z(`/api/now/table/pm_project_task?sysparm_query=sys_id=${e}&sysparm_fields=sub_tree_root&sysparm_limit=1`),t=await n.json();if(t.result&&t.result[0]){const e=t.result[0].sub_tree_root,n=e?e.value||e:null;if(n&&/^[0-9a-f]{32}$/i.test(n))return n}}catch(e){}return null}J.id="snfus-tab-ordy",J.className="snfus-tab-content",J.innerHTML='<div id="snfus-ordy-empty">Cliquez sur une ligne de Resource Assignment pour afficher les données ORDY.</div>',W.appendChild(Y),W.appendChild(J),N.appendChild(W),document.body.appendChild(N),document.addEventListener("keydown",Z),window.snfusSetTab=e=>{I=e,document.querySelectorAll(".snfus-tab").forEach((n,t)=>n.classList.toggle("active",["info","ordy"][t]===e)),document.querySelectorAll(".snfus-tab-content").forEach(e=>e.classList.remove("active")),document.getElementById(`snfus-tab-${e}`)?.classList.add("active")},window.snfusTreeSize=e=>{document.getElementById("snfus-body").className=`tree-${e}`,document.querySelectorAll(".snfus-ttbtn").forEach((n,t)=>{n.classList.toggle("active",["narrow","normal","full"][t]===e)})},window.snfusOpenWs=e=>{const n=T||C&&C.sys_id;if(!n)return;const t=f.find(n=>n.t===e);t&&window.open(location.origin+t.url(n,Date.now()),"_blank")},window.snfusOpenLink=e=>{if(!C)return;const n=m.find(n=>n.t===e);if(!n)return;const t=0===C.depth?n.urlP:n.urlT;window.open(location.origin+t(C.sys_id),"_blank")},window.snfusOpenList=e=>{if(!C)return;const n=b.find(n=>n.id===e);if(!n)return;const t=0===C.depth?n.qP:n.qT;window.open(`${location.origin}/${n.table}_list.do?sysparm_query=${t(C.sys_id)}`,"_blank")},window.snfusSelectNode=e=>{const n=window._snfusNodes&&window._snfusNodes[e];n&&se(n)},window.snfusToggleBreakdown=async(e,n)=>{const t=document.getElementById(`snfus-bkd-${n}`),s=document.getElementById(`snfus-bkd-body-${n}`);if(!t)return;if("none"!==t.style.display)return t.style.display="none",void(e.textContent="▶ Breakdown");if(t.style.display="",e.textContent="▼ Breakdown","1"===s.dataset.loaded)return;s.className="snfus-breakdown-loading",s.textContent="Chargement…";const a=y.map(e=>e.f).join(",");try{const e=await z(`/api/now/table/cost_plan_breakdown?sysparm_query=cost_plan=${n}&sysparm_fields=${a},sys_id&sysparm_limit=50&sysparm_display_value=all`),t=(await e.json()).result||[];if(!t.length)return s.textContent="Aucun breakdown.",s.className="snfus-breakdown-loading",void(s.dataset.loaded="1");const o=y.map(e=>`<th>${e.label}</th>`).join(""),r=t.map(e=>{const n=H(e.sys_id),t=y.map(n=>D(e[n.f])).join("");return`<tr style="cursor:pointer" onclick="window.open('${location.origin}/now/nav/ui/classic/params/target/cost_plan_breakdown.do?sys_id=${n}','_blank')">${t}</tr>`}).join("");s.className="",s.innerHTML=`<table class="snfus-ml-table"><thead><tr>${o}</tr></thead><tbody>${r}</tbody></table>`,s.dataset.loaded="1"}catch(e){s.textContent="Erreur.",s.className="snfus-breakdown-loading"}},window.snfusSelectRA=async(e,n)=>{document.querySelectorAll(".ra-sel").forEach(e=>e.classList.remove("ra-sel")),n.classList.add("ra-sel"),q=e,snfusSetTab("ordy"),document.getElementById("snfus-tab-ordy").innerHTML='<div class="snfus-ordy-empty snfus-ml-loading">Chargement des données ORDY…</div>';const t=h.map(e=>e.f).join(",")+",sys_id,resource_plan",s=$.map(e=>e.f).join(",")+",sys_id",a=k.map(e=>e.f).join(",")+",sys_id";try{const[n,o,r]=await Promise.all([z(`/api/now/table/resource_allocation?sysparm_query=resource_assignment=${e}&sysparm_fields=${t}&sysparm_limit=50&sysparm_display_value=all`),z(`/api/now/table/resource_plan?sysparm_query=resource_assignment=${e}&sysparm_fields=${s}&sysparm_limit=5&sysparm_display_value=all`),z(`/api/now/table/time_card?sysparm_query=resource_assignment=${e}&sysparm_fields=${a}&sysparm_limit=50&sysparm_display_value=all`)]),l=(await n.json()).result||[],i=(await o.json()).result||[];!function(e,n,t,s){const a=document.getElementById("snfus-tab-ordy"),o=re($,t,"resource_plan",null),r=re(h,n,"resource_allocation","snfusOrdyExpandAlloc"),l=re(k,s,"time_card","snfusOrdyExpandTC");a.innerHTML=le("rplan","Resource Plan",t.length,o)+le("alloc","Resource Allocations",n.length,r)+le("tc","Time Cards",s.length,l),window._ordyAllocs=n,window._ordyTCs=s,window._ordyRaSysId=e}(e,l,i,(await r.json()).result||[])}catch(e){document.getElementById("snfus-tab-ordy").innerHTML='<div class="snfus-ordy-empty">Erreur de chargement.</div>'}},window.snfusOrdyToggle=e=>{document.getElementById(`snfus-ordy-${e}`)?.classList.toggle("collapsed")},window.snfusOrdyExpandAlloc=async(e,n)=>{const t=n.closest("tr"),s=[...t.parentElement.children],a=s.indexOf(t),o=s[a+1];if(o&&o.dataset.dailyFor===e)return o.remove(),n.textContent="▶",void t.classList.remove("expanded");t.classList.add("expanded"),n.textContent="▼";const r=document.createElement("tr");r.dataset.dailyFor=e,r.className="snfus-ordy-daily-row",r.innerHTML=`<td colspan="${h.length+1}" style="padding:0"><div class="snfus-ml-loading" style="padding:6px 10px">Chargement daily…</div></td>`,t.insertAdjacentElement("afterend",r);const l=window._ordyRaSysId,i=v.map(e=>e.f).join(",")+",sys_id";try{const e=await z(`/api/now/table/resource_allocation_daily?sysparm_query=allocation.resource_assignment=${l}&sysparm_fields=${i}&sysparm_limit=100&sysparm_display_value=all`),n=(await e.json()).result||[];if(!n.length)return void(r.querySelector("td").innerHTML='<div class="snfus-ml-empty" style="padding:6px 10px">Aucun daily.</div>');const t=v.map(e=>`<th>${e.label}</th>`).join(""),s=n.map(e=>{const n=H(e.sys_id),t=v.map(n=>D(e[n.f])).join("");return`<tr onclick="window.open('${location.origin}/now/nav/ui/classic/params/target/resource_allocation_daily.do?sys_id=${n}','_blank')">${t}</tr>`}).join("");r.querySelector("td").innerHTML=`<table class="snfus-ml-table"><thead><tr>${t}</tr></thead><tbody>${s}</tbody></table>`}catch(e){r.querySelector("td").innerHTML='<div class="snfus-ml-empty" style="padding:6px 10px">Erreur.</div>'}},window.snfusOrdyExpandTC=async(e,n)=>{const t=n.closest("tr"),s=[...t.parentElement.children],a=s.indexOf(t),o=s[a+1];if(o&&o.dataset.dailyFor===e)return o.remove(),n.textContent="▶",void t.classList.remove("expanded");t.classList.add("expanded"),n.textContent="▼";const r=document.createElement("tr");r.dataset.dailyFor=e,r.className="snfus-ordy-daily-row",r.innerHTML=`<td colspan="${k.length+1}" style="padding:0"><div class="snfus-ml-loading" style="padding:6px 10px">Chargement daily…</div></td>`,t.insertAdjacentElement("afterend",r);const l=window._ordyRaSysId,i=E.map(e=>e.f).join(",")+",sys_id";try{const e=await z(`/api/now/table/time_card_daily?sysparm_query=time_card.resource_assignment=${l}&sysparm_fields=${i}&sysparm_limit=100&sysparm_display_value=all`),n=(await e.json()).result||[];if(!n.length)return void(r.querySelector("td").innerHTML='<div class="snfus-ml-empty" style="padding:6px 10px">Aucun daily.</div>');const t=E.map(e=>`<th>${e.label}</th>`).join(""),s=n.map(e=>{const n=H(e.sys_id),t=E.map(n=>D(e[n.f])).join("");return`<tr onclick="window.open('${location.origin}/now/nav/ui/classic/params/target/time_card_daily.do?sys_id=${n}','_blank')">${t}</tr>`}).join("");r.querySelector("td").innerHTML=`<table class="snfus-ml-table"><thead><tr>${t}</tr></thead><tbody>${s}</tbody></table>`}catch(e){r.querySelector("td").innerHTML='<div class="snfus-ml-empty" style="padding:6px 10px">Erreur.</div>'}},window.snfusHover=async e=>{if(void 0!==L[e])return;L[e]="loading",["ra","tc","cp","ex"].forEach(n=>{const t=document.getElementById(`snfus-cnt-${n}-${e}`);t&&(t.innerHTML=`<span class="snfus-cnt ${n}" style="opacity:.5">…</span>`)});const n=window._snfusNodes&&window._snfusNodes[e],t=n&&(0===n.depth||n.isProject)?"top_task":"task";try{const[n,s,a,o]=await Promise.all([z(`/api/now/table/sn_plng_att_core_resource_assignment?sysparm_query=${t}=${e}&sysparm_fields=sys_id&sysparm_limit=1&sysparm_count=true`),z(`/api/now/table/time_card?sysparm_query=${t}=${e}&sysparm_fields=sys_id&sysparm_limit=1&sysparm_count=true`),z(`/api/now/table/cost_plan?sysparm_query=${t}=${e}&sysparm_fields=sys_id&sysparm_limit=1&sysparm_count=true`),z(`/api/now/table/fm_expense_line?sysparm_query=source_id=${e}&sysparm_fields=sys_id&sysparm_limit=1&sysparm_count=true`)]),[r,l,i,d]=await Promise.all([n.json(),s.json(),a.json(),o.json()]),c=parseInt(n.headers.get("X-Total-Count")||(r.result?r.result.length:0)),u=parseInt(s.headers.get("X-Total-Count")||(l.result?l.result.length:0)),p=parseInt(a.headers.get("X-Total-Count")||(i.result?i.result.length:0)),f=parseInt(o.headers.get("X-Total-Count")||(d.result?d.result.length:0));L[e]={ra:c,tc:u,cp:p,ex:f};const m=(n,t,s)=>{const a=document.getElementById(`snfus-cnt-${n}-${e}`);a&&(a.innerHTML=t>0?`<span class="snfus-cnt ${s}">${t}</span>`:'<span class="snfus-cnt empty">—</span>')};m("ra",c,"ra"),m("tc",u,"tc"),m("cp",p,"cp"),m("ex",f,"ex")}catch(n){delete L[e]}},window.snfusClose=Q,window.snfusOnInput=e=>{"number"===e&&document.getElementById("snfus-number").value.trim()&&(document.getElementById("snfus-sysid").value=""),"sysid"===e&&document.getElementById("snfus-sysid").value.trim()&&(document.getElementById("snfus-number").value="")},window.snfusLoad=async()=>{const e=document.getElementById("snfus-number").value.trim(),n=document.getElementById("snfus-sysid").value.trim(),t=document.getElementById("snfus-load-btn"),s=/^[0-9a-f]{32}$/i;if(e||n){if(n&&s.test(n)){t.disabled=!0,K("Chargement…","");const e=await ue(n),s=e||n;return e&&(document.getElementById("snfus-sysid").value=e,K("↑ Projet via sub_tree_root","ok")),T=s,await ce(s),K("✓ Chargé","ok"),void(t.disabled=!1)}if(!n||s.test(n)){if(e){t.disabled=!0,K("Résolution…","");try{const n=await z(`/api/now/table/pm_project?sysparm_query=number=${encodeURIComponent(e)}&sysparm_fields=sys_id&sysparm_limit=1`);if(n.ok){const e=await n.json();if(e.result&&e.result.length){const n=e.result[0].sys_id;return document.getElementById("snfus-sysid").value=n,T=n,await ce(n),K("✓ Chargé","ok"),void(t.disabled=!1)}}}catch(e){}try{const n=window.top&&window.top.GlideRecord||window.GlideRecord;if(n){const s=new n("pm_project");return s.addQuery("number",e.toUpperCase()),s.setLimit(1),void s.query(async()=>{if(s.next()){const e=s.getUniqueValue();document.getElementById("snfus-sysid").value=e,T=e,await ce(e),K("✓ Chargé","ok")}else K("Introuvable","err");t.disabled=!1})}}catch(e){}K("Erreur","err"),t.disabled=!1}}else K("Format invalide","err")}else K("Remplis un champ","err")},(async()=>{const e=function(){const e=decodeURIComponent(location.href),n=e.match(/\/pm_project\/([0-9a-f]{32})/i)||e.match(/project-id\/([0-9a-f]{32})/i)||e.match(/project_resource-([0-9a-f]{32})-pm_project/i)||e.match(/[?&]sys_id=([0-9a-f]{32})/i)||e.match(/[?&]sysparm_sys_id=([0-9a-f]{32})/i);if(n)return n[1];try{const e=window.top&&window.top.g_form||window.g_form;if(e&&"function"==typeof e.getUniqueValue){const n=e.getUniqueValue();if(n&&/^[0-9a-f]{32}$/i.test(n))return n}}catch(e){}const t=document.querySelector('input[name="sys_id"],input[name="sysparm_sys_id"]');return t&&/^[0-9a-f]{32}$/i.test(t.value)?t.value:null}();if(e){const n=document.getElementById("snfus-sysid");n.value=e,n.classList.add("detected"),K("Résolution…","");const t=await ue(e),s=t||e;t?(n.value=t,document.getElementById("snfus-autodetect").textContent="⚡ Projet via tâche"):document.getElementById("snfus-autodetect").textContent="⚡ sys_id détecté",T=s,await ce(s),K("✓ Chargé","ok")}else setTimeout(()=>document.getElementById("snfus-number").focus(),100)})()}();
+javascript:(function(){
+
+/* ============================================================
+   SN PROJECT NAVIGATOR — V3.0
+   Nouveau layout : topbar | nav horizontale | onglets | hiérarchie + data
+   ============================================================ */
+
+const STYLE_ID   = "snfus-style";
+const OVERLAY_ID = "snfus-overlay";
+document.getElementById(OVERLAY_ID) && document.getElementById(OVERLAY_ID).remove();
+document.getElementById(STYLE_ID)   && document.getElementById(STYLE_ID).remove();
+
+/* ---- COULEURS ---- */
+const C_IN="#2dd9a3",C_SEL="#ffd23a",C_PRJ="#3aa0ff";
+const C_T1="#b06bff",C_T2="#ff9f3a",C_T3="#ff4d6d";
+const C_CL="#ff4d6d",C_RA="#b06bff",C_TC="#2dd9a3",C_CP="#ff9f3a",C_EX="#ff4d6d";
+const C_WS="#3aa0ff",C_ORDY="#e040fb";
+
+function rgba(h,a){const r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16);return `rgba(${r},${g},${b},${a})`;}
+function dc(d){return[C_PRJ,C_T1,C_T2,C_T3][Math.min(d,3)];}
+
+/* ---- BOUTONS WORKSPACE ---- */
+const WS_BUTTONS=[
+  {t:"Project Workspace",
+   url:(id,ts)=>`/now/workspace/project/home/sub/record/pm_project/${id}/params/page-name/details/time-stamp/${ts}/project-table/pm_project/project-id/${id}/record-status/1`},
+  {t:"Planning",   url:(id,ts)=>`/now/workspace/project/home/sub/planning/pm_project/${id}/${ts}/params/page-name/planning`},
+  {t:"Resources",  url:(id,ts)=>`/now/workspace/project/home/sub/resource_board/project_resource-${id}-pm_project-${ts}/params/timestamp/${ts}`},
+  {t:"Details",    url:(id,ts)=>`/now/workspace/project/home/sub/record/pm_project/${id}/params/page-name/details/time-stamp/${ts}/project-table/pm_project/project-id/${id}/record-status/1`},
+  {t:"Financials", url:(id,ts)=>`/now/workspace/project/home/sub/pw-financials/pm_project/${id}/${ts}/params/page-name/financials`},
+  {t:"RIDAC",      url:(id,ts)=>`/now/workspace/project/home/sub/ridac-monitor/pm_project/${id}/${ts}/params/page-name/ridac-monitor`},
+  {t:"Analytics",  url:(id,ts)=>`/now/workspace/project/home/sub/analytics/${id}/pm_project/${ts}/params/page-name/analytics`},
+  {t:"Docs",       url:(id)   =>`/now/workspace/project/home/sub/docs/pm_project/${id}/params/page-name/docs`},
+  {t:"Status Reports",url:(id,ts)=>`/now/workspace/project/home/sub/status-report/pm_project/${id}/${ts}/params/page-name/status-report`},
+];
+
+/* ---- BOUTONS LIENS CLASSIQUE ---- */
+const CL_BUTTONS=[
+  {t:"Classique UI",         grp:"cl",
+   urlP:(id)=>`/now/nav/ui/classic/params/target/pm_project_task.do?sys_id=${id}`,
+   urlT:(id)=>`/now/nav/ui/classic/params/target/pm_project_task.do?sys_id=${id}`},
+  {t:"Cost Plan",            grp:"cp",
+   urlP:(id)=>`/cost_plan_list.do?sysparm_query=top_task%3D${id}`,
+   urlT:(id)=>`/cost_plan_list.do?sysparm_query=task%3D${id}`},
+  {t:"CP Breakdown (Task)",  grp:"cp",
+   urlP:(id)=>`/cost_plan_breakdown_list.do?sysparm_query=task%3D${id}`,
+   urlT:(id)=>`/cost_plan_breakdown_list.do?sysparm_query=task%3D${id}`},
+  {t:"CP Breakdown (CP.Task)",grp:"cp",
+   urlP:(id)=>`/cost_plan_breakdown_list.do?sysparm_query=cost_plan.top_task%3D${id}`,
+   urlT:(id)=>`/cost_plan_breakdown_list.do?sysparm_query=cost_plan.task%3D${id}`},
+  {t:"Expense Lines",        grp:"ex",
+   urlP:(id)=>`/fm_expense_line_list.do?sysparm_query=source_id%3D${id}`,
+   urlT:(id)=>`/fm_expense_line_list.do?sysparm_query=source_id%3D${id}`},
+  {t:"Resource Assignments", grp:"ra",
+   urlP:(id)=>`/sn_plng_att_core_resource_assignment_list.do?sysparm_query=top_task%3D${id}`,
+   urlT:(id)=>`/sn_plng_att_core_resource_assignment_list.do?sysparm_query=task%3D${id}`},
+  {t:"Resource Plan",        grp:"ra",
+   urlP:(id)=>`/resource_plan_list.do?sysparm_query=top_task%3D${id}`,
+   urlT:(id)=>`/resource_plan_list.do?sysparm_query=task%3D${id}`},
+  {t:"Resource Allocation",  grp:"ra",
+   urlP:(id)=>`/resource_allocation_list.do?sysparm_query=resource_plan.top_task%3D${id}`,
+   urlT:(id)=>`/resource_allocation_list.do?sysparm_query=resource_plan.task%3D${id}`},
+  {t:"Time Card",            grp:"tc",
+   urlP:(id)=>`/time_card_list.do?sysparm_query=top_task%3D${id}`,
+   urlT:(id)=>`/time_card_list.do?sysparm_query=task%3D${id}`},
+  {t:"Time Card Dailies",    grp:"tc",
+   urlP:(id)=>`/time_card_daily_list.do?sysparm_query=time_card.top_task%3D${id}`,
+   urlT:(id)=>`/time_card_daily_list.do?sysparm_query=time_card.task%3D${id}`},
+];
+
+/* ---- LISTES CONNEXES ---- */
+const CONN_LISTS=[
+  { id:"ra", label:"Resource Assignments", color:C_RA,
+    table:"sn_plng_att_core_resource_assignment",
+    qP:(id)=>`top_task=${id}`, qT:(id)=>`task=${id}`,
+    clickable:true, // cliquable → onglet ORDY
+    cols:[
+      {f:"number",label:"N°"},
+      {f:"user_resource",label:"Resource",ref:true},
+      {f:"role",label:"Role",ref:true},
+      {f:"effort_type",label:"Type",ref:true},
+      {f:"effort",label:"Effort"},
+      {f:"start_date",label:"Début"},
+      {f:"end_date",label:"Fin"},
+    ]
+  },
+  { id:"tc", label:"Time Cards", color:C_TC,
+    table:"time_card",
+    qP:(id)=>`top_task=${id}`, qT:(id)=>`task=${id}`,
+    cols:[
+      {f:"week_starts_on",label:"Week starts on"},
+      {f:"category",label:"Category",ref:true},
+      {f:"user",label:"User",ref:true},
+      {f:"task",label:"Task",ref:true},
+      {f:"state",label:"State"},
+      {f:"sunday",label:"Sun"},{f:"monday",label:"Mon"},{f:"tuesday",label:"Tue"},
+      {f:"wednesday",label:"Wed"},{f:"thursday",label:"Thu"},{f:"friday",label:"Fri"},
+      {f:"saturday",label:"Sat"},{f:"total",label:"Total"},
+    ]
+  },
+  { id:"cp", label:"Cost Plans", color:C_CP,
+    table:"cost_plan",
+    qP:(id)=>`top_task=${id}`, qT:(id)=>`task=${id}`,
+    hasBreakdown:true,
+    cols:[
+      {f:"short_description",label:"Name"},
+      {f:"task",label:"Task",ref:true},
+      {f:"resource_type",label:"Resource type",ref:true},
+      {f:"start_fiscal_period",label:"Start period",ref:true},
+      {f:"end_fiscal_period",label:"End period",ref:true},
+      {f:"cost_default_currency",label:"Planned cost"},
+      {f:"actual_cost_default_currency",label:"Actual cost"},
+      {f:"currency",label:"Currency"},
+      {f:"expense_type",label:"Expense type",ref:true},
+    ]
+  },
+  { id:"ex", label:"Expense Lines", color:C_EX,
+    table:"fm_expense_line",
+    qP:(id)=>`source_id=${id}`, qT:(id)=>`source_id=${id}`,
+    cols:[
+      {f:"number",label:"N°"},
+      {f:"date",label:"Date"},
+      {f:"short_description",label:"Description"},
+      {f:"source_id",label:"Source ID",ref:true},
+      {f:"amount",label:"Amount"},
+      {f:"time_card",label:"Time card",ref:true},
+      {f:"time_card.total",label:"TC Total"},
+      {f:"base_expense",label:"Base expense",ref:true},
+      {f:"base_expense.time_card",label:"Base TC",ref:true},
+      {f:"base_expense.time_card.total",label:"Base TC Total"},
+    ]
+  },
+];
+
+const CP_BREAKDOWN_COLS=[
+  {f:"breakdown_type",label:"Type"},
+  {f:"expense_type",label:"Expense type",ref:true},
+  {f:"fiscal_period",label:"Fiscal period",ref:true},
+  {f:"task",label:"Task",ref:true},
+  {f:"portfolio",label:"Portfolio",ref:true},
+  {f:"program",label:"Program",ref:true},
+  {f:"cost_default_currency",label:"Planned cost"},
+];
+
+/* ---- CHAMPS INFO RECORD ---- */
+const DATE_LEFT=[
+  {f:"approved_start_date",label:"Approved start date"},
+  {f:"start_date",label:"Planned start date"},
+  {f:"work_start",label:"Actual start date"},
+  {f:"duration",label:"Planned duration"},
+  {f:"effort",label:"Planned effort"},
+];
+const DATE_RIGHT=[
+  {f:"approved_end_date",label:"Approved end date"},
+  {f:"end_date",label:"Planned end date"},
+  {f:"work_end",label:"Actual end date"},
+  {f:"work_duration",label:"Actual duration"},
+  {f:"work_effort",label:"Actual effort"},
+];
+const DATE_FIELDS=[...DATE_LEFT,...DATE_RIGHT];
+const COST_FIELDS=[
+  {f:"cost",label:"Total planned cost"},
+  {f:"capex_cost",label:"Planned capital"},
+  {f:"opex_cost",label:"Planned operating"},
+  {f:"budget_cost",label:"Budget cost"},
+  {f:"work_cost",label:"Actual cost"},
+];
+
+/* ---- ONGLET ORDY : colonnes des sous-listes ---- */
+const ORDY_ALLOC_COLS=[
+  {f:"number",label:"N°"},
+  {f:"resource_plan",label:"Resource Plan",ref:true},
+  {f:"resource",label:"Resource",ref:true},
+  {f:"start_date",label:"Début"},
+  {f:"end_date",label:"Fin"},
+  {f:"allocation_percent",label:"Alloc %"},
+  {f:"state",label:"State"},
+];
+const ORDY_ALLOC_DAILY_COLS=[
+  {f:"date",label:"Date"},
+  {f:"allocation",label:"Allocation",ref:true},
+  {f:"resource",label:"Resource",ref:true},
+  {f:"hours",label:"Heures"},
+  {f:"state",label:"State"},
+];
+const ORDY_RPLAN_COLS=[
+  {f:"number",label:"N°"},
+  {f:"task",label:"Task",ref:true},
+  {f:"resource",label:"Resource",ref:true},
+  {f:"start_date",label:"Début"},
+  {f:"end_date",label:"Fin"},
+  {f:"state",label:"State"},
+];
+const ORDY_TC_COLS=[
+  {f:"week_starts_on",label:"Week starts on"},
+  {f:"user",label:"User",ref:true},
+  {f:"task",label:"Task",ref:true},
+  {f:"state",label:"State"},
+  {f:"total",label:"Total"},
+];
+const ORDY_TC_DAILY_COLS=[
+  {f:"date",label:"Date"},
+  {f:"time_card",label:"Time Card",ref:true},
+  {f:"hours",label:"Heures"},
+  {f:"state",label:"State"},
+  {f:"task",label:"Task",ref:true},
+];
+
+/* ============================================================
+   STYLE
+   ============================================================ */
+const styleEl=document.createElement("style");
+styleEl.id=STYLE_ID;
+styleEl.textContent=`
+@keyframes snfus-fadein{from{opacity:0}to{opacity:1}}
+@keyframes snfus-slideup{from{opacity:0;transform:translateY(8px) scale(.988)}to{opacity:1;transform:none}}
+
+/* ===== OVERLAY ===== */
+#snfus-overlay{position:fixed;inset:0;z-index:2147483647;display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;
+  font-family:"Segoe UI",Arial,sans-serif;
+  background:radial-gradient(circle at 20% -10%,rgba(80,60,160,.35),transparent 55%),
+             radial-gradient(circle at 90% 0%,rgba(20,140,160,.25),transparent 50%),rgba(6,8,18,.96);
+  backdrop-filter:blur(6px);animation:snfus-fadein .14s ease-out;padding:10px;gap:8px}
+
+/* ===== TOPBAR ===== */
+#snfus-topbar{display:flex;align-items:center;gap:12px;flex-shrink:0}
+#snfus-title{display:flex;align-items:center;gap:8px;flex-shrink:0}
+#snfus-title h2{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;
+  color:${C_IN};text-shadow:0 0 12px ${rgba(C_IN,.55)};margin:0}
+#snfus-autodetect{font-size:10px;color:${rgba(C_IN,.6)};font-style:italic}
+#snfus-status{font-size:11px;color:rgba(238,240,251,.5)}
+#snfus-status.ok{color:${C_IN}} #snfus-status.err{color:#ff6b7a}
+#snfus-topbar-right{display:flex;align-items:center;gap:8px;margin-left:auto}
+#snfus-close{cursor:pointer;font-size:18px;color:rgba(238,240,251,.5);background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.1);width:28px;height:28px;border-radius:7px;
+  display:flex;align-items:center;justify-content:center;transition:all .14s;flex-shrink:0}
+#snfus-close:hover{background:rgba(255,80,90,.18);color:#ff9aa3}
+
+/* inputs dans topbar */
+.snfus-top-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;
+  color:rgba(238,240,251,.4);margin-bottom:2px}
+.snfus-top-input-wrap{display:flex;flex-direction:column}
+.snfus-field{padding:6px 10px;border:1px solid ${rgba(C_IN,.3)};border-radius:8px;font-size:12px;
+  background:rgba(255,255,255,.06);color:#f4f5ff;outline:none;font-family:inherit;
+  transition:border-color .14s,box-shadow .14s;min-width:160px}
+.snfus-field::placeholder{color:rgba(238,240,251,.3)}
+.snfus-field:focus{border-color:${rgba(C_IN,.6)};box-shadow:0 0 0 3px ${rgba(C_IN,.14)}}
+.snfus-field.detected{border-color:${rgba(C_IN,.5)};background:${rgba(C_IN,.07)}}
+#snfus-load-btn{padding:7px 16px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;
+  background:${rgba(C_IN,.2)};border:1px solid ${rgba(C_IN,.5)};color:${C_IN};font-family:inherit;
+  transition:all .14s;white-space:nowrap}
+#snfus-load-btn:hover{background:${rgba(C_IN,.32)};box-shadow:0 0 12px ${rgba(C_IN,.4)}}
+#snfus-load-btn:disabled{opacity:.45;cursor:default}
+
+/* ===== NAVIGATION HORIZONTALE compacte ===== */
+#snfus-nav{display:flex;align-items:center;gap:6px;flex-shrink:0;
+  background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);
+  border-radius:10px;padding:6px 10px;flex-wrap:nowrap;overflow-x:auto}
+
+/* Section workspace en ligne */
+#snfus-nav-ws{display:flex;align-items:center;gap:4px;flex-shrink:0}
+.snfus-nav-section-title{display:none}
+#snfus-ws-grid-main{display:flex;gap:3px;flex-wrap:nowrap}
+.snfus-wbtn{padding:4px 8px;border-radius:6px;font-size:9.5px;font-weight:500;cursor:pointer;
+  text-align:center;border:1px solid ${rgba(C_WS,.35)};background:${rgba(C_WS,.1)};
+  color:${C_WS};transition:all .13s;font-family:inherit;white-space:nowrap}
+.snfus-wbtn:disabled{opacity:.28;cursor:default}
+.snfus-wbtn:hover:not(:disabled){background:${rgba(C_WS,.22)};box-shadow:0 0 8px ${rgba(C_WS,.3)}}
+.snfus-wbtn.ws-full{font-weight:700;font-size:9px;text-transform:uppercase;letter-spacing:.5px;
+  background:${rgba(C_WS,.18)}}
+
+/* séparateur vertical */
+.snfus-nav-sep{width:1px;height:24px;background:rgba(255,255,255,.12);margin:0 4px;flex-shrink:0}
+
+/* Section classique UI — groupes sur une ligne */
+#snfus-nav-cl{display:flex;align-items:center;gap:6px;flex:1;flex-wrap:nowrap}
+.snfus-cl-group{display:flex;align-items:center;gap:2px;flex-shrink:0}
+.snfus-cl-group-title{display:none}
+.snfus-cl-group-btns{display:flex;gap:2px;flex-wrap:nowrap}
+.snfus-lbtn{padding:4px 8px;border-radius:6px;font-size:9.5px;font-weight:500;cursor:pointer;
+  border:1px solid ${rgba(C_CL,.35)};background:${rgba(C_CL,.1)};color:${C_CL};
+  transition:all .13s;font-family:inherit;white-space:nowrap;text-align:left}
+.snfus-lbtn:disabled{opacity:.28;cursor:default}
+.snfus-lbtn:hover:not(:disabled){background:${rgba(C_CL,.22)};box-shadow:0 0 8px ${rgba(C_CL,.28)}}
+
+/* ===== ONGLETS ===== */
+#snfus-tabs-bar{display:flex;gap:6px;flex-shrink:0}
+.snfus-tab{padding:6px 18px;border-radius:8px 8px 0 0;font-size:11.5px;font-weight:600;cursor:pointer;
+  border:1px solid rgba(255,255,255,.1);border-bottom:none;
+  background:rgba(255,255,255,.04);color:rgba(238,240,251,.55);
+  transition:all .14s;font-family:inherit}
+.snfus-tab.active{background:rgba(255,255,255,.08);color:#fff;border-color:rgba(255,255,255,.18)}
+.snfus-tab-content{display:none;overflow:hidden}
+.snfus-tab-content.active{display:flex;flex:1;flex-direction:column;min-height:0}
+
+/* ===== LAYOUT PRINCIPAL ===== */
+#snfus-main{flex:1;min-height:0;display:flex;flex-direction:column;
+  background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:0 10px 10px 10px;overflow:hidden}
+
+/* Tab informations : hiérarchie | données côte à côte */
+#snfus-tab-info{flex-direction:row !important;align-items:stretch;overflow:hidden}
+#snfus-body{display:grid;grid-template-columns:var(--tree-w,30%) 1fr;gap:0;flex:1;align-self:stretch;overflow:hidden;min-height:0}
+#snfus-body.tree-narrow{--tree-w:200px}
+#snfus-body.tree-normal{--tree-w:30%}
+#snfus-body.tree-full  {grid-template-columns:1fr}
+#snfus-body.tree-full #snfus-data-col{display:none}
+
+/* col hiérarchie */
+#snfus-tree-col{display:flex;flex-direction:column;border-right:1px solid rgba(255,255,255,.07);min-height:0;overflow:hidden}
+#snfus-tree-header{display:flex;align-items:center;justify-content:space-between;
+  padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.06);flex-shrink:0}
+.snfus-tree-title{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:rgba(238,240,251,.4)}
+#snfus-tree-toggle{display:inline-flex;gap:3px}
+.snfus-ttbtn{font-size:9.5px;padding:2px 7px;border-radius:5px;border:1px solid rgba(255,255,255,.15);
+  background:rgba(255,255,255,.05);color:rgba(238,240,251,.55);cursor:pointer;font-family:inherit;transition:all .13s}
+.snfus-ttbtn:hover{background:rgba(255,255,255,.12);color:#fff}
+.snfus-ttbtn.active{background:${rgba(C_SEL,.2)};border-color:${rgba(C_SEL,.45)};color:${C_SEL}}
+#snfus-tree-box{overflow:auto;flex:1;font-size:11.5px;min-height:0}
+.snfus-tree-hint{color:rgba(238,240,251,.3);font-size:11px;font-style:italic;padding:10px}
+
+/* table hiérarchie */
+#snfus-tree-table{width:100%;border-collapse:collapse;table-layout:fixed}
+#snfus-tree-table colgroup col.col-num{width:130px}
+#snfus-tree-table colgroup col.col-name{min-width:200px;width:200px}
+#snfus-tree-table colgroup col.col-cnt{width:38px}
+#snfus-tree-table thead th{position:sticky;top:0;z-index:1;background:rgba(18,20,38,.97);padding:6px 8px;
+  text-align:left;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;
+  color:rgba(238,240,251,.45);border-bottom:1px solid rgba(255,255,255,.08);white-space:nowrap}
+#snfus-tree-table thead th.cnt-col{text-align:center}
+#snfus-tree-table tbody tr{cursor:pointer;transition:background .1s;border-bottom:1px solid rgba(255,255,255,.04)}
+#snfus-tree-table tbody tr:hover{background:rgba(255,255,255,.05)}
+#snfus-tree-table tbody tr.sel{background:rgba(255,210,58,.07)}
+#snfus-tree-table tbody tr.sel td{color:#fff}
+#snfus-tree-table td{padding:5px 8px;vertical-align:middle;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#snfus-tree-table td.num-cell{white-space:nowrap;overflow:visible}
+/* col nom : ellipsis à 350px, tooltip au survol */
+#snfus-tree-table td.name-cell{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px}
+/* en narrow : masquer complètement la colonne nom */
+#snfus-body.tree-narrow .col-name-hide{display:none}
+#snfus-tree-table td.cnt-col{text-align:center;padding:4px 2px}
+.snfus-tnode-num{font-size:10px;font-family:"Consolas","Courier New",monospace;white-space:nowrap}
+.snfus-tnode-name{font-size:11px;color:#dde1f7;opacity:.85}
+.snfus-sel-badge{display:none;font-size:8px;font-weight:700;padding:1px 3px;border-radius:3px;margin-left:4px;
+  background:${rgba(C_SEL,.2)};color:${C_SEL};border:1px solid ${rgba(C_SEL,.4)}}
+#snfus-tree-table tbody tr.sel .snfus-sel-badge{display:inline}
+.snfus-cnt{font-size:9px;font-weight:600;padding:1px 5px;border-radius:9px;display:inline-block}
+.snfus-cnt.ra{background:${rgba(C_RA,.18)};color:${C_RA};border:1px solid ${rgba(C_RA,.3)}}
+.snfus-cnt.tc{background:${rgba(C_TC,.15)};color:${C_TC};border:1px solid ${rgba(C_TC,.28)}}
+.snfus-cnt.cp{background:${rgba(C_CP,.15)};color:${C_CP};border:1px solid ${rgba(C_CP,.28)}}
+.snfus-cnt.ex{background:${rgba(C_EX,.15)};color:${C_EX};border:1px solid ${rgba(C_EX,.28)}}
+.snfus-cnt.empty{color:rgba(238,240,251,.2);background:none;border:none;font-weight:400}
+.snfus-node-dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:5px;vertical-align:middle}
+
+#snfus-data-col{overflow-y:auto;overflow-x:hidden;flex:1;min-height:0;display:flex;flex-direction:column;gap:0}
+
+/* info record */
+#snfus-info{padding:12px;flex-shrink:0;border-bottom:1px solid rgba(255,255,255,.06)}
+#snfus-info-title{font-size:12.5px;font-weight:600;color:${C_SEL};margin-bottom:10px}
+#snfus-info-title span{font-size:10.5px;color:rgba(238,240,251,.45);font-weight:400;margin-left:8px}
+#snfus-info-body{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:start}
+#snfus-dates-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 16px}
+.snfus-dates-col-title{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;
+  color:rgba(238,240,251,.3);margin-bottom:4px;padding-bottom:3px;border-bottom:1px solid rgba(255,255,255,.05)}
+#snfus-costs-col{display:flex;flex-direction:column;gap:6px;min-width:180px}
+.snfus-costs-title{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;
+  color:rgba(238,240,251,.3);margin-bottom:4px;padding-bottom:3px;border-bottom:1px solid rgba(255,255,255,.05)}
+.snfus-ifield{display:flex;flex-direction:column;gap:2px}
+.snfus-ifield-lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:rgba(238,240,251,.4)}
+.snfus-ifield-val{font-size:11.5px;color:#eef0fb;background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.07);border-radius:6px;padding:4px 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.snfus-ifield-val.empty{color:rgba(238,240,251,.25);font-style:italic}
+.snfus-ifield-val.overdue{background:${rgba(C_CL,.14)};border-color:${rgba(C_CL,.35)};color:#ff9aa3}
+#snfus-info-empty{color:rgba(238,240,251,.3);font-size:11px;font-style:italic;padding:8px 0}
+
+/* mini-listes */
+.snfus-minilist{border-top:1px solid rgba(255,255,255,.05);flex-shrink:0}
+.snfus-minilist-hdr{display:flex;align-items:center;justify-content:space-between;padding:8px 12px}
+.snfus-minilist-title{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.8px}
+.snfus-minilist-meta{display:flex;align-items:center;gap:8px}
+.snfus-minilist-count{font-size:10px;color:rgba(238,240,251,.45)}
+.snfus-minilist-open{font-size:10px;cursor:pointer;padding:2px 8px;border-radius:6px;border:1px solid;
+  background:transparent;font-family:inherit;transition:all .13s}
+.snfus-minilist-open:disabled{opacity:.3;cursor:default}
+.snfus-minilist-body{overflow-x:auto}
+.snfus-ml-table{width:100%;border-collapse:collapse;font-size:11px}
+.snfus-ml-table th{padding:5px 8px;text-align:left;font-size:9px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.6px;color:rgba(238,240,251,.4);white-space:nowrap;border-bottom:1px solid rgba(255,255,255,.06)}
+.snfus-ml-table td{padding:5px 8px;color:#dde1f7;white-space:nowrap;border-bottom:1px solid rgba(255,255,255,.04)}
+.snfus-ml-table tr:hover td{background:rgba(255,255,255,.04)}
+.snfus-ml-table td.empty{color:rgba(238,240,251,.3);font-style:italic}
+.snfus-ml-table td.ref-link{color:${C_PRJ};cursor:pointer;text-decoration:underline}
+.snfus-ml-table td.ref-link:hover{color:#90c8ff}
+.snfus-ml-table tr.ra-clickable:hover td{background:${rgba(C_RA,.1)};cursor:pointer}
+.snfus-ml-table tr.ra-clickable.ra-sel td{background:${rgba(C_RA,.18)};color:#fff}
+.snfus-ml-empty{padding:10px 12px;font-size:11px;color:rgba(238,240,251,.3);font-style:italic}
+.snfus-ml-loading{padding:8px 12px;font-size:11px;color:${rgba(C_IN,.6)};font-style:italic}
+/* breakdown */
+.snfus-breakdown-wrap{background:rgba(255,255,255,.03);border-top:1px solid rgba(255,255,255,.06);overflow-x:auto}
+.snfus-breakdown-hdr{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;
+  color:${C_CP};padding:6px 10px;border-bottom:1px solid rgba(255,255,255,.05)}
+.snfus-breakdown-loading{padding:8px 10px;font-size:11px;color:${rgba(C_IN,.6)};font-style:italic}
+.snfus-bkd-btn{font-size:9px;padding:2px 7px;border-radius:4px;border:1px solid ${rgba(C_CP,.4)};
+  background:${rgba(C_CP,.1)};color:${C_CP};cursor:pointer;font-family:inherit;transition:all .12s;white-space:nowrap}
+.snfus-bkd-btn:hover{background:${rgba(C_CP,.22)}}
+
+/* ===== ONGLET ORDY ===== */
+#snfus-tab-ordy{overflow-y:auto;overflow-x:hidden;gap:0}
+#snfus-ordy-empty{color:rgba(238,240,251,.35);font-size:12px;font-style:italic;
+  padding:40px;text-align:center;flex:1}
+.snfus-ordy-section{border-top:1px solid rgba(255,255,255,.06);flex-shrink:0}
+.snfus-ordy-section-hdr{display:flex;align-items:center;justify-content:space-between;
+  padding:8px 12px;cursor:pointer;user-select:none;transition:background .12s}
+.snfus-ordy-section-hdr:hover{background:rgba(255,255,255,.04)}
+.snfus-ordy-section-title{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:${C_ORDY}}
+.snfus-ordy-section-meta{display:flex;align-items:center;gap:8px;font-size:10px;color:rgba(238,240,251,.45)}
+.snfus-ordy-chevron{transition:transform .15s;font-size:10px}
+.snfus-ordy-section.collapsed .snfus-ordy-chevron{transform:rotate(-90deg)}
+.snfus-ordy-section-body{overflow-x:auto}
+.snfus-ordy-section.collapsed .snfus-ordy-section-body{display:none}
+/* ligne cliquable dans alloc/tc pour afficher daily */
+.snfus-ordy-row-click:hover td{background:${rgba(C_ORDY,.08)};cursor:pointer}
+.snfus-ordy-row-click.expanded td{background:${rgba(C_ORDY,.14)}}
+.snfus-ordy-daily-row{background:rgba(255,255,255,.02)}
+.snfus-ordy-daily-row td{font-size:10.5px;color:rgba(238,240,251,.7);padding:4px 8px 4px 24px}
+`;
+document.head.appendChild(styleEl);
+
+/* ============================================================
+   STATE
+   ============================================================ */
+let projId=null, selNode=null, activeTab="info", selRaSysId=null;
+const _cnt={}, _info={}, _lists={}, _ordy={};
+
+/* ============================================================
+   HELPERS
+   ============================================================ */
+function apiH(){
+  const tk=(window.top&&window.top.g_ck)||window.g_ck||"";
+  const h={Accept:"application/json"};if(tk)h["X-UserToken"]=tk;return h;
+}
+async function apiFetch(u){return fetch(u,{headers:apiH()});}
+
+function fmtVal(raw){
+  if(raw===null||raw===undefined||raw==="") return "";
+  if(typeof raw==="object"){
+    const dv=raw.display_value;
+    if(dv!==null&&dv!==undefined&&dv!=="") return fmtDate(String(dv));
+    const v=raw.value;
+    return (v!==null&&v!==undefined&&v!=="")?fmtDate(String(v)):"";
+  }
+  return fmtDate(String(raw));
+}
+
+function fmtDate(s){
+  if(!s) return s;
+  const isoFull=/^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2})(?::(\d{2}))?)?/.exec(s);
+  if(isoFull){
+    const[,Y,M,D,h,m,sec]=isoFull;
+    if(h!==undefined) return `${D}-${M}-${Y} ${h}:${m}:${sec||"00"}`;
+    return `${D}-${M}-${Y}`;
+  }
+  const us=/^(\d{2})-(\d{2})-(\d{4})(?:\s+(\d{2}):(\d{2})(?::(\d{2}))?)?/.exec(s);
+  if(us){const[,M,D,Y,h,m,sec]=us;if(h!==undefined)return `${D}-${M}-${Y} ${h}:${m}:${sec||"00"}`;return `${D}-${M}-${Y}`;}
+  return s;
+}
+
+function getSysId(rawId){
+  if(!rawId) return "";
+  if(typeof rawId==="object"){
+    // Avec sysparm_display_value=all : {value, display_value}
+    const v=rawId.value||rawId.display_value||"";
+    return String(v).trim();
+  }
+  return String(rawId).trim();
+}
+
+function refCell(raw){
+  if(!raw||typeof raw!=="object") return `<td class="empty">(empty)</td>`;
+  const label=raw.display_value||raw.value||"";
+  if(!label) return `<td class="empty">(empty)</td>`;
+  if(raw.link){
+    const refUrl=`${location.origin}/now/nav/ui/classic/params/target/${raw.link.split("/api/now/table/")[1]||""}`;
+    return `<td class="ref-link" onclick="event.stopPropagation();window.open('${refUrl}','_blank')">${label}</td>`;
+  }
+  return `<td>${label}</td>`;
+}
+
+function cellHtml(raw){
+  if(!raw&&raw!==0) return `<td class="empty">(empty)</td>`;
+  if(typeof raw==="object"){
+    const label=raw.display_value||raw.value||"";
+    if(!label) return `<td class="empty">(empty)</td>`;
+    if(raw.link){
+      const refUrl=`${location.origin}/now/nav/ui/classic/params/target/${raw.link.split("/api/now/table/")[1]||""}`;
+      return `<td class="ref-link" onclick="event.stopPropagation();window.open('${refUrl}','_blank')">${label}</td>`;
+    }
+    return `<td>${label}</td>`;
+  }
+  const val=fmtVal(raw);
+  return `<td class="${val?"":"empty"}">${val||"(empty)"}</td>`;
+}
+
+/* ============================================================
+   HTML SKELETON
+   ============================================================ */
+const overlay=document.createElement("div");
+overlay.id=OVERLAY_ID;
+overlay.onclick=e=>{if(e.target===overlay)close();};
+
+// groupes de boutons CL par grp
+const CL_GROUPS={
+  cp:{title:"Cost Plans",btns:[]},
+  ex:{title:"Expense Lines",btns:[]},
+  ra:{title:"Resource",btns:[]},
+  tc:{title:"Time Cards",btns:[]},
+  cl:{title:"Classique",btns:[]},
+};
+CL_BUTTONS.forEach(b=>CL_GROUPS[b.grp].btns.push(b));
+
+function navWsHtml(){
+  const grid=WS_BUTTONS.filter(b=>b.t!=="Project Workspace")
+    .map(b=>`<button class="snfus-wbtn" disabled onclick="snfusOpenWs('${b.t.replace(/'/g,"\\'")}')">${b.t}</button>`).join("");
+  return `<div id="snfus-nav-ws">
+    <div class="snfus-nav-section-title">Workspace</div>
+    <button class="snfus-wbtn ws-full" disabled onclick="snfusOpenWs('Project Workspace')">Project Workspace</button>
+    <div id="snfus-ws-grid-main">${grid}</div>
+  </div>`;
+}
+
+function navClHtml(){
+  const groups=Object.entries(CL_GROUPS).map(([,g])=>{
+    const btns=g.btns.map(b=>`<button class="snfus-lbtn" disabled onclick="snfusOpenLink('${b.t.replace(/'/g,"\\'")}')">${b.t}</button>`).join("");
+    return `<div class="snfus-cl-group">
+      <div class="snfus-cl-group-title">${g.title}</div>
+      <div class="snfus-cl-group-btns">${btns}</div>
+    </div>`;
+  }).join("");
+  return `<div id="snfus-nav-cl">${groups}</div>`;
+}
+
+overlay.innerHTML=`
+<div id="snfus-overlay" style="position:static;padding:0;background:none;backdrop-filter:none;animation:none">
+<div id="snfus-overlay" style="display:contents">
+</div>`;
+
+// On repart proprement
+overlay.innerHTML="";
+
+// Topbar
+const topbar=document.createElement("div");topbar.id="snfus-topbar";
+topbar.innerHTML=`
+  <div id="snfus-title">
+    <h2>🗂️ Project Navigator</h2>
+    <span id="snfus-autodetect"></span>
+    <span id="snfus-status"></span>
+  </div>
+  <div id="snfus-topbar-right">
+    <div class="snfus-top-input-wrap">
+      <div class="snfus-top-label">Numéro</div>
+      <input class="snfus-field" id="snfus-number" placeholder="PRJ0001234"
+        oninput="snfusOnInput('number')" onkeydown="if(event.key==='Enter')snfusLoad()" style="min-width:130px">
+    </div>
+    <div class="snfus-top-input-wrap">
+      <div class="snfus-top-label">SYS_ID</div>
+      <input class="snfus-field" id="snfus-sysid" placeholder="f041cb6a..."
+        oninput="snfusOnInput('sysid')" onkeydown="if(event.key==='Enter')snfusLoad()" style="min-width:220px">
+    </div>
+    <button id="snfus-load-btn" onclick="snfusLoad()" style="align-self:flex-end">Charger la hiérarchie</button>
+    <button id="snfus-close" onclick="snfusClose()">&#215;</button>
+  </div>`;
+overlay.appendChild(topbar);
+
+// Nav
+const nav=document.createElement("div");nav.id="snfus-nav";
+nav.innerHTML=navWsHtml()+`<div class="snfus-nav-sep"></div>`+navClHtml();
+overlay.appendChild(nav);
+
+// Onglets
+const tabsBar=document.createElement("div");tabsBar.id="snfus-tabs-bar";
+tabsBar.innerHTML=`
+  <button class="snfus-tab active" onclick="snfusSetTab('info')">Informations</button>
+  <button class="snfus-tab" onclick="snfusSetTab('ordy')">🤖 ORDY</button>`;
+overlay.appendChild(tabsBar);
+
+// Zone principale
+const main=document.createElement("div");main.id="snfus-main";
+
+// Tab info
+const tabInfo=document.createElement("div");tabInfo.id="snfus-tab-info";tabInfo.className="snfus-tab-content active";
+const split=document.createElement("div");split.id="snfus-split";split.setAttribute("id","snfus-body");
+
+// Colonne hiérarchie
+const treeCol=document.createElement("div");treeCol.id="snfus-tree-col";
+treeCol.innerHTML=`
+  <div id="snfus-tree-header">
+    <span class="snfus-tree-title">Hiérarchie du projet</span>
+    <div id="snfus-tree-toggle">
+      <button class="snfus-ttbtn" onclick="snfusTreeSize('narrow')" title="Compact">⊟</button>
+      <button class="snfus-ttbtn active" onclick="snfusTreeSize('normal')" title="Normal">⊡</button>
+      <button class="snfus-ttbtn" onclick="snfusTreeSize('full')" title="Plein écran">⊞</button>
+    </div>
+  </div>
+  <div id="snfus-tree-box">
+    <div class="snfus-tree-hint" id="snfus-tree-hint">Entrez un numéro ou sys_id.</div>
+    <table id="snfus-tree-table" style="display:none">
+      <colgroup><col class="col-num"><col class="col-name"><col class="col-cnt"><col class="col-cnt"><col class="col-cnt"><col class="col-cnt"></colgroup>
+      <thead><tr>
+        <th>Numéro</th>
+        <th class="col-name-hide">Nom</th>
+        <th class="cnt-col" style="color:${C_RA}" title="Resource Assignments">RA</th>
+        <th class="cnt-col" style="color:${C_TC}" title="Time Cards">TC</th>
+        <th class="cnt-col" style="color:${C_CP}" title="Cost Plans">CP</th>
+        <th class="cnt-col" style="color:${C_EX}" title="Expense Lines">EX</th>
+      </tr></thead>
+      <tbody id="snfus-tree"></tbody>
+    </table>
+  </div>`;
+
+// Colonne données
+const dataCol=document.createElement("div");dataCol.id="snfus-data-col";
+dataCol.innerHTML=`
+  <div id="snfus-info">
+    <div id="snfus-info-title">Sélectionnez un nœud</div>
+    <div id="snfus-info-content"><div id="snfus-info-empty">—</div></div>
+  </div>
+  ${CONN_LISTS.map(cl=>`
+  <div class="snfus-minilist" id="snfus-ml-${cl.id}">
+    <div class="snfus-minilist-hdr">
+      <span class="snfus-minilist-title" style="color:${cl.color}">${cl.label}</span>
+      <div class="snfus-minilist-meta">
+        <span class="snfus-minilist-count" id="snfus-ml-${cl.id}-count">—</span>
+        <button class="snfus-minilist-open" disabled style="color:${cl.color};border-color:${rgba(cl.color,.4)}"
+          onclick="snfusOpenList('${cl.id}')">↗ Liste complète</button>
+      </div>
+    </div>
+    <div class="snfus-minilist-body" id="snfus-ml-${cl.id}-body">
+      <div class="snfus-ml-empty">Sélectionnez un nœud.</div>
+    </div>
+  </div>`).join("")}`;
+
+split.appendChild(treeCol);
+split.appendChild(dataCol);
+tabInfo.appendChild(split);
+
+// Tab ORDY
+const tabOrdy=document.createElement("div");tabOrdy.id="snfus-tab-ordy";tabOrdy.className="snfus-tab-content";
+tabOrdy.innerHTML=`<div id="snfus-ordy-empty">Cliquez sur une ligne de Resource Assignment pour afficher les données ORDY.</div>`;
+
+main.appendChild(tabInfo);
+main.appendChild(tabOrdy);
+overlay.appendChild(main);
+document.body.appendChild(overlay);
+
+/* ============================================================
+   FERMETURE
+   ============================================================ */
+function close(){
+  document.getElementById(OVERLAY_ID)?.remove();
+  document.getElementById(STYLE_ID)?.remove();
+  document.removeEventListener("keydown",onKey);
+}
+function onKey(e){if(e.key==="Escape")close();}
+document.addEventListener("keydown",onKey);
+function setSt(msg,type){const el=document.getElementById("snfus-status");el.textContent=msg;el.className=type||"";}
+
+/* ============================================================
+   ONGLETS
+   ============================================================ */
+window.snfusSetTab=(tab)=>{
+  activeTab=tab;
+  document.querySelectorAll(".snfus-tab").forEach((b,i)=>b.classList.toggle("active",["info","ordy"][i]===tab));
+  document.querySelectorAll(".snfus-tab-content").forEach(p=>p.classList.remove("active"));
+  document.getElementById(`snfus-tab-${tab}`)?.classList.add("active");
+};
+
+/* ============================================================
+   TOGGLE TAILLE ARBRE
+   ============================================================ */
+window.snfusTreeSize=(size)=>{
+  const body=document.getElementById("snfus-body");
+  body.className=`tree-${size}`;
+  document.querySelectorAll(".snfus-ttbtn").forEach((b,i)=>{
+    b.classList.toggle("active",["narrow","normal","full"][i]===size);
+  });
+};
+
+/* ============================================================
+   BOUTONS NAVIGATION
+   ============================================================ */
+function allWsBtns(){return document.querySelectorAll("#snfus-nav-ws .snfus-wbtn");}
+function allLinkBtns(){return document.querySelectorAll("#snfus-nav-cl .snfus-lbtn");}
+function allListOpenBtns(){return document.querySelectorAll(".snfus-minilist-open");}
+
+window.snfusOpenWs=(label)=>{
+  const pid=projId||(selNode&&selNode.sys_id);if(!pid)return;
+  const b=WS_BUTTONS.find(x=>x.t===label);if(!b)return;
+  window.open(location.origin+b.url(pid,Date.now()),"_blank");
+};
+
+window.snfusOpenLink=(label)=>{
+  if(!selNode)return;
+  const b=CL_BUTTONS.find(x=>x.t===label);if(!b)return;
+  const fn=selNode.depth===0?b.urlP:b.urlT;
+  window.open(location.origin+fn(selNode.sys_id),"_blank");
+};
+
+window.snfusOpenList=(listId)=>{
+  if(!selNode)return;
+  const cl=CONN_LISTS.find(x=>x.id===listId);if(!cl)return;
+  const fn=selNode.depth===0?cl.qP:cl.qT;
+  window.open(`${location.origin}/${cl.table}_list.do?sysparm_query=${fn(selNode.sys_id)}`,"_blank");
+};
+
+/* ============================================================
+   SÉLECTION NŒUD
+   ============================================================ */
+function selectNode(node){
+  selNode=node;
+  document.querySelectorAll("#snfus-tree tr").forEach(e=>e.classList.remove("sel"));
+  document.querySelector(`#snfus-tree tr[data-id="${node.sys_id}"]`)?.classList.add("sel");
+  allWsBtns().forEach(b=>b.disabled=false);
+  allLinkBtns().forEach(b=>b.disabled=false);
+  allListOpenBtns().forEach(b=>b.disabled=false);
+  loadInfo(node);
+  CONN_LISTS.forEach(cl=>loadMiniList(cl,node));
+}
+
+function deselectAll(){
+  selNode=null;
+  document.querySelectorAll("#snfus-tree tr").forEach(e=>e.classList.remove("sel"));
+  allWsBtns().forEach(b=>b.disabled=true);
+  allLinkBtns().forEach(b=>b.disabled=true);
+  allListOpenBtns().forEach(b=>b.disabled=true);
+  CONN_LISTS.forEach(cl=>{
+    document.getElementById(`snfus-ml-${cl.id}-body`).innerHTML=`<div class="snfus-ml-empty">Sélectionnez un nœud.</div>`;
+    document.getElementById(`snfus-ml-${cl.id}-count`).textContent="—";
+  });
+  document.getElementById("snfus-info-title").textContent="Sélectionnez un nœud";
+  document.getElementById("snfus-info-content").innerHTML=`<div id="snfus-info-empty">—</div>`;
+}
+
+window.snfusSelectNode=(sysId)=>{
+  const n=window._snfusNodes&&window._snfusNodes[sysId];if(n)selectNode(n);
+};
+
+/* ============================================================
+   INFO RECORD
+   ============================================================ */
+async function loadInfo(node){
+  if(_info[node.sys_id]){renderInfo(node,_info[node.sys_id]);return;}
+  document.getElementById("snfus-info-title").textContent=`${node.number} — ${node.name}`;
+  document.getElementById("snfus-info-content").innerHTML=`<div class="snfus-ml-loading">Chargement…</div>`;
+  const isP=node.depth===0||node.isProject;
+  const tbl=isP?"pm_project":"pm_project_task";
+  const allFlds=[...DATE_FIELDS,...COST_FIELDS].map(f=>f.f).join(",");
+  try{
+    const res=await apiFetch(`/api/now/table/${tbl}?sysparm_query=sys_id=${node.sys_id}&sysparm_fields=${allFlds}&sysparm_limit=1&sysparm_display_value=all`);
+    const data=await res.json();
+    const rec=data.result&&data.result[0]?data.result[0]:{};
+    _info[node.sys_id]={rec,isP};
+    renderInfo(node,_info[node.sys_id]);
+  }catch(e){
+    document.getElementById("snfus-info-content").innerHTML=`<div class="snfus-ml-empty">Erreur.</div>`;
+  }
+}
+
+function renderInfo(node,{rec,isP}){
+  document.getElementById("snfus-info-title").innerHTML=`${node.number} <span>— ${node.name}</span>`;
+  const now=new Date();
+  function fieldHtml(f){
+    const raw=rec[f.f]||null; const val=fmtVal(raw);
+    let cls=val?"":"empty";
+    if(val&&(f.f==="end_date"||f.f==="approved_end_date")){
+      const rawStr=raw&&typeof raw==="object"?(raw.value||""):String(raw||"");
+      const d=new Date(rawStr);if(!isNaN(d)&&d<now)cls="overdue";
+    }
+    return `<div class="snfus-ifield"><span class="snfus-ifield-lbl">${f.label}</span>
+      <div class="snfus-ifield-val ${cls}">${val||"—"}</div></div>`;
+  }
+  const leftHtml=DATE_LEFT.map(fieldHtml).join("");
+  const rightHtml=DATE_RIGHT.map(fieldHtml).join("");
+  const costHtml=COST_FIELDS.map(fieldHtml).join("");
+  document.getElementById("snfus-info-content").innerHTML=`
+    <div id="snfus-info-body">
+      <div id="snfus-dates-grid">
+        <div><div class="snfus-dates-col-title">Start</div><div style="display:flex;flex-direction:column;gap:6px">${leftHtml}</div></div>
+        <div><div class="snfus-dates-col-title">End</div><div style="display:flex;flex-direction:column;gap:6px">${rightHtml}</div></div>
+      </div>
+      <div id="snfus-costs-col"><div class="snfus-costs-title">Coûts</div>${costHtml}</div>
+    </div>`;
+}
+
+/* ============================================================
+   MINI-LISTES
+   ============================================================ */
+async function loadMiniList(cl,node){
+  const bodyEl=document.getElementById(`snfus-ml-${cl.id}-body`);
+  const cntEl=document.getElementById(`snfus-ml-${cl.id}-count`);
+  if(_lists[cl.id]&&_lists[cl.id][node.sys_id]){renderMiniList(cl,_lists[cl.id][node.sys_id],bodyEl,cntEl);return;}
+  bodyEl.innerHTML=`<div class="snfus-ml-loading">Chargement…</div>`;cntEl.textContent="…";
+  const isP=node.depth===0||node.isProject;
+  const q=(isP?cl.qP:cl.qT)(node.sys_id);
+  const fields=cl.cols.map(c=>c.f).join(",")+",sys_id";
+  try{
+    const res=await apiFetch(`/api/now/table/${cl.table}?sysparm_query=${q}&sysparm_fields=${fields}&sysparm_limit=10&sysparm_display_value=all`);
+    const data=await res.json();
+    const rows=data.result||[];
+    const total=res.headers.get("X-Total-Count");
+    if(!_lists[cl.id])_lists[cl.id]={};
+    _lists[cl.id][node.sys_id]={rows,total};
+    renderMiniList(cl,{rows,total},bodyEl,cntEl);
+  }catch(e){bodyEl.innerHTML=`<div class="snfus-ml-empty">Erreur.</div>`;cntEl.textContent="err";}
+}
+
+function renderMiniList(cl,{rows,total},bodyEl,cntEl){
+  const shown=rows.length,tot=total?parseInt(total):shown;
+  cntEl.textContent=tot>shown?`${shown}/${tot} (limité à 10)`:tot===1?"1 enregistrement":`${tot} enregistrements`;
+  if(!rows.length){bodyEl.innerHTML=`<div class="snfus-ml-empty">Aucun enregistrement.</div>`;return;}
+  const thCells=cl.cols.map(c=>`<th>${c.label}</th>`).join("")
+    +(cl.id==="ra"?`<th style="width:30px"></th>`:"")
+    +(cl.hasBreakdown?`<th style="width:80px"></th>`:"");
+  const tdRows=rows.map(row=>{
+    const sysId=getSysId(row.sys_id);
+    const cells=cl.cols.map(c=>cellHtml(row[c.f])).join("");
+    const bkdCell=cl.hasBreakdown?`<td onclick="event.stopPropagation()"><button class="snfus-bkd-btn" onclick="snfusToggleBreakdown(this,'${sysId}')">▶ Breakdown</button></td>`:"";
+    const rowUrl=sysId?`${location.origin}/now/nav/ui/classic/params/target/${cl.table}.do?sys_id=${sysId}`:"#";
+    // Pour RA : bouton robot en fin de ligne, le reste de la ligne ouvre l'enregistrement
+    const raBtn=cl.id==="ra"
+      ? `<td onclick="event.stopPropagation()"><button style="background:none;border:none;cursor:pointer;font-size:14px;padding:0 4px;opacity:.8;transition:opacity .12s" title="Ouvrir dans ORDY" onclick="snfusSelectRA('${sysId}',this.closest('tr'))">🤖</button></td>`
+      : "";
+    const colspan=cl.hasBreakdown?cl.cols.length+1:cl.cols.length;
+    return `<tr onclick="window.open('${rowUrl}','_blank')">${cells}${cl.id==="ra"?raBtn:""}${cl.hasBreakdown?bkdCell:""}</tr>`
+      +(cl.hasBreakdown?`<tr class="snfus-breakdown-row" id="snfus-bkd-${sysId}" style="display:none"><td colspan="${colspan}" style="padding:0"><div class="snfus-breakdown-wrap"><div class="snfus-breakdown-hdr">Cost Plan Breakdowns</div><div id="snfus-bkd-body-${sysId}" class="snfus-breakdown-loading">Cliquez sur ▶ pour charger.</div></div></td></tr>`:"");
+  }).join("");
+  bodyEl.innerHTML=`<table class="snfus-ml-table"><thead><tr>${thCells}</tr></thead><tbody>${tdRows}</tbody></table>`;
+}
+
+/* Breakdown cost plan */
+window.snfusToggleBreakdown=async(btn,cpSysId)=>{
+  const row=document.getElementById(`snfus-bkd-${cpSysId}`);
+  const bodyDiv=document.getElementById(`snfus-bkd-body-${cpSysId}`);
+  if(!row)return;
+  const isOpen=row.style.display!=="none";
+  if(isOpen){row.style.display="none";btn.textContent="▶ Breakdown";return;}
+  row.style.display="";btn.textContent="▼ Breakdown";
+  if(bodyDiv.dataset.loaded==="1")return;
+  bodyDiv.className="snfus-breakdown-loading";bodyDiv.textContent="Chargement…";
+  const fields=CP_BREAKDOWN_COLS.map(c=>c.f).join(",");
+  try{
+    const res=await apiFetch(`/api/now/table/cost_plan_breakdown?sysparm_query=cost_plan=${cpSysId}&sysparm_fields=${fields},sys_id&sysparm_limit=50&sysparm_display_value=all`);
+    const data=await res.json();const rows=data.result||[];
+    if(!rows.length){bodyDiv.textContent="Aucun breakdown.";bodyDiv.className="snfus-breakdown-loading";bodyDiv.dataset.loaded="1";return;}
+    const thCells=CP_BREAKDOWN_COLS.map(c=>`<th>${c.label}</th>`).join("");
+    const tdRows=rows.map(row=>{
+      const sysId=getSysId(row.sys_id);
+      const cells=CP_BREAKDOWN_COLS.map(c=>cellHtml(row[c.f])).join("");
+      return `<tr style="cursor:pointer" onclick="window.open('${location.origin}/now/nav/ui/classic/params/target/cost_plan_breakdown.do?sys_id=${sysId}','_blank')">${cells}</tr>`;
+    }).join("");
+    bodyDiv.className="";bodyDiv.innerHTML=`<table class="snfus-ml-table"><thead><tr>${thCells}</tr></thead><tbody>${tdRows}</tbody></table>`;
+    bodyDiv.dataset.loaded="1";
+  }catch(e){bodyDiv.textContent="Erreur.";bodyDiv.className="snfus-breakdown-loading";}
+};
+
+/* ============================================================
+   ONGLET ORDY
+   ============================================================ */
+window.snfusSelectRA=async(raSysId, trEl)=>{
+  // Forcer une string propre au cas où
+  raSysId=String(raSysId).trim();
+  if(!raSysId||!/^[0-9a-f]{32}$/i.test(raSysId)){
+    console.warn("ORDY: raSysId invalide:", raSysId);return;
+  }
+  // Désélectionner l'ancienne ligne RA
+  document.querySelectorAll(".ra-sel").forEach(r=>r.classList.remove("ra-sel"));
+  trEl.classList.add("ra-sel");
+  selRaSysId=raSysId;
+  snfusSetTab("ordy");
+  renderOrdyLoading();
+  // Charger toutes les données en parallèle
+  const fields_alloc=ORDY_ALLOC_COLS.map(c=>c.f).join(",")+",sys_id,resource_plan";
+  const fields_rplan=ORDY_RPLAN_COLS.map(c=>c.f).join(",")+",sys_id";
+  const fields_tc=ORDY_TC_COLS.map(c=>c.f).join(",")+",sys_id";
+  try{
+    const [allocRes, rplanRes, tcRes]=await Promise.all([
+      apiFetch(`/api/now/table/resource_allocation?sysparm_query=resource_assignment=${raSysId}&sysparm_fields=${fields_alloc}&sysparm_limit=50&sysparm_display_value=all`),
+      apiFetch(`/api/now/table/resource_plan?sysparm_query=resource_assignment=${raSysId}&sysparm_fields=${fields_rplan}&sysparm_limit=5&sysparm_display_value=all`),
+      apiFetch(`/api/now/table/time_card?sysparm_query=resource_assignment=${raSysId}&sysparm_fields=${fields_tc}&sysparm_limit=50&sysparm_display_value=all`),
+    ]);
+    const allocs=(await allocRes.json()).result||[];
+    const rplans=(await rplanRes.json()).result||[];
+    const tcs=(await tcRes.json()).result||[];
+    renderOrdy(raSysId, allocs, rplans, tcs);
+  }catch(e){
+    document.getElementById("snfus-tab-ordy").innerHTML=`<div class="snfus-ordy-empty">Erreur de chargement.</div>`;
+  }
+};
+
+function renderOrdyLoading(){
+  document.getElementById("snfus-tab-ordy").innerHTML=`<div class="snfus-ordy-empty snfus-ml-loading">Chargement des données ORDY…</div>`;
+}
+
+function ordyTableHtml(cols, rows, table, expandFn){
+  if(!rows.length) return `<div class="snfus-ml-empty">Aucun enregistrement.</div>`;
+  const thCells=cols.map(c=>`<th>${c.label}</th>`).join("")+(expandFn?`<th style="width:30px"></th>`:"");
+  const tdRows=rows.map(row=>{
+    const sysId=getSysId(row.sys_id);
+    const cells=cols.map(c=>cellHtml(row[c.f])).join("");
+    const expandCell=expandFn?`<td onclick="event.stopPropagation();${expandFn}('${sysId}',this)" style="cursor:pointer;text-align:center;color:${C_ORDY}">▶</td>`:"";
+    const url=`${location.origin}/now/nav/ui/classic/params/target/${table}.do?sys_id=${sysId}`;
+    return `<tr class="${expandFn?"snfus-ordy-row-click":""}" onclick="window.open('${url}','_blank')">${cells}${expandCell}</tr>`;
+  }).join("");
+  return `<table class="snfus-ml-table"><thead><tr>${thCells}</tr></thead><tbody>${tdRows}</tbody></table>`;
+}
+
+function ordySection(id, title, count, bodyHtml){
+  return `<div class="snfus-ordy-section" id="snfus-ordy-${id}">
+    <div class="snfus-ordy-section-hdr" onclick="snfusOrdyToggle('${id}')">
+      <span class="snfus-ordy-section-title">${title}</span>
+      <div class="snfus-ordy-section-meta">
+        <span>${count} enregistrement${count!==1?"s":""}</span>
+        <span class="snfus-ordy-chevron">▾</span>
+      </div>
+    </div>
+    <div class="snfus-ordy-section-body">${bodyHtml}</div>
+  </div>`;
+}
+
+function renderOrdy(raSysId, allocs, rplans, tcs){
+  const tab=document.getElementById("snfus-tab-ordy");
+  // Resource Plan (premier trouvé)
+  const rplanHtml=ordyTableHtml(ORDY_RPLAN_COLS, rplans, "resource_plan", null);
+  // Resource Allocations
+  const allocHtml=ordyTableHtml(ORDY_ALLOC_COLS, allocs, "resource_allocation","snfusOrdyExpandAlloc");
+  // Time Cards
+  const tcHtml=ordyTableHtml(ORDY_TC_COLS, tcs, "time_card","snfusOrdyExpandTC");
+
+  tab.innerHTML=
+    ordySection("rplan","Resource Plan",rplans.length,rplanHtml)+
+    ordySection("alloc","Resource Allocations",allocs.length,allocHtml)+
+    ordySection("tc","Time Cards",tcs.length,tcHtml);
+
+  // Stocker pour daily expansion
+  window._ordyAllocs=allocs;
+  window._ordyTCs=tcs;
+  window._ordyRaSysId=raSysId;
+}
+
+window.snfusOrdyToggle=(id)=>{
+  document.getElementById(`snfus-ordy-${id}`)?.classList.toggle("collapsed");
+};
+
+/* Charger les daily d'une allocation */
+window.snfusOrdyExpandAlloc=async(allocSysId, btn)=>{
+  const tr=btn.closest("tr");
+  // Toggle si déjà ouvert
+  const nextRows=[...tr.parentElement.children];
+  const idx=nextRows.indexOf(tr);
+  const existing=nextRows[idx+1];
+  if(existing&&existing.dataset.dailyFor===allocSysId){
+    existing.remove();btn.textContent="▶";tr.classList.remove("expanded");return;
+  }
+  tr.classList.add("expanded");btn.textContent="▼";
+  const dailyTr=document.createElement("tr");
+  dailyTr.dataset.dailyFor=allocSysId;
+  dailyTr.className="snfus-ordy-daily-row";
+  dailyTr.innerHTML=`<td colspan="${ORDY_ALLOC_COLS.length+1}" style="padding:0"><div class="snfus-ml-loading" style="padding:6px 10px">Chargement daily…</div></td>`;
+  tr.insertAdjacentElement("afterend",dailyTr);
+  const raSysId=window._ordyRaSysId;
+  const fields=ORDY_ALLOC_DAILY_COLS.map(c=>c.f).join(",")+",sys_id";
+  try{
+    const res=await apiFetch(`/api/now/table/resource_allocation_daily?sysparm_query=allocation.resource_assignment=${raSysId}&sysparm_fields=${fields}&sysparm_limit=100&sysparm_display_value=all`);
+    const rows=(await res.json()).result||[];
+    if(!rows.length){dailyTr.querySelector("td").innerHTML=`<div class="snfus-ml-empty" style="padding:6px 10px">Aucun daily.</div>`;return;}
+    const thCells=ORDY_ALLOC_DAILY_COLS.map(c=>`<th>${c.label}</th>`).join("");
+    const tdRows=rows.map(row=>{
+      const sysId=getSysId(row.sys_id);
+      const cells=ORDY_ALLOC_DAILY_COLS.map(c=>cellHtml(row[c.f])).join("");
+      return `<tr onclick="window.open('${location.origin}/now/nav/ui/classic/params/target/resource_allocation_daily.do?sys_id=${sysId}','_blank')">${cells}</tr>`;
+    }).join("");
+    dailyTr.querySelector("td").innerHTML=`<table class="snfus-ml-table"><thead><tr>${thCells}</tr></thead><tbody>${tdRows}</tbody></table>`;
+  }catch(e){dailyTr.querySelector("td").innerHTML=`<div class="snfus-ml-empty" style="padding:6px 10px">Erreur.</div>`;}
+};
+
+/* Charger les daily d'une time card */
+window.snfusOrdyExpandTC=async(tcSysId, btn)=>{
+  const tr=btn.closest("tr");
+  const nextRows=[...tr.parentElement.children];
+  const idx=nextRows.indexOf(tr);
+  const existing=nextRows[idx+1];
+  if(existing&&existing.dataset.dailyFor===tcSysId){
+    existing.remove();btn.textContent="▶";tr.classList.remove("expanded");return;
+  }
+  tr.classList.add("expanded");btn.textContent="▼";
+  const dailyTr=document.createElement("tr");
+  dailyTr.dataset.dailyFor=tcSysId;
+  dailyTr.className="snfus-ordy-daily-row";
+  dailyTr.innerHTML=`<td colspan="${ORDY_TC_COLS.length+1}" style="padding:0"><div class="snfus-ml-loading" style="padding:6px 10px">Chargement daily…</div></td>`;
+  tr.insertAdjacentElement("afterend",dailyTr);
+  const raSysId=window._ordyRaSysId;
+  const fields=ORDY_TC_DAILY_COLS.map(c=>c.f).join(",")+",sys_id";
+  try{
+    const res=await apiFetch(`/api/now/table/time_card_daily?sysparm_query=time_card.resource_assignment=${raSysId}&sysparm_fields=${fields}&sysparm_limit=100&sysparm_display_value=all`);
+    const rows=(await res.json()).result||[];
+    if(!rows.length){dailyTr.querySelector("td").innerHTML=`<div class="snfus-ml-empty" style="padding:6px 10px">Aucun daily.</div>`;return;}
+    const thCells=ORDY_TC_DAILY_COLS.map(c=>`<th>${c.label}</th>`).join("");
+    const tdRows=rows.map(row=>{
+      const sysId=getSysId(row.sys_id);
+      const cells=ORDY_TC_DAILY_COLS.map(c=>cellHtml(row[c.f])).join("");
+      return `<tr onclick="window.open('${location.origin}/now/nav/ui/classic/params/target/time_card_daily.do?sys_id=${sysId}','_blank')">${cells}</tr>`;
+    }).join("");
+    dailyTr.querySelector("td").innerHTML=`<table class="snfus-ml-table"><thead><tr>${thCells}</tr></thead><tbody>${tdRows}</tbody></table>`;
+  }catch(e){dailyTr.querySelector("td").innerHTML=`<div class="snfus-ml-empty" style="padding:6px 10px">Erreur.</div>`;}
+};
+
+/* ============================================================
+   COMPTEURS AU SURVOL
+   ============================================================ */
+window.snfusHover=async(sysId)=>{
+  if(_cnt[sysId]!==undefined)return;
+  _cnt[sysId]="loading";
+  ["ra","tc","cp","ex"].forEach(k=>{
+    const el=document.getElementById(`snfus-cnt-${k}-${sysId}`);
+    if(el)el.innerHTML=`<span class="snfus-cnt ${k}" style="opacity:.5">…</span>`;
+  });
+  const node=window._snfusNodes&&window._snfusNodes[sysId];
+  const isP=node&&(node.depth===0||node.isProject);
+  const f=isP?"top_task":"task";
+  try{
+    const [raR,tcR,cpR,exR]=await Promise.all([
+      apiFetch(`/api/now/table/sn_plng_att_core_resource_assignment?sysparm_query=${f}=${sysId}&sysparm_fields=sys_id&sysparm_limit=1&sysparm_count=true`),
+      apiFetch(`/api/now/table/time_card?sysparm_query=${f}=${sysId}&sysparm_fields=sys_id&sysparm_limit=1&sysparm_count=true`),
+      apiFetch(`/api/now/table/cost_plan?sysparm_query=${f}=${sysId}&sysparm_fields=sys_id&sysparm_limit=1&sysparm_count=true`),
+      apiFetch(`/api/now/table/fm_expense_line?sysparm_query=source_id=${sysId}&sysparm_fields=sys_id&sysparm_limit=1&sysparm_count=true`),
+    ]);
+    const [raD,tcD,cpD,exD]=await Promise.all([raR.json(),tcR.json(),cpR.json(),exR.json()]);
+    const ra=parseInt(raR.headers.get("X-Total-Count")||(raD.result?raD.result.length:0));
+    const tc=parseInt(tcR.headers.get("X-Total-Count")||(tcD.result?tcD.result.length:0));
+    const cp=parseInt(cpR.headers.get("X-Total-Count")||(cpD.result?cpD.result.length:0));
+    const ex=parseInt(exR.headers.get("X-Total-Count")||(exD.result?exD.result.length:0));
+    _cnt[sysId]={ra,tc,cp,ex};
+    const fill=(k,v,cls)=>{
+      const el=document.getElementById(`snfus-cnt-${k}-${sysId}`);
+      if(el)el.innerHTML=v>0?`<span class="snfus-cnt ${cls}">${v}</span>`:`<span class="snfus-cnt empty">—</span>`;
+    };
+    fill("ra",ra,"ra");fill("tc",tc,"tc");fill("cp",cp,"cp");fill("ex",ex,"ex");
+  }catch(e){delete _cnt[sysId];}
+};
+
+/* ============================================================
+   ARBRE
+   ============================================================ */
+function flatTree(all,pid,d){
+  return all.filter(t=>t.parent===pid).flatMap(t=>[{...t,depth:d},...flatTree(all,t.sys_id,d+1)]);
+}
+
+function renderNode(n){
+  const c=dc(n.depth),ind=n.depth*14,id=n.sys_id;
+  const dotHtml=`<span class="snfus-node-dot" style="background:${c};box-shadow:0 0 4px ${rgba(c,.6)};margin-left:${ind}px"></span>`;
+  return `<tr data-id="${id}" onclick="snfusSelectNode('${id}')" onmouseenter="snfusHover('${id}')">
+    <td class="num-cell" style="white-space:nowrap">${dotHtml}<span class="snfus-tnode-num" style="color:${c}">${n.number}</span><span class="snfus-sel-badge">✓</span></td>
+    <td class="name-cell col-name-hide" title="${n.name}"><span class="snfus-tnode-name">${n.name}</span></td>
+    <td class="cnt-col" id="snfus-cnt-ra-${id}"><span class="snfus-cnt empty">—</span></td>
+    <td class="cnt-col" id="snfus-cnt-tc-${id}"><span class="snfus-cnt empty">—</span></td>
+    <td class="cnt-col" id="snfus-cnt-cp-${id}"><span class="snfus-cnt empty">—</span></td>
+    <td class="cnt-col" id="snfus-cnt-ex-${id}"><span class="snfus-cnt empty">—</span></td>
+  </tr>`;
+}
+
+function renderTree(nodes){
+  const tEl=document.getElementById("snfus-tree");
+  const hEl=document.getElementById("snfus-tree-hint");
+  const tableEl=document.getElementById("snfus-tree-table");
+  if(!nodes||!nodes.length){hEl.textContent="Aucune tâche trouvée.";hEl.style.display="";tableEl.style.display="none";return;}
+  hEl.style.display="none";tableEl.style.display="";
+  tEl.innerHTML=nodes.map(renderNode).join("");
+}
+
+/* ============================================================
+   CHARGEMENT HIÉRARCHIE
+   ============================================================ */
+async function fetchParentChain(pid){
+  const chain=[];let current=pid,safety=0;
+  while(current&&safety++<10){
+    try{
+      const res=await apiFetch(`/api/now/table/pm_project?sysparm_query=sys_id=${current}&sysparm_fields=number,short_description,parent&sysparm_limit=1`);
+      const data=await res.json();const rec=data.result&&data.result[0];if(!rec)break;
+      const parentRef=rec.parent;const parentId=parentRef?(parentRef.value||null):null;
+      if(parentId&&/^[0-9a-f]{32}$/i.test(parentId)){chain.push({sys_id:current,number:rec.number,name:rec.short_description||""});current=parentId;}
+      else break;
+    }catch(e){break;}
+  }
+  return chain;
+}
+
+async function loadHierarchy(pid, autoSelectId){
+  const tEl=document.getElementById("snfus-tree");
+  const hEl=document.getElementById("snfus-tree-hint");
+  const tableEl=document.getElementById("snfus-tree-table");
+  tEl.innerHTML="";hEl.style.display="";hEl.textContent="Chargement…";tableEl.style.display="none";
+  deselectAll();
+  [_cnt,_info,...CONN_LISTS.map(x=>_lists[x.id]||{})].forEach(o=>{if(o)Object.keys(o).forEach(k=>delete o[k]);});
+
+  async function fetchProject(id){
+    const res=await apiFetch(`/api/now/table/pm_project?sysparm_query=sys_id=${id}&sysparm_fields=number,short_description,parent&sysparm_limit=1`);
+    const data=await res.json();return data.result&&data.result[0]?data.result[0]:null;
+  }
+  async function fetchTasks(id){
+    const res=await apiFetch(`/api/now/table/pm_project_task?sysparm_query=top_task=${id}&sysparm_fields=sys_id,number,short_description,parent&sysparm_limit=2000`);
+    const data=await res.json();
+    return (data.result||[]).map(t=>({sys_id:t.sys_id,number:t.number,name:t.short_description||"",parent:t.parent?(t.parent.value||t.parent):id}));
+  }
+  // Récupérer les sous-projets enfants d'un projet (pm_project.parent = id)
+  async function fetchChildProjects(id){
+    const res=await apiFetch(`/api/now/table/pm_project?sysparm_query=parent=${id}&sysparm_fields=sys_id,number,short_description&sysparm_limit=100`);
+    const data=await res.json();return data.result||[];
+  }
+
+  try{
+    const [prjRec,tasks,parentChain]=await Promise.all([fetchProject(pid),fetchTasks(pid),fetchParentChain(pid)]);
+    const pNum=prjRec?prjRec.number:"PRJ";const pName=prjRec?prjRec.short_description||"":"";
+    const ancestors=[...parentChain].reverse();
+    const flat=[];
+    ancestors.forEach((anc,i)=>flat.push({sys_id:anc.sys_id,number:anc.number,name:anc.name,depth:i,isProject:true}));
+    const rootDepth=ancestors.length;
+    flat.push({sys_id:pid,number:pNum,name:pName,depth:rootDepth,isProject:true});
+
+    // Construire l'arbre des tâches récursivement
+    // Pour chaque tâche qui est aussi un sous-projet, charger ses propres tâches
+    async function addTasksWithSubProjects(parentId, d, allTasks){
+      const children=allTasks.filter(t=>t.parent===parentId);
+      for(const t of children){
+        flat.push({...t,depth:d});
+        // Vérifier si cette tâche est aussi un sous-projet (pm_project avec parent=pid)
+        // Les sous-projets ont leur propre set de tâches via top_task = sous-projet.sys_id
+        const subTasks=await fetchTasks(t.sys_id);
+        if(subTasks.length>0){
+          // C'est un sous-projet : charger ses enfants récursivement
+          await addTasksWithSubProjects(t.sys_id,d+1,subTasks);
+        } else {
+          // Tâche normale : continuer dans le même allTasks
+          await addTasksWithSubProjects(t.sys_id,d+1,allTasks);
+        }
+      }
+    }
+
+    // Chercher aussi les sous-projets directs (pm_project.parent = pid)
+    const childProjects=await fetchChildProjects(pid);
+    // Fusionner : les tâches du projet racine + les sous-projets comme nœuds dans l'arbre
+    // Les sous-projets s'insèrent en fonction de leur position (ils ont un sys_id dans tasks via parent)
+    const allNodes=[...tasks,...childProjects.map(cp=>({
+      sys_id:cp.sys_id,
+      number:cp.number,
+      name:cp.short_description||"",
+      parent:pid, // rattaché au projet racine
+      isProject:true
+    }))];
+
+    await addTasksWithSubProjects(pid,rootDepth+1,allNodes);
+
+    renderTree(flat);
+    window._snfusNodes={};flat.forEach(n=>{window._snfusNodes[n.sys_id]=n;});
+
+    // Fix 2 : auto-sélectionner le nœud correspondant au sys_id de la page
+    if(autoSelectId&&window._snfusNodes[autoSelectId]){
+      selectNode(window._snfusNodes[autoSelectId]);
+    }
+    return;
+  }catch(e){console.error(e);}
+  hEl.textContent="Erreur de chargement.";
+}
+
+/* ============================================================
+   RÉSOLUTION
+   ============================================================ */
+async function resolveProj(sysId){
+  try{
+    const res=await apiFetch(`/api/now/table/pm_project_task?sysparm_query=sys_id=${sysId}&sysparm_fields=sub_tree_root&sysparm_limit=1`);
+    const data=await res.json();
+    if(data.result&&data.result[0]){const v=data.result[0].sub_tree_root;const id=v?(v.value||v):null;if(id&&/^[0-9a-f]{32}$/i.test(id))return id;}
+  }catch(e){}
+  return null;
+}
+
+window.snfusClose=close;
+window.snfusOnInput=(src)=>{
+  if(src==="number"&&document.getElementById("snfus-number").value.trim())document.getElementById("snfus-sysid").value="";
+  if(src==="sysid"&&document.getElementById("snfus-sysid").value.trim())document.getElementById("snfus-number").value="";
+};
+
+window.snfusLoad=async()=>{
+  const num=document.getElementById("snfus-number").value.trim();
+  const sid=document.getElementById("snfus-sysid").value.trim();
+  const btn=document.getElementById("snfus-load-btn");
+  const hexRe=/^[0-9a-f]{32}$/i;
+  if(!num&&!sid){setSt("Remplis un champ","err");return;}
+  if(sid&&hexRe.test(sid)){
+    btn.disabled=true;setSt("Chargement…","");
+    const pid=await resolveProj(sid);const id=pid||sid;
+    if(pid){document.getElementById("snfus-sysid").value=pid;setSt("↑ Projet via sub_tree_root","ok");}
+    projId=id;await loadHierarchy(id, sid);setSt("✓ Chargé","ok");btn.disabled=false;return;
+  }
+  if(sid&&!hexRe.test(sid)){setSt("Format invalide","err");return;}
+  if(num){
+    btn.disabled=true;setSt("Résolution…","");
+    try{
+      const res=await apiFetch(`/api/now/table/pm_project?sysparm_query=number=${encodeURIComponent(num)}&sysparm_fields=sys_id&sysparm_limit=1`);
+      if(res.ok){
+        const data=await res.json();
+        if(data.result&&data.result.length){
+          const id=data.result[0].sys_id;
+          document.getElementById("snfus-sysid").value=id;
+          projId=id;await loadHierarchy(id, id);setSt("✓ Chargé","ok");btn.disabled=false;return;
+        }
+      }
+    }catch(e){}
+    try{
+      const GR=(window.top&&window.top.GlideRecord)||window.GlideRecord;
+      if(GR){const gr=new GR("pm_project");gr.addQuery("number",num.toUpperCase());gr.setLimit(1);
+        gr.query(async()=>{
+          if(gr.next()){const id=gr.getUniqueValue();document.getElementById("snfus-sysid").value=id;projId=id;await loadHierarchy(id, id);setSt("✓ Chargé","ok");}
+          else setSt("Introuvable","err");btn.disabled=false;});return;}
+    }catch(e){}
+    setSt("Erreur","err");btn.disabled=false;
+  }
+};
+
+/* ============================================================
+   DÉTECTION AUTO
+   ============================================================ */
+function detectSysId(){
+  const url=decodeURIComponent(location.href);
+  const m=url.match(/\/pm_project\/([0-9a-f]{32})/i)||url.match(/project-id\/([0-9a-f]{32})/i)
+         ||url.match(/project_resource-([0-9a-f]{32})-pm_project/i)
+         ||url.match(/[?&]sys_id=([0-9a-f]{32})/i)||url.match(/[?&]sysparm_sys_id=([0-9a-f]{32})/i);
+  if(m)return m[1];
+  try{const gf=(window.top&&window.top.g_form)||window.g_form;
+    if(gf&&typeof gf.getUniqueValue==="function"){const v=gf.getUniqueValue();if(v&&/^[0-9a-f]{32}$/i.test(v))return v;}}catch(e){}
+  const inp=document.querySelector('input[name="sys_id"],input[name="sysparm_sys_id"]');
+  if(inp&&/^[0-9a-f]{32}$/i.test(inp.value))return inp.value;
+  return null;
+}
+
+(async()=>{
+  const autoId=detectSysId();
+  if(autoId){
+    const f=document.getElementById("snfus-sysid");
+    f.value=autoId;f.classList.add("detected");setSt("Résolution…","");
+    const pid=await resolveProj(autoId);const id=pid||autoId;
+    if(pid){f.value=pid;document.getElementById("snfus-autodetect").textContent="⚡ Projet via tâche";}
+    else document.getElementById("snfus-autodetect").textContent="⚡ sys_id détecté";
+    projId=id;await loadHierarchy(id, autoId);setSt("✓ Chargé","ok");
+  }else{setTimeout(()=>document.getElementById("snfus-number").focus(),100);}
+})();
+
+})();void(0);
