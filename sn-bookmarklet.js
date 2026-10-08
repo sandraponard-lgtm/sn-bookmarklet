@@ -1,7 +1,11 @@
 javascript:(function(){
 
 /* ============================================================
-   CONFIGURATION — zone éditable V2.0
+   CONFIGURATION — zone éditable V2.1
+   Syntaxe :
+     { section: "..." }  -> titre de section (niveau 1)
+     { sub: "..." }      -> sous-section (niveau 2), rattachée à la section au-dessus
+     Les liens placés juste après { section } sans { sub } restent sans sous-titre.
    ============================================================ */
 
 const data = [
@@ -30,6 +34,8 @@ const data = [
       { t: "Local Update Sets",       u: "/sys_update_set_list.do",              ic: "📤", tbl: "sys_update_set" },
       { t: "Retrieved Update Sets",   u: "/sys_remote_update_set_list.do",       ic: "📥", tbl: "sys_remote_update_set" },
       { t: "Customer Updates",        u: "/sys_update_xml_list.do",              ic: "👩‍💻", tbl: "sys_update_xml" },
+    { section: "Application" },
+      { t: "Application File",        u: "/sys_metadata_list.do",                tbl: "sys_metadata" },
     { section: "Scripting & Log" },
       { t: "Logs 5min SPO",           u: "/syslog_list.do?sysparm_query=sys_created_onRELATIVEGT@minute@ago@5^sourceLIKESPO", tbl: "syslog" },
       { t: "Scripts Background",      u: "/sys.scripts.do" },
@@ -72,6 +78,7 @@ const data = [
       { t: "Transform Maps",          u: "/sys_transform_entry_list.do" },
     { section: "Others" },
       { t: "UI Views",                u: "/sys_ui_view_list.do" },
+      { t: "Scripted REST Resource",  u: "/sys_ws_operation_list.do",            tbl: "sys_ws_operation" },
   ]},
 
   { f: "Data Foundations", c: "#D97706", i: "🗂️", l: [
@@ -135,13 +142,14 @@ const data = [
   ]},
 
   { f: "SPM", c: "#EA580C", i: "🎯", l: [
-    { section: "Demands" },
-      { t: "Demands",                 u: "/dmn_demand_list.do" },
-      { t: "Demand Tasks",            u: "/dmn_demand_task_list.do" },
-    { section: "Projects" },
-      { t: "Projects",                u: "/pm_project_list.do" },
-      { t: "Project Tasks",           u: "/pm_project_task_list.do" },
-      { t: "Project Status",          u: "/project_status_list.do",              tbl: "project_status" },
+    { section: "Demand & Project" },
+      { sub: "Demands" },
+        { t: "Demands",                 u: "/dmn_demand_list.do" },
+        { t: "Demand Tasks",            u: "/dmn_demand_task_list.do" },
+      { sub: "Projects" },
+        { t: "Projects",                u: "/pm_project_list.do" },
+        { t: "Project Tasks",           u: "/pm_project_task_list.do" },
+        { t: "Project Status",          u: "/project_status_list.do",              tbl: "project_status" },
     { section: "Documentation" },
       { t: "Doc Pages",               u: "/sn_doc_page_list.do",                 tbl: "sn_doc_page" },
       { t: "Doc Page Templates",      u: "/sn_doc_page_template_list.do",        tbl: "sn_doc_page_template" },
@@ -159,9 +167,15 @@ const data = [
       { t: "Resource Allocation",     u: "/resource_allocation_list.do" },
       { t: "Resource Alloc. Daily",   u: "/resource_allocation_daily_list.do" },
     { section: "Aggregates" },
-      { t: "Aggregate Monthly",       u: "/resource_aggregate_monthly_list.do" },
-      { t: "Aggregate Weekly",        u: "/resource_aggregate_monthly_list.do" },
-      { t: "DBV profile + aggregate", u: "/sn_plng_att_core_attribute_based_resource_aggregates_list.do" },
+      { sub: "Resource" },
+        { t: "Aggregate Monthly",       u: "/resource_aggregate_monthly_list.do" },
+        { t: "Aggregate Weekly",        u: "/resource_aggregate_monthly_list.do" },
+      { sub: "Attribute-based" },
+        { t: "DBV profile + aggregate", u: "/sn_plng_att_core_attribute_based_resource_aggregates_list.do" },
+        { t: "Attr. Aggregate Monthly Capacity", u: "/sn_plng_att_core_cpaam_capacity_list.do",   tbl: "sn_plng_att_core_cpaam_capacity" },
+        { t: "Attr. Aggregate Combination",      u: "/sn_plng_att_core_cpaam_combination_list.do", tbl: "sn_plng_att_core_cpaam_combination" },
+        { t: "Attr. Aggregate Monthly Effort",   u: "/sn_plng_att_core_cpaam_effort_list.do",      tbl: "sn_plng_att_core_cpaam_effort" },
+        { t: "Capacity Generation Run Log",      u: "/sn_plng_att_core_capacity_generation_run_log_list.do", tbl: "sn_plng_att_core_capacity_generation_run_log" },
     { section: "Goals Framework" },
       { t: "Strategic Value",         u: "/sn_gf_strategy_value_list.do" },
       { t: "Strategic Plan",          u: "/sn_gf_strategic_plan_list.do" },
@@ -169,14 +183,15 @@ const data = [
       { t: "Goals",                   u: "/sn_gf_core_goal_list.do" },
       { t: "Targets",                 u: "/sn_gf_goal_target_list.do" },
     { section: "Strategic Planning" },
-      { t: "Portfolio Plan Config",   u: "/sn_align_ws_roadmap_configuration_list.do" },
-      { t: "Integrations",            u: "/sn_align_cmn_int_integrations_setup_list.do" },
-      { t: "Lens",                    u: "/sn_align_core_lens_list.do" },
-      { t: "Planning Attributes",     u: "/sn_plng_att_core_planning_attribute_list.do" },
-    { section: "Strategic Planning Data" },
-      { t: "Planning Items",          u: "/sn_align_core_planning_item_list.do" },
-      { t: "Portfolio Plan",          u: "/sn_align_ws_portfolio_plan_list.do" },
-      { t: "Portfolio Plan View",     u: "/sn_align_ws_portfolio_plan_view_list.do" },
+      { sub: "Configuration" },
+        { t: "Portfolio Plan Config",   u: "/sn_align_ws_roadmap_configuration_list.do" },
+        { t: "Integrations",            u: "/sn_align_cmn_int_integrations_setup_list.do" },
+        { t: "Lens",                    u: "/sn_align_core_lens_list.do" },
+        { t: "Planning Attributes",     u: "/sn_plng_att_core_planning_attribute_list.do" },
+      { sub: "Data" },
+        { t: "Planning Items",          u: "/sn_align_core_planning_item_list.do" },
+        { t: "Portfolio Plan",          u: "/sn_align_ws_portfolio_plan_list.do" },
+        { t: "Portfolio Plan View",     u: "/sn_align_ws_portfolio_plan_view_list.do" },
     { section: "RIDAC" },
       { t: "Risk",                    u: "/risk_list.do" },
       { t: "Issue",                   u: "/issue_list.do" },
@@ -318,19 +333,28 @@ function buildRow(item){
   </div>`;
 }
 
+/* Un bloc = une section d'une colonne, contenant une ou plusieurs sous-sections.
+   block = { col, sec, subs:[{name, items:[]}], isFirstBlock } */
 function getSectionBlocks(sourceData, matchFn){
   const blocks=[];
   sourceData.forEach(col=>{
-    let curSec=null, curItems=[], isFirstBlock=true;
+    let curSec=null, curSubs=[], curSub=null, isFirstBlock=true;
+    const newSub=name=>{ curSub={name,items:[]}; curSubs.push(curSub); };
     const flush=()=>{
-      if(curItems.length){
-        blocks.push({col,sec:curSec,items:curItems,isFirstBlock});
-        isFirstBlock=false; curSec=null; curItems=[];
+      const subs=curSubs.filter(s=>s.items.length);
+      if(subs.length){
+        blocks.push({col,sec:curSec,subs,isFirstBlock});
+        isFirstBlock=false;
       }
+      curSec=null; curSubs=[]; curSub=null;
     };
     col.l.forEach(item=>{
       if(item.section){ flush(); curSec=item.section; }
-      else if(item.t && matchFn(item)){ curItems.push(item); }
+      else if(item.sub){ newSub(item.sub); }
+      else if(item.t && matchFn(item)){
+        if(!curSub) newSub(null);
+        curSub.items.push(item);
+      }
     });
     flush();
   });
@@ -338,7 +362,7 @@ function getSectionBlocks(sourceData, matchFn){
 }
 
 function buildBlock(block, skipColHeader){
-  const {col, sec, items, isFirstBlock}=block;
+  const {col, sec, subs, isFirstBlock}=block;
   let headerHtml="";
   if(!skipColHeader){
     if(isFirstBlock){
@@ -348,7 +372,11 @@ function buildBlock(block, skipColHeader){
     }
   }
   const secHtml=sec?`<div class="snql-sec" style="background:${rgba(col.c,0.06)};color:${col.c};border-color:${rgba(col.c,0.2)}">${sec}</div>`:"";
-  return `<div class="snql-block" style="--col-accent:${col.c};--col-glow:${rgba(col.c,0.05)}">${headerHtml}${secHtml}${items.map(buildRow).join("")}</div>`;
+  const subsHtml=subs.map(s=>{
+    const head=s.name?`<div class="snql-sub" style="color:${col.c}">${s.name}</div>`:"";
+    return `<div class="snql-subblock${s.name?" has-sub":""}" style="--sub-line:${rgba(col.c,0.28)}">${head}${s.items.map(buildRow).join("")}</div>`;
+  }).join("");
+  return `<div class="snql-block" style="--col-accent:${col.c};--col-glow:${rgba(col.c,0.05)}">${headerHtml}${secHtml}${subsHtml}</div>`;
 }
 
 function renderBlocks(el, blocks, skipColHeader){
@@ -416,7 +444,7 @@ function renderCols(q){
   }
   const countEl=document.getElementById("snql-count");
   if(search){
-    const n=blocks.reduce((s,b)=>s+b.items.length,0);
+    const n=blocks.reduce((s,b)=>s+b.subs.reduce((t,sb)=>t+sb.items.length,0),0);
     countEl.textContent=n+(n===1?" résultat":" résultats");
     countEl.style.display="";
   } else {
@@ -588,6 +616,16 @@ styleEl.textContent=`
   font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;
   padding:4px 9px;border-radius:6px;border:1px solid;
   margin-top:10px;margin-bottom:5px;line-height:1.3;display:inline-block;
+}
+
+/* SOUS-SECTION */
+.snql-subblock.has-sub{
+  margin:2px 0 6px 6px;padding-left:8px;
+  border-left:2px solid var(--sub-line,#E5E7EB);
+}
+.snql-sub{
+  font-size:11px;font-weight:600;letter-spacing:0.02em;
+  margin:6px 0 2px 4px;line-height:1.3;opacity:.85;
 }
 
 /* LIGNE */
