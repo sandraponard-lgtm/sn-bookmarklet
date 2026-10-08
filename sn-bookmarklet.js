@@ -141,7 +141,7 @@ const data = [
       { t: "Business Application",    u: "/cmdb_ci_business_app_list.do",        ic: "🔵", tbl: "cmdb_ci_business_app" },
   ]},
 
-  { f: "SPM", c: "#EA580C", i: "🎯", l: [
+  { f: "SPM", c: "#EA580C", i: "🎯", cols: 4, l: [
     { section: "Demand & Project" },
       { sub: "Demands" },
         { t: "Demands",                 u: "/dmn_demand_list.do" },
