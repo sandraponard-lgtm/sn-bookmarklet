@@ -55,6 +55,7 @@ const data = [
       { t: "Fix Scripts",             u: "/sys_script_fix_list.do" },
       { t: "Business Rules",          u: "/sys_script_list.do" },
       { t: "Script Includes",         u: "/sys_script_include_list.do",          tbl: "sys_script_include" },
+      { t: "Email Scripts",           u: "/sys_script_email_list.do",            tbl: "sys_script_email" },
     { section: "Automation" },
       { t: "Scheduled Jobs",          u: "/sys_trigger_list.do",                 tbl: "sys_trigger" },
       { t: "Scheduled Script Exec.",  u: "/sysauto_script_list.do",              ic: "🏁", tbl: "sysauto_script" },
@@ -155,7 +156,9 @@ const data = [
          { t: "Resource Users",          u: "/sys_user_list.do?sysparm_query=roles%3Dpps_resource%5E&sysparm_view=resource_manager" },
          { t: "Resource Groups",         u: "/sys_user_group_list.do?sysparm_query=roles%3Dpps_resource%5E&sysparm_view=resource_manager" },
          { t: "Resource Plans",          u: "/resource_plan_list.do" },
-       { sub: "Assignment" },
+       { sub: "Config" },
+         { t: "Resource Board",          u: "/sn_rm_ws_resource_board_list.do",             tbl: "sn_rm_ws_resource_board" },
+      { sub: "Assignment" },
          { t: "Resource Assignment",     u: "/sn_plng_att_core_resource_assignment_list.do" },
          { t: "Resource Allocation",     u: "/resource_allocation_list.do" },
          { t: "Resource Alloc. Daily",   u: "/resource_allocation_daily_list.do" },
@@ -588,9 +591,11 @@ styleEl.textContent=`
 /* GRILLES */
 #snql-grid,.snql-pin-grid{
   display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+  grid-template-columns:repeat(4,minmax(0,1fr));
   gap:16px 20px;align-items:start;
 }
+@media(max-width:1000px){#snql-grid,.snql-pin-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){#snql-grid,.snql-pin-grid{grid-template-columns:1fr}}
 #snql-home{display:block}
 
 /* BLOC */
