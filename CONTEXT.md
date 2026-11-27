@@ -92,7 +92,8 @@ resource_allocation_daily?sysparm_query=allocation.resource_assignment.top_task=
 - RAD : allocated_cost présent (162.5, 150… = heures × 50, `decimal` en USD), actual_cost = chaîne vide "" (projet futur)
 - Devise du projet = USD, devise fonctionnelle = USD, devise d'affichage de l'utilisateur = EUR
 
-## Version courante : v2026-11-27.11
+## Version courante : v2026-11-27.12
+- v2026-11-27.12 : (1) réconciliation, colonne « Écart » (max − min entre Σ EX, work_cost, Σ RAD réel, + Σ CP sur la ligne projet ; ✓ si < 0,01) ; (2) filtre rapide au-dessus des minilistes de plus de 3 lignes (insensible casse/accents, compteur n / N, les lignes Breakdown suivent leur ligne parente).
 - v2026-11-27.11 : tri des colonnes sur toutes les tables (minilistes, breakdown, réconciliation) : clic sur un en-tête = tri croissant puis décroissant (▲/▼). Nombres (formats fr et US), dates jj-mm-aaaa et texte gérés ; valeurs vides toujours en dernier ; les liens ↗ des en-têtes ne déclenchent pas le tri ; la ligne Breakdown dépliée reste attachée à sa ligne Cost Plan. Délégation d'événement unique (`window.snfusSortInit`).
 - v2026-11-27.10 : dans l'arbre, le lien au survol d'une ligne affiche « ↗ » seul (le mot « Classique » est retiré ; l'infobulle reste).
 - v2026-11-27.9 : la minilist « Resource Alloc. Daily » est retirée de la partie principale (les RAD restent lues par la réconciliation). Le lien rapide « Resource Allocation » du menu Ressources reste disponible.
