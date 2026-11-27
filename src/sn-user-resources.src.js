@@ -2,7 +2,7 @@
  * Source lisible ; le fichier servi est sn-user-resources.js (minifié : npm run build ou voir CONTEXT.md). */
 (function () {
   'use strict';
-  var VER = 'v2026-11-27.3';
+  var VER = 'v2026-11-27.4';
   var ID = 'snus-overlay', CSSID = 'snus-style', LS = 'snus.v1';
   var old = document.getElementById(ID);
   if (old) { old._close && old._close(); return; }
@@ -34,7 +34,7 @@
   function dv(o) { return o && typeof o === 'object' ? (o.display_value == null ? '' : String(o.display_value)) : (o == null ? '' : String(o)); }
 
   /* ---------- Préférences (localStorage, jamais bloquant) ---------- */
-  var P = { tab: 'ov', gran: 'm', preset: 'cur', from: '', to: '', unit: 'h', costs: true, force: false };
+  var P = { tab: 'ov', gran: 'm', sorts: {}, preset: 'cur', from: '', to: '', unit: 'h', costs: true, force: false };
   try { var raw = localStorage.getItem(LS); if (raw) Object.assign(P, JSON.parse(raw)); } catch (e) {}
   function save() { try { localStorage.setItem(LS, JSON.stringify(P)); } catch (e) {} }
 
@@ -330,21 +330,18 @@
     var ld = h('div', { cls: 'card' }, [h('div', { cls: 'ct', text: 'Charge sur la période (heures allouées par jour)' })]);
     if (days <= 92) { ld.appendChild(heatmap(d)); ld.appendChild(h('div', { cls: 'mt', text: 'Gris : rien · bleu : 0–2 h, 2–4 h, 4–8 h · rouge : plus de 8 h' })); }
     else ld.appendChild(h('div', { cls: 'mt', text: 'Période longue : voir le détail par mois ci-dessous.' }));
-    var tb = h('table', { cls: 'tb' }, [h('thead', null, [h('tr', null, ['Mois', 'Capacité', 'Alloué', 'Réel', 'Occupation', 'Agrégat alloué', 'Écart'].concat(P.costs ? ['Coût alloué', 'Coût réel'] : []).map(function (x, i) { return h('th', { text: x, cls: i ? 'n' : '' }); }))])]);
-    var bd = h('tbody');
-    mrs.forEach(function (r) {
+    var R2 = mrs.map(function (r) {
       var diff = r.hasAgg && r.full ? r.al - r.aggAl : null, o = r.full && r.hasCap && r.cap > 0 ? r.al / r.cap * 100 : null;
-      var tr = h('tr', null, [
-        h('td', { text: r.m.slice(0, 7).split('-').reverse().join('-') + (r.full ? '' : ' (partiel)') }),
-        h('td', { cls: 'n', text: r.hasCap ? fH(r.cap) : '—' }), h('td', { cls: 'n', text: fH(r.al) }), h('td', { cls: 'n', text: fH(r.ac) }),
-        h('td', { cls: 'n' + (o != null && o > 100 ? ' bad' : ''), text: o == null ? '—' : NF.format(o) + ' %' }),
-        h('td', { cls: 'n', text: r.hasAgg ? fH(r.aggAl) : '—' }),
-        h('td', { cls: 'n' + (diff != null && Math.abs(diff) >= 0.01 ? ' bad' : diff != null ? ' good' : ''), text: diff == null ? '—' : Math.abs(diff) < 0.01 ? '✓' : (diff > 0 ? '+' : '') + NF.format(diff / (P.unit === 'j' ? 8 : 1)) + (P.unit === 'j' ? ' j' : ' h') })
-      ]);
-      if (P.costs) { tr.appendChild(h('td', { cls: 'n', text: NF.format(r.cAl) })); tr.appendChild(h('td', { cls: 'n', text: NF.format(r.cAc) })); }
-      bd.appendChild(tr);
+      var c = [C(r.m.slice(0, 7).split('-').reverse().join('-') + (r.full ? '' : ' (partiel)'), { d: r.m }), C(r.hasCap ? fN(r.cap) : '—', { n: r.hasCap ? r.cap : null }), C(fN(r.al), { n: r.al }), C(fN(r.ac), { n: r.ac }),
+        C(o == null ? '—' : NF.format(o) + ' %', { n: o, cls: o != null && o > 100 ? 'bad' : '' }), C(r.hasAgg ? fN(r.aggAl) : '—', { n: r.hasAgg ? r.aggAl : null }),
+        diff == null ? C('—') : Math.abs(diff) < 0.01 ? C('✓', { cls: 'good', n: 0 }) : C((diff > 0 ? '+' : '') + fN(diff), { cls: 'bad', n: diff })];
+      if (P.costs) c.push(C(NF.format(r.cAl), { n: r.cAl }), C(NF.format(r.cAc), { n: r.cAc }));
+      return { c: c, r: r };
     });
-    tb.appendChild(bd); ld.appendChild(h('div', { cls: 'tw' }, [tb]));
+    var cols2 = ['Mois', 'Capacité' + uS(), 'Alloué' + uS(), 'Réel' + uS(), 'Occupation', 'Agrégat alloué' + uS(), 'Écart' + uS()].concat(P.costs ? ['Coût alloué', 'Coût réel'] : []).map(function (x, i) { return { l: x, num: i > 0 }; });
+    ld.appendChild(dtable({ name: 'mois', cols: cols2, rows: R2, totals: function (vis) {
+      var a = 0, b2 = 0, c = 0, e = 0, f = 0, g = 0; vis.forEach(function (x) { a += x.r.cap; b2 += x.r.al; c += x.r.ac; e += x.r.cAl; f += x.r.cAc; });
+      var t = [C('Σ'), C(fN(a)), C(fN(b2)), C(fN(c)), C(a > 0 ? NF.format(b2 / a * 100) + ' %' : '—'), C(''), C('')]; if (P.costs) t.push(C(NF.format(e)), C(NF.format(f))); return t; } }));
     box.appendChild(ld);
 
     box.appendChild(relCard(d.uid));
@@ -384,7 +381,9 @@
   function C(t, o) { var c = { t: t == null ? '' : String(t) }; if (o) for (var k in o) c[k] = o[k]; return c; }
   function empty(c) { return c.t === '' || c.t === '—'; }
   function dtable(o) {
-    var stt = { sort: null, asc: true, q: '' }, wrap = h('div'), tw = h('div', { cls: 'tw' }), cnt = h('span', { cls: 'mt' });
+    var stt = { sort: null, asc: true, q: '' }, sm = P.sorts[o.name];
+    if (sm) o.cols.forEach(function (c, i) { if (c.l === sm.l) { stt.sort = i; stt.asc = sm.asc; } });
+    var wrap = h('div'), tw = h('div', { cls: 'tw' }), cnt = h('span', { cls: 'mt' });
     var fq = h('input', { cls: 'fld sm', type: 'search', placeholder: 'Filtrer…', oninput: function () { stt.q = fq.value; draw(); } });
     var vis = [];
     function lines() {
@@ -419,7 +418,7 @@
       }
       var tr = h('tr');
       o.cols.forEach(function (c, i) {
-        var th = h('th', { cls: c.num ? 'n' : '', text: c.l + (stt.sort === i ? (stt.asc ? ' ▲' : ' ▼') : ''), onclick: function () { if (stt.sort === i) stt.asc = !stt.asc; else { stt.sort = i; stt.asc = true; } draw(); } });
+        var th = h('th', { cls: c.num ? 'n' : '', text: c.l + (stt.sort === i ? (stt.asc ? ' ▲' : ' ▼') : ''), onclick: function () { if (stt.sort === i) stt.asc = !stt.asc; else { stt.sort = i; stt.asc = true; } if (o.name) { P.sorts[o.name] = { l: c.l, asc: stt.asc }; save(); } draw(); } });
         if (c.href) th.appendChild(h('a', { cls: 'hl', href: c.href, target: '_blank', rel: 'noopener', title: 'Ouvrir la liste classique filtrée', text: '↗', onclick: function (e) { e.stopPropagation(); } }));
         tr.appendChild(th);
       });
@@ -659,6 +658,7 @@
     '.btn{padding:7px 14px;border-radius:8px;border:1px solid #3758F9;background:#3758F9;color:#fff;font:inherit;font-weight:500;cursor:pointer}.btn:hover{background:#1B44C8}.btn:disabled{opacity:.5;cursor:default}',
     '.btn.sec{background:#fff;color:#374151;border-color:#D1D5DB}.btn.sec:hover{background:#F3F4F6}.btn.on{background:#EEF2FF;color:#3758F9;border-color:#3758F9}',
     '.sp{flex:1}',
+    '#snus-overlay :focus-visible{outline:2px solid #3758F9;outline-offset:2px}',
     '#snus-close{width:32px;height:32px;border-radius:8px;border:1px solid #E5E7EB;background:#F3F4F6;color:#6B7280;cursor:pointer;font-size:16px}#snus-close:hover{background:#FEF2F2;color:#DC2626;border-color:#FECACA}',
     '#snus-mode{font-size:11px;color:#6B7280}',
     '#snus-tabs{display:flex;gap:4px;padding:8px 16px;background:#F9FAFB;border-bottom:1px solid #E5E7EB;flex-wrap:wrap}',
@@ -693,7 +693,7 @@
   ].join('');
 
   var st = h('style', { id: CSSID }); st.textContent = CSS;
-  var ov = h('div', { id: ID }), win = h('div', { id: 'snus-win' });
+  var ov = h('div', { id: ID }), win = h('div', { id: 'snus-win', role: 'dialog', 'aria-label': 'Utilisateur : charge et time cards' });
   var inp = h('input', { cls: 'fld', placeholder: 'Nom, e-mail ou sys_id', style: 'min-width:240px' });
   var preset = h('select', { cls: 'fld', onchange: function () { P.preset = preset.value; save(); syncDates(); if (P.preset !== 'custom') refresh(false); } },
     [['cur', 'Mois courant'], ['prev', 'Mois précédent'], ['q', 'Trimestre'], ['y', 'Année civile'], ['custom', 'Personnalisé']].map(function (x) { return h('option', { value: x[0], text: x[1] }); }));
@@ -713,7 +713,7 @@
     bForce.textContent = P.force ? 'Ligne à ligne : forcé' : 'Forcer ligne à ligne'; bForce.className = 'btn sec' + (P.force ? ' on' : '');
   }
   win.appendChild(h('div', { id: 'snus-top' }, [h('h2', null, [h('span', { text: 'Utilisateur' }), h('span', { cls: 'ver', text: VER })]), inp, bLoad, preset, dFrom, dTo, bUnit, bCost, bRe, bForce, h('span', { cls: 'sp' }), mode,
-    h('button', { id: 'snus-close', title: 'Fermer (Échap)', text: '✕', onclick: close })]));
+    h('button', { id: 'snus-close', title: 'Fermer (Échap)', 'aria-label': 'Fermer', text: '✕', onclick: close })]));
   win.appendChild(tabs); win.appendChild(main); ov.appendChild(win);
   document.head.appendChild(st); document.body.appendChild(ov);
   function onKey(e) { if (e.key === 'Escape') close(); }
