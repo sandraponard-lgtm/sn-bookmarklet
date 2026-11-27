@@ -138,7 +138,13 @@ Script de diagnostic à lancer dans la console :
 - **Purge jsDelivr** : `https://purge.jsdelivr.net/gh/sandraponard-lgtm/sn-bookmarklet@main/sn-user-resources.js` (ou épingler un commit : `@<sha>`).
 - Versions propres à ce fichier (`vAAAA-MM-JJ.N`, affichée dans l'en-tête).
 
-## Version courante : v2026-11-27.3 (lot 3 : Allocations + Agrégats)
+## Version courante : v2026-11-27.4 (lot 4 : finitions et recette)
+- v2026-11-27.4 : tableau mensuel de la vue d'ensemble migré vers le tableau générique (tri, filtre, Σ, Copier, CSV) ; tri mémorisé par tableau (`sorts` dans `snus.v1`, retrouvé par libellé de colonne) ; focus visible, `role="dialog"`, `aria-label` sur la fermeture.
+- Recette (lecture seule, 2026-11-27) : détection de l'utilisateur dans l'URL du Next Experience (`/now/nav/ui/classic/params/target/sys_user.do%3Fsys_id%3D…`) OK ; ouverture utile (9 requêtes) en ~300–330 ms ; période annuelle en hebdomadaire OK (53 semaines, 64 colonnes) ; utilisateur enfant de groupe (Émilie Rousseau) sans double comptage ; mode ligne à ligne = mêmes valeurs ; constats détaillés dans le doc de projet `sn-tables-reference-utilisateur.md`.
+- Non mesuré : durée « avant » de l'ancien bookmarklet (test automatisé non concluant : 2 requêtes API en 31 s sans fin de chargement).
+- Purge jsDelivr après fusion : `https://purge.jsdelivr.net/gh/sandraponard-lgtm/sn-bookmarklet@main/sn-user-resources.js`.
+
+## v2026-11-27.3 (lot 3 : Allocations + Agrégats)
 - v2026-11-27.3 : onglet **Allocations** (resource_allocation de l'utilisateur chevauchant la période, matrice allocation × mois ou semaines en heures allouées, Σ alloué / réel / coûts ; allocations présentes dans les RAD mais absentes de la liste affichées « sans assignation » pour que les totaux concordent ; **détail quotidien à la demande** par allocation). Onglet **Agrégats** (mensuel ou hebdomadaire : capacité, disponibilité, alloué et réel des agrégats, taux d'occupation, utilisation, alloué et réel des allocations quotidiennes avec colonnes **Écart**, bouton Tester la fiabilité). Granularité mensuelle / hebdomadaire commune, mémorisée (`gran`). Périodes d'agrégats prises entières (mois complets ou semaines lundi → dimanche).
 - Constat : `resource_aggregate_weekly.week_starts_on` est un **lundi** (contrairement à `time_card.week_starts_on`, dimanche). `resource_allocation` se filtre par `resource_assignment.user_resource=<user>` (sûr : 1976 → 3) et se lit avec `resource_assignment.top_task` et `resource_assignment.task` en dot-walk (display_value=all renvoie la clé « resource_assignment.top_task »). `stats` groupé par `allocation,date` fonctionne (63 groupes en nov. 2026).
 - Concordance nov. 2026 (David Bernard) : mensuel capacité 168 h, alloué 185,25 h (agrégat = RAD), réel 40 h ; hebdo 6 semaines, écarts ✓ ; Allocations Σ 185,25 h / 40 h / 9 262,50 / 2 000,00 ; mode ligne à ligne identique (29 requêtes cumulées contre 16).
