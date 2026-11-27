@@ -92,7 +92,8 @@ resource_allocation_daily?sysparm_query=allocation.resource_assignment.top_task=
 - RAD : allocated_cost présent (162.5, 150… = heures × 50, `decimal` en USD), actual_cost = chaîne vide "" (projet futur)
 - Devise du projet = USD, devise fonctionnelle = USD, devise d'affichage de l'utilisateur = EUR
 
-## Version courante : v2026-11-27.9
+## Version courante : v2026-11-27.10
+- v2026-11-27.10 : dans l'arbre, le lien au survol d'une ligne affiche « ↗ » seul (le mot « Classique » est retiré ; l'infobulle reste).
 - v2026-11-27.9 : la minilist « Resource Alloc. Daily » est retirée de la partie principale (les RAD restent lues par la réconciliation). Le lien rapide « Resource Allocation » du menu Ressources reste disponible.
 - v2026-11-27.8 : (1) Σ RAD alloué dédoublé projet / tâches comme EX et RAD réel ; (2) titres de colonnes de la réconciliation cliquables (↗) vers la liste filtrée correspondante (EX/RAD par colonne projet ou tâches, CP, work_cost) ; (3) barre de navigation en onglets (Workspace, Accès rapide, Plans de coût, Dépenses, Ressources, Cartes de temps) au lieu d'une rangée de boutons défilante : `snfusNavTab(g)`, panneaux `.snfus-np`.
 - v2026-11-27.7 : réconciliation, les colonnes Σ EX et Σ RAD réel sont dédoublées en « sur le projet » (valeur de la ligne projet) et « sur les tâches » (valeurs des lignes tâches), pour distinguer visuellement le cumul du projet des lignes de tâches. Les lignes de total remplissent la colonne correspondante.
