@@ -2,7 +2,7 @@
  * Source lisible ; le fichier servi est sn-user-resources.js (minifié : npm run build ou voir CONTEXT.md). */
 (function () {
   'use strict';
-  var VER = 'v2026-11-27.2';
+  var VER = 'v2026-11-27.3';
   var ID = 'snus-overlay', CSSID = 'snus-style', LS = 'snus.v1';
   var old = document.getElementById(ID);
   if (old) { old._close && old._close(); return; }
@@ -34,7 +34,7 @@
   function dv(o) { return o && typeof o === 'object' ? (o.display_value == null ? '' : String(o.display_value)) : (o == null ? '' : String(o)); }
 
   /* ---------- Préférences (localStorage, jamais bloquant) ---------- */
-  var P = { tab: 'ov', preset: 'cur', from: '', to: '', unit: 'h', costs: true, force: false };
+  var P = { tab: 'ov', gran: 'm', preset: 'cur', from: '', to: '', unit: 'h', costs: true, force: false };
   try { var raw = localStorage.getItem(LS); if (raw) Object.assign(P, JSON.parse(raw)); } catch (e) {}
   function save() { try { localStorage.setItem(LS, JSON.stringify(P)); } catch (e) {} }
 
@@ -347,15 +347,21 @@
     tb.appendChild(bd); ld.appendChild(h('div', { cls: 'tw' }, [tb]));
     box.appendChild(ld);
 
+    box.appendChild(relCard(d.uid));
+  }
+
+
+  function relCard(uid) {
     var rel = h('div', { cls: 'card' }, [h('div', { cls: 'ct', text: 'Fiabilité des agrégats' })]);
     var relOut = h('div', { cls: 'mt', text: 'Compare, sur tout l’historique de l’utilisateur, les allocations quotidiennes aux agrégats mensuels et hebdomadaires.' });
     var btn = h('button', { cls: 'btn', text: 'Tester la fiabilité', onclick: async function () {
       btn.disabled = true; relOut.textContent = 'Test en cours…';
-      try { S.rel = await reliability(d.uid); drawRel(relOut, S.rel); } catch (e) { relOut.textContent = 'Échec du test : ' + e.message; relOut.className = 'mt bad'; }
+      try { S.rel = await reliability(uid); S.rel.uid = uid; drawRel(relOut, S.rel); } catch (e) { relOut.textContent = 'Échec du test : ' + e.message; relOut.className = 'mt bad'; }
       btn.disabled = false;
     } });
-    rel.appendChild(btn); rel.appendChild(relOut); box.appendChild(rel);
-    if (S.rel && S.rel.uid === d.uid) drawRel(relOut, S.rel);
+    rel.appendChild(btn); rel.appendChild(relOut);
+    if (S.rel && S.rel.uid === uid) drawRel(relOut, S.rel);
+    return rel;
   }
 
   function drawRel(out, r) {
@@ -506,12 +512,134 @@
         t.push(C(fN(st)), C(''), C(''), C(''), C(!any ? '—' : Math.abs(sg) < 0.01 ? '✓' : (sg > 0 ? '+' : '') + fN(sg), { cls: any ? (Math.abs(sg) < 0.01 ? 'good' : 'bad') : '' }));
         return t; } })]));
   }
-  var LOADERS = { ra: loadRA, tc: loadTC }, DRAW = { ra: drawRA, tc: drawTC };
+
+  /* ---------- Découpage en périodes (mois / semaines ; agrégats : semaines à partir du lundi) ---------- */
+  function buckets(f, t, gran) {
+    var out = [];
+    if (gran === 'w') { for (var d = mondayOf(pd(f)); ymd(d) <= t; d = addD(d, 7)) out.push({ k: ymd(d), lo: ymd(d), hi: ymd(addD(d, 6)), l: 'S ' + pad(d.getDate()) + '-' + pad(d.getMonth() + 1) }); }
+    else monthsIn(f, t).forEach(function (m) { var a = pd(m); out.push({ k: m, lo: m, hi: ymd(new Date(a.getFullYear(), a.getMonth() + 1, 0)), l: m.slice(0, 7).split('-').reverse().join('-') }); });
+    return out;
+  }
+  function bucketOf(date, gran) { return gran === 'w' ? ymd(mondayOf(pd(date))) : date.slice(0, 7) + '-01'; }
+  function granBar(onchange) {
+    function btn(g, txt) { return h('button', { cls: 'btn sm ' + (P.gran === g ? '' : 'sec'), text: txt, onclick: function () { P.gran = g; save(); onchange(); } }); }
+    return h('div', { cls: 'tools' }, [h('span', { cls: 'mt', text: 'Granularité :' }), btn('m', 'Mensuel'), btn('w', 'Hebdomadaire')]);
+  }
+
+  /* ---------- Onglet Allocations ---------- */
+  async function loadRL(uid, per) {
+    var r = await Promise.all([
+      rows('resource_allocation', 'resource_assignment.user_resource=' + uid + '^start_date<=' + per.t + '^end_date>=' + per.f,
+        ['sys_id', 'number', 'task', 'resource_assignment', 'resource_assignment.top_task', 'resource_plan', 'start_date', 'end_date', 'distribution_type'], true),
+      agg('resource_allocation_daily', 'user=' + uid + '^date>=' + per.f + '^date<=' + per.t, { sum: ['hours', 'actual_hours', 'allocated_cost', 'actual_cost'], group: ['allocation', 'date'] })
+    ]);
+    return { al: r[0].rows, partial: r[0].partial, rad: r[1], per: per, uid: uid };
+  }
+  function drawRL(box, d) {
+    var gran = P.gran, bk = buckets(d.per.f, d.per.t, gran), byAl = {}, info = {};
+    d.al.forEach(function (x) { info[sv(x.sys_id)] = x; });
+    d.rad.forEach(function (x) {
+      var o = byAl[x.g.allocation] = byAl[x.g.allocation] || { b: {}, h: 0, a: 0, c: 0, ca: 0 }, k = bucketOf(x.g.date, gran);
+      o.b[k] = (o.b[k] || 0) + x.sum.hours; o.h += x.sum.hours; o.a += x.sum.actual_hours; o.c += x.sum.allocated_cost; o.ca += x.sum.actual_cost;
+    });
+    var ids = d.al.map(function (x) { return sv(x.sys_id); });
+    Object.keys(byAl).forEach(function (k) { if (ids.indexOf(k) < 0) ids.push(k); });
+    var R = ids.map(function (id) {
+      var x = info[id], o = byAl[id] || { b: {}, h: 0, a: 0, c: 0, ca: 0 }, pj = x ? sv(x['resource_assignment.top_task']) : '', tk = x ? sv(x.task) : '';
+      var c = [C(x ? sv(x.number) : 'Allocation ' + id.slice(0, 6) + '…', { href: '/resource_allocation.do?sys_id=' + id }), C(x ? dv(x['resource_assignment.top_task']) || '—' : '—', pj ? { href: '/pm_project.do?sys_id=' + pj } : null),
+        C(x ? dv(x.task) || '—' : '—', tk ? { href: '/pm_project_task.do?sys_id=' + tk } : null), C(x ? dv(x.resource_assignment) || '—' : '(sans assignation)'), C(x ? dv(x.resource_plan) || '—' : '—'),
+        C(x ? frDate(sv(x.start_date)) : '—', { d: x ? sv(x.start_date) : '' }), C(x ? frDate(sv(x.end_date)) : '—', { d: x ? sv(x.end_date) : '' })];
+      bk.forEach(function (b) { var v = o.b[b.k] || 0; c.push(C(v ? fN(v) : '', { n: v ? v : null })); });
+      c.push(C(fN(o.h), { n: o.h }), C(fN(o.a), { n: o.a }));
+      if (P.costs) c.push(C(NF.format(o.c), { n: o.c }), C(NF.format(o.ca), { n: o.ca }));
+      return { c: c, o: o, id: id };
+    });
+    var cols = [{ l: 'N°', href: listLink('resource_allocation', 'resource_assignment.user_resource=' + d.uid) }, { l: 'Projet' }, { l: 'Tâche' }, { l: 'Assignation' }, { l: 'Plan' }, { l: 'Début' }, { l: 'Fin' }]
+      .concat(bk.map(function (b) { return { l: b.l, num: 1 }; }), [{ l: 'Σ Alloué' + uS(), num: 1, href: listLink('resource_allocation_daily', 'user=' + d.uid + '^date>=' + d.per.f + '^date<=' + d.per.t) }, { l: 'Σ Réel' + uS(), num: 1 }]);
+    if (P.costs) cols.push({ l: 'Coût alloué', num: 1 }, { l: 'Coût réel', num: 1 });
+    var card = h('div', { cls: 'card' }, [h('div', { cls: 'ct', text: 'Allocations par ' + (gran === 'w' ? 'semaine' : 'mois') + ' (heures allouées)' }),
+      h('div', { cls: 'mt', text: 'Alloué et réel : allocations quotidiennes de la période. Coûts dans la devise du rate model de chaque allocation (non convertis).' }),
+      granBar(function () { render(); }),
+      dtable({ name: 'allocations', cols: cols, rows: R, note: d.partial ? 'partiel (40 pages)' : '', totals: function (vis) {
+        var t = [C('Σ'), C(''), C(''), C(''), C(''), C(''), C('')];
+        bk.forEach(function (b) { var v = 0; vis.forEach(function (r) { v += r.o.b[b.k] || 0; }); t.push(C(v ? fN(v) : '')); });
+        var h1 = 0, a1 = 0, c1 = 0, c2 = 0; vis.forEach(function (r) { h1 += r.o.h; a1 += r.o.a; c1 += r.o.c; c2 += r.o.ca; });
+        t.push(C(fN(h1)), C(fN(a1))); if (P.costs) t.push(C(NF.format(c1)), C(NF.format(c2)));
+        return t; } })]);
+    box.appendChild(card);
+
+    /* détail quotidien, à la demande */
+    var sel = h('select', { cls: 'fld sm' }, [h('option', { value: '', text: 'Toutes les allocations' })].concat(R.map(function (r) { return h('option', { value: r.id, text: r.c[0].t + (r.c[2].t !== '—' ? ' · ' + r.c[2].t : '') }); })));
+    var out = h('div'), dBtn = h('button', { cls: 'btn sm', text: 'Charger le détail quotidien', onclick: async function () {
+      var al = sel.value, key = [d.uid, 'rld', d.per.f, d.per.t, al, P.force].join('|'), ld = S.cache[key];
+      out.textContent = ''; out.appendChild(phLine('Chargement…')); dBtn.disabled = true;
+      try {
+        if (!ld) ld = S.cache[key] = (await rows('resource_allocation_daily', 'user=' + d.uid + '^date>=' + d.per.f + '^date<=' + d.per.t + (al ? '^allocation=' + al : '') + '^ORDERBYdate',
+          ['sys_id', 'date', 'allocation', 'task', 'type', 'hours', 'actual_hours', 'allocated_hourly_rate', 'allocated_cost', 'actual_cost'], true));
+        out.textContent = ''; out.appendChild(drawDaily(ld, d, info));
+      } catch (e) { out.textContent = ''; out.appendChild(h('div', { cls: 'err-box', text: e.message + (e.status ? ' [' + e.status + ']' : '') })); }
+      dBtn.disabled = false;
+    } });
+    box.appendChild(h('div', { cls: 'card' }, [h('div', { cls: 'ct', text: 'Détail quotidien' }), h('div', { cls: 'mt', text: 'Non chargé par défaut (une ligne par jour et par allocation).' }), h('div', { cls: 'tools' }, [sel, dBtn]), out]));
+  }
+  function drawDaily(ld, d, info) {
+    var R = ld.rows.map(function (x) {
+      var hr = num(sv(x.hours)), ac = num(sv(x.actual_hours)), cc = num(sv(x.allocated_cost)), ca = num(sv(x.actual_cost)), al = sv(x.allocation), nb = info[al] ? sv(info[al].number) : '—', dt = sv(x.date);
+      var c = [C(frDate(dt), { d: dt }), C(nb, al ? { href: '/resource_allocation.do?sys_id=' + al } : null), C(dv(x.task) || '—'), C(dv(x.type) || '—'), C(fN(hr), { n: hr }), C(fN(ac), { n: ac }), C(NF.format(num(sv(x.allocated_hourly_rate))), { n: num(sv(x.allocated_hourly_rate)) })];
+      if (P.costs) c.push(C(NF.format(cc), { n: cc }), C(NF.format(ca), { n: ca }));
+      return { c: c, hr: hr, ac: ac, cc: cc, ca: ca, open: '/resource_allocation_daily.do?sys_id=' + sv(x.sys_id) };
+    });
+    var cols = [{ l: 'Date' }, { l: 'Allocation' }, { l: 'Tâche' }, { l: 'Type' }, { l: 'Alloué' + uS(), num: 1 }, { l: 'Réel' + uS(), num: 1 }, { l: 'Taux horaire', num: 1 }];
+    if (P.costs) cols.push({ l: 'Coût alloué', num: 1 }, { l: 'Coût réel', num: 1 });
+    return dtable({ name: 'allocations-quotidiennes', cols: cols, rows: R, note: ld.partial ? 'partiel (40 pages)' : '', totals: function (vis) {
+      var a = 0, b = 0, c = 0, e = 0; vis.forEach(function (r) { a += r.hr; b += r.ac; c += r.cc; e += r.ca; });
+      var t = [C('Σ'), C(''), C(''), C(''), C(fN(a)), C(fN(b)), C('')]; if (P.costs) t.push(C(NF.format(c)), C(NF.format(e))); return t; } });
+  }
+
+  /* ---------- Onglet Agrégats ---------- */
+  async function loadAG(uid, per, gran) {
+    var w = gran === 'w', bk = buckets(per.f, per.t, gran), lo = bk[0].lo, hi = bk[bk.length - 1].hi, col = w ? 'week_starts_on' : 'month_starts_on', U = 'user=' + uid;
+    var r = await Promise.all([
+      agg(w ? 'resource_aggregate_weekly' : 'resource_aggregate_monthly', U + '^' + col + '>=' + lo + '^' + col + '<=' + hi, { sum: ['hours', 'utilization'], group: [col, 'category'] }),
+      agg('resource_allocation_daily', U + '^date>=' + lo + '^date<=' + hi, { sum: ['hours', 'actual_hours'], group: ['date'] })
+    ]);
+    return { ag: r[0], rad: r[1], bk: bk, col: col, gran: gran, lo: lo, hi: hi, per: per, uid: uid };
+  }
+  function drawAG(box, d) {
+    var M = {}; d.bk.forEach(function (b) { M[b.k] = { cap: null, av: null, al: null, ac: null, ut: null, rh: 0, ra: 0 }; });
+    d.ag.forEach(function (x) {
+      var m = M[x.g[d.col]]; if (!m) return; var c = x.g.category, hh = x.sum.hours;
+      if (c === 'capacity') m.cap = (m.cap || 0) + hh; else if (c === 'availability') { m.av = (m.av || 0) + hh; m.ut = (m.ut || 0) + x.sum.utilization; }
+      else if (CAT_ALLOC.indexOf(c) >= 0) m.al = (m.al || 0) + hh; else if (c === 'project_actual') m.ac = (m.ac || 0) + hh;
+    });
+    d.rad.forEach(function (x) { var m = M[bucketOf(x.g.date, d.gran)]; if (m) { m.rh += x.sum.hours; m.ra += x.sum.actual_hours; } });
+    function nz(v) { return v == null ? C('—') : C(fN(v), { n: v }); }
+    function ec(v) { return v == null ? C('—') : Math.abs(v) < 0.01 ? C('✓', { cls: 'good', n: 0 }) : C((v > 0 ? '+' : '') + fN(v), { cls: 'bad', n: v }); }
+    var R = d.bk.map(function (b) {
+      var m = M[b.k], has = m.cap != null || m.al != null || m.ac != null, occ = m.cap > 0 && m.al != null ? m.al / m.cap * 100 : null;
+      var dAl = has ? (m.al || 0) - m.rh : null, dAc = has ? (m.ac || 0) - m.ra : null;
+      return { m: m, dAl: dAl, dAc: dAc, c: [C(b.l, { d: b.k }), nz(m.cap), nz(m.av), nz(m.al), nz(m.ac), occ == null ? C('—') : C(NF.format(occ) + ' %', { n: occ, cls: occ > 100 ? 'bad' : '' }),
+        m.ut == null ? C('—') : C(NF.format(m.ut) + ' %', { n: m.ut }), C(fN(m.rh), { n: m.rh }), ec(dAl), C(fN(m.ra), { n: m.ra }), ec(dAc)] };
+    });
+    var T0 = d.gran === 'w' ? 'resource_aggregate_weekly' : 'resource_aggregate_monthly';
+    var cols = [{ l: d.gran === 'w' ? 'Semaine (lundi)' : 'Mois', href: listLink(T0, 'user=' + d.uid + '^' + d.col + '>=' + d.lo + '^' + d.col + '<=' + d.hi) }, { l: 'Capacité' + uS(), num: 1 }, { l: 'Disponibilité' + uS(), num: 1 }, { l: 'Alloué agrégat' + uS(), num: 1 }, { l: 'Réel agrégat' + uS(), num: 1 }, { l: 'Occupation', num: 1 }, { l: 'Utilisation', num: 1 },
+      { l: 'Alloué alloc.' + uS(), num: 1, href: listLink('resource_allocation_daily', 'user=' + d.uid + '^date>=' + d.lo + '^date<=' + d.hi) }, { l: 'Écart alloué' + uS(), num: 1 }, { l: 'Réel alloc.' + uS(), num: 1 }, { l: 'Écart réel' + uS(), num: 1 }];
+    box.appendChild(h('div', { cls: 'card' }, [h('div', { cls: 'ct', text: 'Agrégats ' + (d.gran === 'w' ? 'hebdomadaires' : 'mensuels') + ' (' + frDate(d.lo) + ' → ' + frDate(d.hi) + ')' }),
+      h('div', { cls: 'mt', text: 'Les périodes sont prises entières (' + (d.gran === 'w' ? 'semaines du lundi au dimanche' : 'mois complets') + '). Écart = agrégat − allocations quotidiennes sur la même période. Occupation = alloué agrégat / capacité.' }),
+      granBar(function () { render(); }),
+      dtable({ name: 'agregats', cols: cols, rows: R, totals: function (vis) {
+        var S2 = { cap: 0, av: 0, al: 0, ac: 0, rh: 0, ra: 0, dA: 0, dC: 0, hc: false, ha: false }, hasD = false;
+        vis.forEach(function (r) { var m = r.m; S2.cap += m.cap || 0; S2.av += m.av || 0; S2.al += m.al || 0; S2.ac += m.ac || 0; S2.rh += m.rh; S2.ra += m.ra; if (r.dAl != null) { S2.dA += r.dAl; S2.dC += r.dAc; hasD = true; } });
+        return [C('Σ'), C(fN(S2.cap)), C(fN(S2.av)), C(fN(S2.al)), C(fN(S2.ac)), C(S2.cap > 0 ? NF.format(S2.al / S2.cap * 100) + ' %' : '—'), C(''), C(fN(S2.rh)), hasD ? ec(S2.dA) : C('—'), C(fN(S2.ra)), hasD ? ec(S2.dC) : C('—')]; } })]));
+    box.appendChild(relCard(d.uid));
+  }
+
+  var LOADERS = { ra: loadRA, tc: loadTC, rl: loadRL, ag: loadAG }, DRAW = { ra: drawRA, tc: drawTC, rl: drawRL, ag: drawAG };
   async function renderTab(tab) {
-    var per = S.data.per, key = [S.uid, tab.k, per.f, per.t, P.force].join('|'), ld = S.cache[key], t0 = performance.now(), r0 = REQ;
+    var per = S.data.per, key = [S.uid, tab.k, per.f, per.t, P.force, tab.k === 'ag' ? P.gran : ''].join('|'), ld = S.cache[key], t0 = performance.now(), r0 = REQ;
     if (!ld) {
       main.textContent = ''; main.appendChild(phLine('Chargement…'));
-      try { ld = S.cache[key] = await LOADERS[tab.k](S.uid, per); console.debug('[snus] ' + tab.t + ' : ' + (REQ - r0) + ' requêtes, ' + Math.round(performance.now() - t0) + ' ms, mode ' + modeUsed); }
+      try { ld = S.cache[key] = await LOADERS[tab.k](S.uid, per, P.gran); console.debug('[snus] ' + tab.t + ' : ' + (REQ - r0) + ' requêtes, ' + Math.round(performance.now() - t0) + ' ms, mode ' + modeUsed); }
       catch (e) { if (S.tab === tab.k) errBox(e, function () { delete S.cache[key]; renderTab(tab); }); return; }
     }
     if (S.tab !== tab.k || !S.data || ld.uid !== S.uid) return;
