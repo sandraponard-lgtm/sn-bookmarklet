@@ -138,7 +138,11 @@ Script de diagnostic à lancer dans la console :
 - **Purge jsDelivr** : `https://purge.jsdelivr.net/gh/sandraponard-lgtm/sn-bookmarklet@main/sn-user-resources.js` (ou épingler un commit : `@<sha>`).
 - Versions propres à ce fichier (`vAAAA-MM-JJ.N`, affichée dans l'en-tête).
 
-## Version courante : v2026-11-27.6 (calendrier de charge : planifié / réalisé / écart)
+## Version courante : v2026-11-27.7 (détail quotidien des time cards + signe des écarts unifié)
+- v2026-11-27.7 : onglet **Time cards** — bouton « Charger le détail quotidien » (à la demande, filtre optionnel par time card) : lignes de `time_card_daily` (`date`, `time_card`, `time_worked`) avec Projet / Tâche / État, **Jour de la carte** (valeur du même jour dans la time card, rouge si ≠ Heures), **Réel alloc.** du jour (mêmes règles de base que le tableau des semaines) et **Écart** (Approved / Processed seulement ; base « utilisateur » : somme des time cards approuvées du jour). **Signe des écarts unifié** : agrégat − allocations quotidiennes partout (tableau mensuel de la vue d'ensemble, onglet Agrégats, bloc Fiabilité) ; un écart négatif = manque dans les agrégats.
+- Constat : `time_card_daily` n'a que `date`, `time_card`, `time_worked` (heures) ; filtrable par `time_card.user`.
+
+## v2026-11-27.6 (calendrier de charge : planifié / réalisé / écart)
 - v2026-11-27.6 : le calendrier de la vue d'ensemble a trois modes (Planifié, Réalisé, Écart ; choix mémorisé dans `hm`). Planifié = `hours` des allocations quotidiennes, réalisé = `actual_hours`, écart = réalisé − planifié (jours passés seulement ; ✓ vert si nul, orange si moins réalisé, rouge si plus). Chaque case affiche le jour et la valeur (suit l'unité h / j) ; l'infobulle donne les trois valeurs. Les seuils de couleur restent en heures.
 
 ## v2026-11-27.5 (ligne « sans allocation » + Écart des time cards explicable)
