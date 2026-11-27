@@ -92,7 +92,8 @@ resource_allocation_daily?sysparm_query=allocation.resource_assignment.top_task=
 - RAD : allocated_cost présent (162.5, 150… = heures × 50, `decimal` en USD), actual_cost = chaîne vide "" (projet futur)
 - Devise du projet = USD, devise fonctionnelle = USD, devise d'affichage de l'utilisateur = EUR
 
-## Version courante : v2026-11-27.3
+## Version courante : v2026-11-27.4
+- v2026-11-27.4 : liens « ↗ Liste » de la réconciliation filtrés sur le projet (EX : `source_idIN<sys_id des nœuds>`, CP : `taskIN<sys_id des nœuds>`, RAD : `allocation.resource_assignment.top_task=<projet>` + `assignment_type=user`).
 - v2026-11-27.3 : liens « ↗ Liste » de la réconciliation corrigés (`${location.origin}` dans un template, pas `'+location.origin+'`) ; log console `[snfus recon]` par nœud (nb de lignes EX/CP/WC/RAD) pour diagnostiquer les 0.00.
 - v2026-11-27.2 : réconciliation — résultats des requêtes enfin parsés (`.json()`), cause du 0.00 partout.
 - Réconciliation : la colonne work_cost est lue en devise projet (`actual_cost_project_currency`, currency2 → `currency_display_value`) au lieu de `work_cost` (EUR converti), pour être comparable à Σ EX et Σ CP (USD).
