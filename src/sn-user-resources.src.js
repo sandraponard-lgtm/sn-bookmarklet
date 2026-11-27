@@ -2,7 +2,7 @@
  * Source lisible ; le fichier servi est sn-user-resources.js (minifié : npm run build ou voir CONTEXT.md). */
 (function () {
   'use strict';
-  var VER = 'v2026-11-27.5';
+  var VER = 'v2026-11-27.7';
   var ID = 'snus-overlay', CSSID = 'snus-style', LS = 'snus.v1';
   var old = document.getElementById(ID);
   if (old) { old._close && old._close(); return; }
@@ -34,7 +34,7 @@
   function dv(o) { return o && typeof o === 'object' ? (o.display_value == null ? '' : String(o.display_value)) : (o == null ? '' : String(o)); }
 
   /* ---------- Préférences (localStorage, jamais bloquant) ---------- */
-  var P = { tab: 'ov', gran: 'm', sorts: {}, preset: 'cur', from: '', to: '', unit: 'h', costs: true, force: false };
+  var P = { tab: 'ov', gran: 'm', sorts: {}, preset: 'cur', from: '', to: '', unit: 'h', costs: true, force: false, hm: 'p' };
   try { var raw = localStorage.getItem(LS); if (raw) Object.assign(P, JSON.parse(raw)); } catch (e) {}
   function save() { try { localStorage.setItem(LS, JSON.stringify(P)); } catch (e) {} }
 
@@ -217,18 +217,32 @@
     return L.map(function (x) { return link(x[0] + ' ↗', x[1]); });
   }
 
-  function heatmap(d) {
-    var per = d.per, byDay = {}, a, b;
+  function heatmap(d, mode) {
+    var per = d.per, byDay = {}, today = ymd(new Date());
     d.rad.forEach(function (x) { var k = x.g.date; byDay[k] = byDay[k] || { h: 0, r: 0 }; byDay[k].h += x.sum.hours; byDay[k].r += x.sum.actual_hours; });
     var wrap = h('div', { cls: 'hm' });
     ['L', 'M', 'M', 'J', 'V', 'S', 'D'].forEach(function (x) { wrap.appendChild(h('div', { cls: 'hmh', text: x })); });
     var cur = mondayOf(pd(per.f)), end = addD(mondayOf(pd(per.t)), 6);
     for (; cur <= end; cur = addD(cur, 1)) {
-      var k = ymd(cur), v = byDay[k], inP = k >= per.f && k <= per.t, hr = v ? v.h : 0;
-      var cl = 'hc' + (inP ? '' : ' out') + (hr > 8 ? ' over' : hr > 4 ? ' l3' : hr > 0 ? (hr > 2 ? ' l2' : ' l1') : '') + ((cur.getDay() + 6) % 7 > 4 ? ' we' : '');
-      wrap.appendChild(h('div', { cls: cl, title: frDate(k) + ' : ' + NF.format(hr) + ' h alloué' + (v && v.r ? ' · ' + NF.format(v.r) + ' h réel' : ''), text: String(cur.getDate()) }));
+      var k = ymd(cur), v = byDay[k] || { h: 0, r: 0 }, inP = k >= per.f && k <= per.t, past = k <= today, e = v.r - v.h, hasE = past && (v.h || v.r), cl, val = '';
+      if (mode === 'e') { cl = hasE ? (Math.abs(e) < 0.005 ? ' ok' : e < 0 ? ' under' : ' over') : ''; val = hasE ? (Math.abs(e) < 0.005 ? '✓' : (e > 0 ? '+' : '') + fN(e)) : ''; }
+      else { var hr = mode === 'r' ? v.r : v.h; cl = hr > 8 ? ' over' : hr > 4 ? ' l3' : hr > 0 ? (hr > 2 ? ' l2' : ' l1') : ''; val = hr ? fN(hr) : ''; }
+      var tip = frDate(k) + ' : planifié ' + fH(v.h) + ' · réalisé ' + fH(v.r) + (hasE ? ' · écart ' + (e > 0 ? '+' : '') + fH(e) : past ? '' : ' (à venir)');
+      wrap.appendChild(h('div', { cls: 'hc' + (inP ? '' : ' out') + cl + ((cur.getDay() + 6) % 7 > 4 ? ' we' : ''), title: tip }, [h('span', { cls: 'hd', text: String(cur.getDate()) }), h('span', { cls: 'hv', text: val })]));
     }
     return wrap;
+  }
+  var HM_LEG = { p: 'Gris : rien · bleu : 0–2 h, 2–4 h, 4–8 h · rouge : plus de 8 h planifiées', r: 'Gris : rien · bleu : 0–2 h, 2–4 h, 4–8 h · rouge : plus de 8 h réalisées', e: 'Écart = réalisé − planifié (jours passés uniquement) · vert : ✓ conforme · orange : moins réalisé que planifié · rouge : plus réalisé que planifié' };
+  function heatCard(d) {
+    var box = h('div'), bar = h('div', { cls: 'tools' });
+    function draw() {
+      box.innerHTML = ''; bar.innerHTML = '';
+      [['p', 'Planifié'], ['r', 'Réalisé'], ['e', 'Écart']].forEach(function (m) { bar.appendChild(h('button', { cls: 'btn sm ' + (P.hm === m[0] ? 'on' : 'sec'), text: m[1], onclick: function () { P.hm = m[0]; save(); draw(); } })); });
+      box.appendChild(heatmap(d, P.hm));
+      box.appendChild(h('div', { cls: 'mt', text: HM_LEG[P.hm] + '. Planifié = heures allouées ; réalisé = heures réelles (actual_hours) des allocations quotidiennes ; l’infobulle donne les trois valeurs.' }));
+    }
+    draw();
+    return [bar, box];
   }
 
   function monthRows(d) {
@@ -272,7 +286,7 @@
     r[1].forEach(function (x) { var m = mo(x.g.month_starts_on); if (x.g.category === 'project_allocated') m.aPa += x.sum.hours; else if (x.g.category === 'non_project_time') m.aNp += x.sum.hours; else if (x.g.category === 'project_actual') m.aAct += x.sum.hours; });
     var list = Object.keys(M).sort().map(function (k) { return M[k]; });
     list.forEach(function (m) {
-      m.dAl = (m.pw + m.ot) - (m.aPa + m.aNp); m.dAct = m.ra - m.aAct;
+      m.dAl = (m.aPa + m.aNp) - (m.pw + m.ot); m.dAct = m.aAct - m.ra;
       m.ok = Math.abs(m.dAl) < 0.01 && Math.abs(m.dAct) < 0.01;
     });
     var wk = {}; r[2].forEach(function (x) { wk[x.g.category] = x.sum.hours; });
@@ -327,18 +341,18 @@
     box.appendChild(ab);
 
     var days = (pd(per.t) - pd(per.f)) / 864e5 + 1;
-    var ld = h('div', { cls: 'card' }, [h('div', { cls: 'ct', text: 'Charge sur la période (heures allouées par jour)' })]);
-    if (days <= 92) { ld.appendChild(heatmap(d)); ld.appendChild(h('div', { cls: 'mt', text: 'Gris : rien · bleu : 0–2 h, 2–4 h, 4–8 h · rouge : plus de 8 h' })); }
+    var ld = h('div', { cls: 'card' }, [h('div', { cls: 'ct', text: 'Charge sur la période : planifié / réalisé / écart par jour' })]);
+    if (days <= 92) heatCard(d).forEach(function (n) { ld.appendChild(n); });
     else ld.appendChild(h('div', { cls: 'mt', text: 'Période longue : voir le détail par mois ci-dessous.' }));
     var R2 = mrs.map(function (r) {
-      var diff = r.hasAgg && r.full ? r.al - r.aggAl : null, o = r.full && r.hasCap && r.cap > 0 ? r.al / r.cap * 100 : null;
+      var diff = r.hasAgg && r.full ? r.aggAl - r.al : null, o = r.full && r.hasCap && r.cap > 0 ? r.al / r.cap * 100 : null;
       var c = [C(r.m.slice(0, 7).split('-').reverse().join('-') + (r.full ? '' : ' (partiel)'), { d: r.m }), C(r.hasCap ? fN(r.cap) : '—', { n: r.hasCap ? r.cap : null }), C(fN(r.al), { n: r.al }), C(fN(r.ac), { n: r.ac }),
         C(o == null ? '—' : NF.format(o) + ' %', { n: o, cls: o != null && o > 100 ? 'bad' : '' }), C(r.hasAgg ? fN(r.aggAl) : '—', { n: r.hasAgg ? r.aggAl : null }),
         diff == null ? C('—') : Math.abs(diff) < 0.01 ? C('✓', { cls: 'good', n: 0 }) : C((diff > 0 ? '+' : '') + fN(diff), { cls: 'bad', n: diff })];
       if (P.costs) c.push(C(NF.format(r.cAl), { n: r.cAl }), C(NF.format(r.cAc), { n: r.cAc }));
       return { c: c, r: r };
     });
-    var cols2 = ['Mois', 'Capacité' + uS(), 'Alloué' + uS(), 'Réel' + uS(), 'Occupation', 'Agrégat alloué' + uS(), 'Écart' + uS()].concat(P.costs ? ['Coût alloué', 'Coût réel'] : []).map(function (x, i) { return { l: x, num: i > 0 }; });
+    var cols2 = ['Mois', 'Capacité' + uS(), 'Alloué' + uS(), 'Réel' + uS(), 'Occupation', 'Agrégat alloué' + uS(), 'Écart (agrégat − alloc.)' + uS()].concat(P.costs ? ['Coût alloué', 'Coût réel'] : []).map(function (x, i) { return { l: x, num: i > 0 }; });
     ld.appendChild(dtable({ name: 'mois', cols: cols2, rows: R2, totals: function (vis) {
       var a = 0, b2 = 0, c = 0, e = 0, f = 0, g = 0; vis.forEach(function (x) { a += x.r.cap; b2 += x.r.al; c += x.r.ac; e += x.r.cAl; f += x.r.cAc; });
       var t = [C('Σ'), C(fN(a)), C(fN(b2)), C(fN(c)), C(a > 0 ? NF.format(b2 / a * 100) + ' %' : '—'), C(''), C('')]; if (P.costs) t.push(C(NF.format(e)), C(NF.format(f))); return t; } }));
@@ -368,7 +382,7 @@
     out.appendChild(h('div', { cls: 'mt', text: 'Dernière mise à jour : agrégats mensuels ' + (r.aggUpd || 'n/d') + ' · allocations quotidiennes ' + (r.radUpd || 'n/d') + ' · ' + r.req + ' requêtes (' + modeUsed + ')' }));
     var bad = r.list.filter(function (m) { return !m.ok; });
     if (bad.length) {
-      var t = h('table', { cls: 'tb' }, [h('thead', null, [h('tr', null, ['Mois', 'Écart alloué', 'Écart réel'].map(function (x, i) { return h('th', { text: x, cls: i ? 'n' : '' }); }))])]), b = h('tbody');
+      var t = h('table', { cls: 'tb' }, [h('thead', null, [h('tr', null, ['Mois', 'Écart alloué (agrégat − alloc.)', 'Écart réel (agrégat − alloc.)'].map(function (x, i) { return h('th', { text: x, cls: i ? 'n' : '' }); }))])]), b = h('tbody');
       bad.forEach(function (m) { b.appendChild(h('tr', null, [h('td', { text: m.m.slice(0, 7).split('-').reverse().join('-') }), h('td', { cls: 'n bad', text: NF.format(m.dAl) + ' h' }), h('td', { cls: 'n bad', text: NF.format(m.dAct) + ' h' })])); });
       t.appendChild(b); out.appendChild(h('div', { cls: 'tw' }, [t]));
     }
@@ -496,6 +510,7 @@
       });
       return { h: h1, n: n };
     }
+    var CI = {};
     var R = d.tc.map(function (x) {
       var w0 = sv(x.week_starts_on), st = sv(x.state), tot = num(sv(x.total)), tk = sv(x.task), tp = sv(x.top_task), approved = approvedSt(st);
       var mode = !tk && !tp ? 'user' : (!tk || tk === tp) ? 'top' : 'task', key = mode === 'top' ? tp : tk, rf = radFor(mode, key, w0);
@@ -507,7 +522,8 @@
         [C(fN(tot), { n: tot }), C(st, { cls: 'st st-' + (STC[st] || 'pend') }), C(dv(x.time_sheet) || '—', ts ? { href: '/time_sheet.do?sys_id=' + ts } : null), C(sv(x.approved_on) ? frDate(sv(x.approved_on).slice(0, 10)) + sv(x.approved_on).slice(10, 16) : '—', { d: sv(x.approved_on) }),
           C(fN(rf.h), { n: rf.h, href: listLink('resource_allocation_daily', q) }), C(String(rf.n), { n: rf.n }), C(base),
           diff == null ? C('—') : Math.abs(diff) < 0.01 ? C('✓', { cls: 'good', n: 0 }) : C((diff > 0 ? '+' : '') + fN(diff), { cls: 'bad', n: diff })]);
-      return { c: c, open: '/time_card.do?sys_id=' + sv(x.sys_id), days: DAYS.map(function (k) { return num(sv(x[k])); }), tot: tot, diff: diff };
+      CI[sv(x.sys_id)] = { w0: w0, st: st, mode: mode, key: key, tk: tk, tp: tp, tkL: dv(x.task) || '—', tpL: dv(x.top_task) || '—', days: DAYS.map(function (k) { return num(sv(x[k])); }), approved: approved, base: base };
+      return { c: c, open: '/time_card.do?sys_id=' + sv(x.sys_id), days: DAYS.map(function (k) { return num(sv(x[k])); }), tot: tot, diff: diff, id: sv(x.sys_id), lab: frDate(w0) + ' · ' + (dv(x.task) || dv(x.top_task) || 'sans projet') + ' · ' + st };
     });
     var cols = [{ l: 'Semaine', href: listLink('time_card', 'user=' + d.uid + '^week_starts_on>=' + ymd(addD(pd(d.per.f), -6)) + '^week_starts_on<=' + d.per.t) }, { l: 'Projet' }, { l: 'Tâche' }]
       .concat(DL.map(function (x) { return { l: x, num: 1 }; }), [{ l: 'Total' + uS(), num: 1 }, { l: 'État' }, { l: 'Time sheet' }, { l: 'Approuvée le' }, { l: 'Réel alloc.' + uS(), num: 1 }, { l: 'Lignes', num: 1 }, { l: 'Base' }, { l: 'Écart' + uS(), num: 1 }]);
@@ -519,6 +535,44 @@
         sd.forEach(function (v) { t.push(C(v ? fN(v) : '')); });
         t.push(C(fN(st)), C(''), C(''), C(''), C(''), C(''), C(''), C(!any ? '—' : Math.abs(sg) < 0.01 ? '✓' : (sg > 0 ? '+' : '') + fN(sg), { cls: any ? (Math.abs(sg) < 0.01 ? 'good' : 'bad') : '' }));
         return t; } })]));
+
+    /* détail quotidien (time_card_daily), à la demande */
+    var sel = h('select', { cls: 'fld sm' }, [h('option', { value: '', text: 'Toutes les time cards' })].concat(R.map(function (r) { return h('option', { value: r.id, text: r.lab }); })));
+    var out = h('div'), dBtn = h('button', { cls: 'btn sm', text: 'Charger le détail quotidien', onclick: async function () {
+      var tcid = sel.value, lo = ymd(addD(pd(d.per.f), -6)), hi = ymd(addD(pd(d.per.t), 6)), key = [d.uid, 'tcd', d.per.f, d.per.t, tcid, P.force].join('|'), ld = S.cache[key];
+      out.textContent = ''; out.appendChild(phLine('Chargement…')); dBtn.disabled = true;
+      try {
+        if (!ld) ld = S.cache[key] = await rows('time_card_daily', 'time_card.user=' + d.uid + '^date>=' + lo + '^date<=' + hi + (tcid ? '^time_card=' + tcid : '') + '^ORDERBYdate', ['sys_id', 'date', 'time_card', 'time_worked'], true);
+        out.textContent = ''; out.appendChild(drawTCDaily(ld, d, CI));
+      } catch (e) { out.textContent = ''; out.appendChild(h('div', { cls: 'err-box', text: e.message + (e.status ? ' [' + e.status + ']' : '') })); }
+      dBtn.disabled = false;
+    } });
+    box.appendChild(h('div', { cls: 'card' }, [h('div', { cls: 'ct', text: 'Détail quotidien des time cards' }), h('div', { cls: 'mt', text: 'Non chargé par défaut (une ligne par jour et par time card, table time_card_daily).' }), h('div', { cls: 'tools' }, [sel, dBtn]), out]));
+  }
+  function drawTCDaily(ld, d, CI) {
+    var dayAppr = {};
+    ld.rows.forEach(function (x) { var c = CI[sv(x.time_card)]; if (c && c.approved) { var k = sv(x.date); dayAppr[k] = (dayAppr[k] || 0) + num(sv(x.time_worked)); } });
+    function radDay(mode, key, date) {
+      var h1 = 0, n = 0;
+      d.rad.forEach(function (x) { if (x.g.date !== date) return; if (mode === 'user' || (mode === 'top' ? x.g.top_task : x.g.task) === key) { h1 += x.sum.actual_hours; n += x.count; } });
+      return { h: h1, n: n };
+    }
+    var R = ld.rows.map(function (x) {
+      var id = sv(x.time_card), c = CI[id], dt = sv(x.date), tw = num(sv(x.time_worked));
+      if (!c) return { c: [C(frDate(dt), { d: dt }), C('(hors liste)', { href: '/time_card.do?sys_id=' + id }), C('—'), C('—'), C('—'), C(fN(tw), { n: tw }), C('—'), C('—'), C('—'), C('—')], tw: tw, cd: 0, ra: 0, diff: null, open: '/time_card_daily.do?sys_id=' + sv(x.sys_id) };
+      var off = Math.round((pd(dt) - pd(c.w0)) / 864e5), cd = off >= 0 && off < 7 ? c.days[(pd(dt).getDay() + 6) % 7] : null, rf = radDay(c.mode, c.key, dt);
+      var cmp = c.mode === 'user' ? (dayAppr[dt] || 0) : tw, diff = c.approved ? cmp - rf.h : null, mism = cd != null && Math.abs(cd - tw) > 0.005;
+      var cells = [C(frDate(dt), { d: dt }), C(frDate(c.w0), { href: '/time_card.do?sys_id=' + id, d: c.w0 }), C(c.tpL, c.tp ? { href: '/pm_project.do?sys_id=' + c.tp } : null), C(c.tkL, c.tk && c.tk !== c.tp ? { href: '/pm_project_task.do?sys_id=' + c.tk } : null), C(c.st, { cls: 'st st-' + (STC[c.st] || 'pend') }),
+        C(fN(tw), { n: tw }), C(cd == null ? '—' : fN(cd), { n: cd, cls: mism ? 'bad' : '' }),
+        C(fN(rf.h), { n: rf.h, href: listLink('resource_allocation_daily', 'user=' + d.uid + '^date=' + dt + '^actual_hours>0' + (c.mode === 'top' ? '^top_task=' + c.tp : c.mode === 'task' ? '^task=' + c.tk : '')) }), C(c.base),
+        diff == null ? C('—') : Math.abs(diff) < 0.01 ? C('✓', { cls: 'good', n: 0 }) : C((diff > 0 ? '+' : '') + fN(diff), { cls: 'bad', n: diff })];
+      return { c: cells, tw: tw, cd: cd || 0, ra: rf.h, diff: diff, open: '/time_card_daily.do?sys_id=' + sv(x.sys_id) };
+    });
+    var cols = [{ l: 'Date' }, { l: 'Semaine' }, { l: 'Projet' }, { l: 'Tâche' }, { l: 'État' }, { l: 'Heures' + uS(), num: 1 }, { l: 'Jour de la carte' + uS(), num: 1 }, { l: 'Réel alloc.' + uS(), num: 1 }, { l: 'Base' }, { l: 'Écart' + uS(), num: 1 }];
+    return h('div', null, [h('div', { cls: 'mt', text: 'Heures : time_worked de la table time_card_daily. Jour de la carte : valeur du même jour dans la time card (en rouge si elle diffère des Heures). Réel alloc. et Écart : mêmes règles que le tableau ci-dessus, jour par jour (Approved / Processed seulement).' }),
+      dtable({ name: 'time-cards-quotidien', cols: cols, rows: R, note: ld.partial ? 'partiel (40 pages)' : '', totals: function (vis) {
+        var a = 0, b = 0, e = 0, g = 0, any = false; vis.forEach(function (r) { a += r.tw; b += r.cd; if (r.diff != null) { g += r.diff; any = true; } });
+        return [C('Σ'), C(''), C(''), C(''), C(''), C(fN(a)), C(fN(b)), C(''), C(''), C(!any ? '—' : Math.abs(g) < 0.01 ? '✓' : (g > 0 ? '+' : '') + fN(g), { cls: any ? (Math.abs(g) < 0.01 ? 'good' : 'bad') : '' })]; } })]);
   }
 
   /* ---------- Découpage en périodes (mois / semaines ; agrégats : semaines à partir du lundi) ---------- */
@@ -686,9 +740,9 @@
     '.tile.bad .tv{color:#DC2626}.tile.good .tv{color:#16A34A}',
     '.al{padding:3px 0}.al.err{color:#B42318}.al.warn{color:#B45309}.al.ok{color:#16A34A}',
     '.mt{color:#6B7280;font-size:12px;margin:6px 0}.bad{color:#DC2626}.good{color:#16A34A}',
-    '.hm{display:grid;grid-template-columns:repeat(7,44px);gap:3px;margin:4px 0}.hmh{font-size:10px;color:#6B7280;text-align:center}',
-    '.hc{height:30px;border-radius:5px;background:#F3F4F6;font-size:10px;color:#6B7280;display:flex;align-items:flex-start;justify-content:flex-start;padding:2px 4px}',
-    '.hc.l1{background:#DBEAFE}.hc.l2{background:#93C5FD}.hc.l3{background:#3B82F6;color:#fff}.hc.over{background:#DC2626;color:#fff}.hc.out{opacity:.35}.hc.we{outline:1px dashed #D1D5DB}',
+    '.hm{display:grid;grid-template-columns:repeat(7,52px);gap:3px;margin:4px 0}.hmh{font-size:10px;color:#6B7280;text-align:center}',
+    '.hc{height:38px;border-radius:5px;background:#F3F4F6;font-size:10px;color:#6B7280;display:flex;flex-direction:column;justify-content:space-between;padding:2px 4px}.hc .hd{line-height:1}.hc .hv{font-size:11px;font-weight:600;text-align:right;line-height:1}',
+    '.hc.l1{background:#DBEAFE}.hc.l2{background:#93C5FD}.hc.l3{background:#3B82F6;color:#fff}.hc.over{background:#DC2626;color:#fff}.hc.ok{background:#D1FAE5;color:#065F46}.hc.under{background:#FED7AA;color:#9A3412}.hc.out{opacity:.35}.hc.we{outline:1px dashed #D1D5DB}',
     '.tw{overflow:auto;max-height:50vh;border:1px solid #E5E7EB;border-radius:6px;margin-top:8px}',
     '.tb{border-collapse:collapse;width:100%}.tb th{position:sticky;top:0;background:#F3F4F6;text-align:left;padding:6px 10px;border-bottom:1px solid #E5E7EB;font-size:12px;white-space:nowrap}',
     '.tb td{padding:5px 10px;border-bottom:1px solid #F3F4F6;white-space:nowrap}.n{text-align:right!important;font-variant-numeric:tabular-nums}',
