@@ -128,3 +128,27 @@ Script de diagnostic à lancer dans la console :
   console.log('window._snfusNodes:', window._snfusNodes ? Object.keys(window._snfusNodes).length + ' noeuds' : 'undefined');
 })();
 ```
+
+---
+
+# Bookmarklet « Utilisateur » (`sn-user-resources.js`) — refonte
+
+- **Source lisible** : `src/sn-user-resources.src.js` ; **fichier servi (minifié)** : `sn-user-resources.js`. Build : `npx terser src/sn-user-resources.src.js -c -m -o sn-user-resources.js`, puis contrôle `node -e 'new Function(require("fs").readFileSync("sn-user-resources.js","utf8"))'`.
+- **Loader** : `javascript:(function(){var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/gh/sandraponard-lgtm/sn-bookmarklet@main/sn-user-resources.js?t='+Date.now();document.body.appendChild(s)})()` (même nom de fichier que l'ancien : le bookmarklet existant est mis à jour sans changement).
+- **Purge jsDelivr** : `https://purge.jsdelivr.net/gh/sandraponard-lgtm/sn-bookmarklet@main/sn-user-resources.js` (ou épingler un commit : `@<sha>`).
+- Versions propres à ce fichier (`vAAAA-MM-JJ.N`, affichée dans l'en-tête).
+
+## Version courante : v2026-11-27.1 (lot 1 : socle + vue d'ensemble)
+- Overlay plein écran, détection de l'utilisateur (g_form / URL, iframe `gsft_main`), recherche par nom / e-mail / sys_id, onglets (Vue d'ensemble active ; Assignations, Allocations, Time cards, Agrégats = compteurs + liens vers listes classiques, détail aux lots 2 et 3).
+- Sélecteur de période commun (mois courant par défaut, précédent, trimestre, année civile, personnalisé), unité h / jours-homme, coûts oui/non, mémorisés (`localStorage` `snus.v1`, try/catch).
+- Données : 9 requêtes en parallèle (`/api/now/stats` pour RAD, time cards, agrégats ; `sys_user`, `sys_user_grmember`, assignations). Cache par (utilisateur, onglet, période, mode) ; « Recalculer » le vide. Repli automatique ligne à ligne (500/page, `^ORDERBYsys_id`, 40 pages) si l'agrégation échoue ; bouton « Forcer ligne à ligne » pour le tester ; mode, nombre de requêtes et durée affichés (et `console.debug`).
+- Vue d'ensemble : identité, manager, groupes, rôles ressource, compteurs, KPI (capacité, alloué, réel, taux d'occupation, coûts), alertes (surallocation mensuelle, jours > 8 h, time cards Pending / Submitted / Rejected / Recalled, écart time cards approuvées vs heures réelles sur semaines entières), heatmap quotidienne (≤ 92 jours), tableau mensuel avec colonne Écart (RAD alloué vs agrégat mensuel), bouton **Tester la fiabilité** des agrégats (historique complet, RAD vs mensuel vs hebdo, dernières mises à jour).
+
+### Constats instance (lecture seule, ispconsultingdemo08, David Bernard `f632d130fbb74710d9ddf5028eefdcd5`, 2026-11-27)
+- `resource_aggregate_monthly` : champs `user`, `task`, `month_starts_on`, `category` / `parent_category`, `hours`, `man_days`, `fte`, `utilization`. Catégories : `capacity`, `availability` (porte `utilization`), `non_project_time` + `project_allocated` (parent `allocated`), `project_actual` (parent `actual`). `resource_aggregate_weekly` : mêmes champs avec `week_starts_on`.
+- Concordance : Σ RAD `hours` (905,25) = non_project_time + project_allocated (625,25 + 280) ; Σ RAD `actual_hours` (40) = project_actual (40) ; 24 / 24 mois concordent ; hebdo = mensuel.
+- `resource_allocation_daily.type` : `ktlo` (hors projet) / `project_work`. Filtre direct `user=<sys_id>` fonctionne.
+- Contrôle `X-Total-Count` (sans filtre → avec filtre, nov. 2026) : assignations 352 → 3, allocations (`resource_assignment.user_resource`) 1976 → 3, RAD 95662 → 63, time cards 103 → 2, agrégats mensuels 61747 → 6, hebdo 57198 → 29. Aucun filtre ne renvoie toute la table.
+- Agrégation serveur et repli ligne à ligne donnent les mêmes KPI (capacité 168 h, alloué 185,25 h, réel 40 h, coûts 9 262,50 / 2 000,00).
+- Time cards de l'utilisateur : états Pending (2), Processed (1), Submitted (1).
+- Non vérifié : rôles plateforme (`sys_user_has_role`, 0 ligne non héritée) ; devise du rate model (affichée sans symbole).
