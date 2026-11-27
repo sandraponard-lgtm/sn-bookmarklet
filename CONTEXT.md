@@ -92,6 +92,11 @@ resource_allocation_daily?sysparm_query=allocation.resource_assignment.top_task=
 - RAD : allocated_cost présent (162.5, 150… = heures × 50, `decimal` en USD), actual_cost = chaîne vide "" (projet futur)
 - Devise du projet = USD, devise fonctionnelle = USD, devise d'affichage de l'utilisateur = EUR
 
+## Version courante : v2026-11-27.1
+- Réconciliation : la colonne work_cost est lue en devise projet (`actual_cost_project_currency`, currency2 → `currency_display_value`) au lieu de `work_cost` (EUR converti), pour être comparable à Σ EX et Σ CP (USD).
+- Réconciliation : Σ RAD filtre par `top_task` pour le projet et par `task` pour les tâches (comme les minilists).
+- Diagnostic SC_Pourpre (2026-11-27) : requêtes saines (EX=2000, CP=2000 USD, RAD alloué=10000, réel=2000).
+
 ## Problème en cours (non résolu)
 Note : le sys_id utilisé dans le script de diagnostic ci-dessous était tronqué (29 car. au lieu de 32) → il ne renvoie aucune ligne, donc "0.00" attendu avec ce script. Corrigé ici ; relancer le diagnostic avec l'id complet avant de conclure.
 La réconciliation affiche tout à 0.00 malgré le fix `.json()`.
