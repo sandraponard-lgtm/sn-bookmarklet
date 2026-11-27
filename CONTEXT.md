@@ -92,7 +92,8 @@ resource_allocation_daily?sysparm_query=allocation.resource_assignment.top_task=
 - RAD : allocated_cost présent (162.5, 150… = heures × 50, `decimal` en USD), actual_cost = chaîne vide "" (projet futur)
 - Devise du projet = USD, devise fonctionnelle = USD, devise d'affichage de l'utilisateur = EUR
 
-## Version courante : v2026-11-27.12
+## Version courante : v2026-11-27.13
+- v2026-11-27.13 : réconciliation par agrégation serveur (`/api/now/stats`, sommes groupées par nœud : EX par source_id, CP par task, RAD par allocation.resource_assignment.task, projets par top_task) + 2 lectures groupées de work_cost : une poignée d'appels au lieu de 5 par nœud et plus de lignes à télécharger. Repli automatique sur l'ancienne lecture ligne à ligne si l'API stats échoue ; le mode utilisé est affiché dans l'en-tête de la réconciliation. Validé sur SC_Pourpre (mêmes valeurs que la lecture ligne à ligne).
 - v2026-11-27.12 : (1) réconciliation, colonne « Écart » (max − min entre Σ EX, work_cost, Σ RAD réel, + Σ CP sur la ligne projet ; ✓ si < 0,01) ; (2) filtre rapide au-dessus des minilistes de plus de 3 lignes (insensible casse/accents, compteur n / N, les lignes Breakdown suivent leur ligne parente).
 - v2026-11-27.11 : tri des colonnes sur toutes les tables (minilistes, breakdown, réconciliation) : clic sur un en-tête = tri croissant puis décroissant (▲/▼). Nombres (formats fr et US), dates jj-mm-aaaa et texte gérés ; valeurs vides toujours en dernier ; les liens ↗ des en-têtes ne déclenchent pas le tri ; la ligne Breakdown dépliée reste attachée à sa ligne Cost Plan. Délégation d'événement unique (`window.snfusSortInit`).
 - v2026-11-27.10 : dans l'arbre, le lien au survol d'une ligne affiche « ↗ » seul (le mot « Classique » est retiré ; l'infobulle reste).
