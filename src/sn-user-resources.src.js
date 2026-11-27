@@ -2,7 +2,7 @@
  * Source lisible ; le fichier servi est sn-user-resources.js (minifié : npm run build ou voir CONTEXT.md). */
 (function () {
   'use strict';
-  var VER = 'v2026-11-27.7';
+  var VER = 'v2026-11-27.8';
   var ID = 'snus-overlay', CSSID = 'snus-style', LS = 'snus.v1';
   var old = document.getElementById(ID);
   if (old) { old._close && old._close(); return; }
@@ -135,6 +135,20 @@
     });
     return list;
   }
+  /* Allocations quotidiennes : le réel (heures et coûts) des lignes sans projet (top_task vide = hors projet) n'est pas compté ;
+     l'alloué reste complet. Le réel exclu est exposé dans list.hp pour affichage informatif. */
+  async function aggRAD(q, o) {
+    var r = await Promise.all([agg('resource_allocation_daily', q + '^top_taskISNOTEMPTY', o), agg('resource_allocation_daily', q + '^top_taskISEMPTY', o)]);
+    var map = {}, list = [], hp = { a: 0, c: 0 };
+    function add(x) {
+      var k = JSON.stringify(x.g), it = map[k];
+      if (!it) { it = map[k] = { g: x.g, count: 0, sum: {} }; list.push(it); }
+      it.count += x.count; for (var f in x.sum) it.sum[f] = (it.sum[f] || 0) + x.sum[f];
+    }
+    r[0].forEach(add);
+    r[1].forEach(function (x) { hp.a += x.sum.actual_hours || 0; hp.c += x.sum.actual_cost || 0; x.sum.actual_hours = 0; if ('actual_cost' in x.sum) x.sum.actual_cost = 0; add(x); });
+    list.hp = hp; return list;
+  }
   function tot(list, f) { return list.reduce(function (a, x) { return a + (f === 'count' ? x.count : (x.sum[f] || 0)); }, 0); }
 
   /* ---------- Période ---------- */
@@ -172,8 +186,8 @@
       J(TBL + 'sys_user_grmember?sysparm_query=' + enc(U) + '&sysparm_fields=group&sysparm_display_value=all&sysparm_limit=100' + EXC),
       rows('sn_plng_att_core_resource_assignment', 'user_resource=' + uid + '^assignment_type=user^start_date<=' + per.t + '^end_date>=' + per.f, ['role', 'sys_id'], true),
       agg('resource_allocation', 'resource_assignment.user_resource=' + uid + '^start_date<=' + per.t + '^end_date>=' + per.f, {}),
-      agg('resource_allocation_daily', U + '^date>=' + per.f + '^date<=' + per.t, { sum: ['hours', 'actual_hours', 'allocated_cost', 'actual_cost'], group: ['date', 'type'] }),
-      agg('resource_allocation_daily', U + '^date>=' + wkF + '^date<=' + wkT, { sum: ['actual_hours'] }),
+      aggRAD(U + '^date>=' + per.f + '^date<=' + per.t, { sum: ['hours', 'actual_hours', 'allocated_cost', 'actual_cost'], group: ['date', 'type'] }),
+      agg('resource_allocation_daily', U + '^date>=' + wkF + '^date<=' + wkT + '^top_taskISNOTEMPTY', { sum: ['actual_hours'] }),
       agg('time_card', U + '^week_starts_on>=' + wkF + '^week_starts_on<=' + per.t, { sum: ['total'], group: ['state'] }),
       agg('resource_aggregate_monthly', U + '^month_starts_on>=' + moF + '^month_starts_on<=' + per.t, { sum: ['hours'], group: ['month_starts_on', 'category'] }),
       agg('resource_aggregate_weekly', U + '^week_starts_on>=' + wkF + '^week_starts_on<=' + per.t, {})
@@ -274,7 +288,7 @@
   async function reliability(uid) {
     var U = 'user=' + uid, r0 = REQ;
     var r = await Promise.all([
-      agg('resource_allocation_daily', U, { sum: ['hours', 'actual_hours'], group: ['date', 'type'] }),
+      aggRAD(U, { sum: ['hours', 'actual_hours'], group: ['date', 'type'] }),
       agg('resource_aggregate_monthly', U, { sum: ['hours'], group: ['month_starts_on', 'category'] }),
       agg('resource_aggregate_weekly', U, { sum: ['hours'], group: ['category'] }),
       J(TBL + 'resource_aggregate_monthly?sysparm_query=' + enc(U + '^ORDERBYDESCsys_updated_on') + '&sysparm_limit=1&sysparm_fields=sys_updated_on' + EXC),
@@ -338,6 +352,8 @@
     var A = alerts(d, mrs), ab = h('div', { cls: 'card' }, [h('div', { cls: 'ct', text: 'Alertes' })]);
     if (!A.length) ab.appendChild(h('div', { cls: 'al ok', text: '✓ Aucune alerte sur la période' }));
     A.forEach(function (a) { ab.appendChild(h('div', { cls: 'al ' + a[0], text: (a[0] === 'err' ? '● ' : '▲ ') + a[1] })); });
+    var hp = d.rad.hp;
+    if (hp && (hp.a > 0.005 || hp.c > 0.005)) ab.appendChild(h('div', { cls: 'mt', text: 'Réel hors projet non compté (lignes sans projet) : ' + fH(hp.a) + (P.costs ? ' · coût ' + NF.format(hp.c) : '') + '. Il est exclu du réel, des coûts réels et des écarts de tout le bookmarklet ; l’alloué reste complet.', title: 'Lien : lignes quotidiennes sans projet de la période' }), link('Voir ces lignes ↗', listLink('resource_allocation_daily', 'user=' + d.uid + '^date>=' + per.f + '^date<=' + per.t + '^top_taskISEMPTY^actual_hours>0')));
     box.appendChild(ab);
 
     var days = (pd(per.t) - pd(per.f)) / 864e5 + 1;
@@ -461,7 +477,7 @@
     var r = await Promise.all([
       rows('sn_plng_att_core_resource_assignment', 'user_resource=' + uid + '^assignment_type=user^start_date<=' + per.t + '^end_date>=' + per.f,
         ['number', 'top_task', 'task', 'parent', 'group_resource', 'effort', 'effort_type', 'start_date', 'end_date', 'resource_status', 'resource_allocation', 'sys_id'], true),
-      agg('resource_allocation_daily', 'user=' + uid + '^date>=' + per.f + '^date<=' + per.t, { sum: ['hours', 'actual_hours', 'allocated_cost', 'actual_cost'], group: ['allocation'] })
+      aggRAD('user=' + uid + '^date>=' + per.f + '^date<=' + per.t, { sum: ['hours', 'actual_hours', 'allocated_cost', 'actual_cost'], group: ['allocation'] })
     ]);
     var byAl = {}; r[1].forEach(function (x) { byAl[x.g.allocation] = x.sum; });
     return { ra: r[0].rows, partial: r[0].partial, byAl: byAl, per: per, uid: uid };
@@ -495,7 +511,7 @@
     var lo = ymd(addD(pd(per.f), -6)), hi = ymd(addD(pd(per.t), 6));
     var r = await Promise.all([
       rows('time_card', 'user=' + uid + '^week_starts_on>=' + lo + '^week_starts_on<=' + per.t, ['sys_id', 'week_starts_on', 'task', 'top_task', 'state', 'total', 'time_sheet', 'approved_on'].concat(DAYS), true),
-      agg('resource_allocation_daily', 'user=' + uid + '^actual_hours>0^date>=' + lo + '^date<=' + hi, { sum: ['actual_hours'], group: ['task', 'top_task', 'date'] })
+      agg('resource_allocation_daily', 'user=' + uid + '^actual_hours>0^top_taskISNOTEMPTY^date>=' + lo + '^date<=' + hi, { sum: ['actual_hours'], group: ['task', 'top_task', 'date'] })
     ]);
     return { tc: r[0].rows, partial: r[0].partial, rad: r[1], per: per, uid: uid };
   }
@@ -593,7 +609,7 @@
     var r = await Promise.all([
       rows('resource_allocation', 'resource_assignment.user_resource=' + uid + '^start_date<=' + per.t + '^end_date>=' + per.f,
         ['sys_id', 'number', 'task', 'resource_assignment', 'resource_assignment.top_task', 'resource_plan', 'start_date', 'end_date', 'distribution_type'], true),
-      agg('resource_allocation_daily', 'user=' + uid + '^date>=' + per.f + '^date<=' + per.t, { sum: ['hours', 'actual_hours', 'allocated_cost', 'actual_cost'], group: ['allocation', 'date'] })
+      aggRAD('user=' + uid + '^date>=' + per.f + '^date<=' + per.t, { sum: ['hours', 'actual_hours', 'allocated_cost', 'actual_cost'], group: ['allocation', 'date'] })
     ]);
     return { al: r[0].rows, partial: r[0].partial, rad: r[1], per: per, uid: uid };
   }
@@ -609,7 +625,7 @@
     var NONE = '__none__', noneLink = listLink('resource_allocation_daily', 'user=' + d.uid + '^date>=' + d.per.f + '^date<=' + d.per.t + '^allocationISEMPTY');
     var R = ids.map(function (id) {
       var x = info[id], o = byAl[id] || { b: {}, h: 0, a: 0, c: 0, ca: 0 }, pj = x ? sv(x['resource_assignment.top_task']) : '', tk = x ? sv(x.task) : '';
-      var c = [id === '' ? C('Sans allocation (réel hors planification)', { href: noneLink, cls: 'bad' }) : C(x ? sv(x.number) : 'Allocation ' + id.slice(0, 6) + '…', { href: '/resource_allocation.do?sys_id=' + id }), C(x ? dv(x['resource_assignment.top_task']) || '—' : '—', pj ? { href: '/pm_project.do?sys_id=' + pj } : null),
+      var c = [id === '' ? C(o.a > 0.005 ? 'Sans allocation (réel hors planification)' : 'Sans allocation', { href: noneLink, cls: 'bad' }) : C(x ? sv(x.number) : 'Allocation ' + id.slice(0, 6) + '…', { href: '/resource_allocation.do?sys_id=' + id }), C(x ? dv(x['resource_assignment.top_task']) || '—' : '—', pj ? { href: '/pm_project.do?sys_id=' + pj } : null),
         C(x ? dv(x.task) || '—' : '—', tk ? { href: '/pm_project_task.do?sys_id=' + tk } : null), C(x ? dv(x.resource_assignment) || '—' : id === '' ? '—' : '(sans assignation)'), C(x ? dv(x.resource_plan) || '—' : '—'),
         C(x ? frDate(sv(x.start_date)) : '—', { d: x ? sv(x.start_date) : '' }), C(x ? frDate(sv(x.end_date)) : '—', { d: x ? sv(x.end_date) : '' })];
       bk.forEach(function (b) { var v = o.b[b.k] || 0; c.push(C(v ? fN(v) : '', { n: v ? v : null })); });
@@ -648,8 +664,8 @@
   }
   function drawDaily(ld, d, info) {
     var R = ld.rows.map(function (x) {
-      var hr = num(sv(x.hours)), ac = num(sv(x.actual_hours)), cc = num(sv(x.allocated_cost)), ca = num(sv(x.actual_cost)), al = sv(x.allocation), nb = !al ? 'Sans allocation' : info[al] ? sv(info[al].number) : 'Allocation ' + al.slice(0, 6) + '…', dt = sv(x.date), pj = sv(x.top_task);
-      var c = [C(frDate(dt), { d: dt }), C(nb, al ? { href: '/resource_allocation.do?sys_id=' + al } : { cls: 'bad' }), C(dv(x.top_task) || '—', pj ? { href: '/pm_project.do?sys_id=' + pj } : null), C(dv(x.task) || '—'), C(dv(x.type) || '—'), C(fN(hr), { n: hr }), C(fN(ac), { n: ac }), C(NF.format(num(sv(x.allocated_hourly_rate))), { n: num(sv(x.allocated_hourly_rate)) })];
+      var nop = !sv(x.top_task), hr = num(sv(x.hours)), ac = nop ? 0 : num(sv(x.actual_hours)), cc = num(sv(x.allocated_cost)), ca = nop ? 0 : num(sv(x.actual_cost)), al = sv(x.allocation), nb = !al ? 'Sans allocation' : info[al] ? sv(info[al].number) : 'Allocation ' + al.slice(0, 6) + '…', dt = sv(x.date), pj = sv(x.top_task);
+      var c = [C(frDate(dt), { d: dt }), C(nb, al ? { href: '/resource_allocation.do?sys_id=' + al } : { cls: 'bad' }), C(nop ? '— (hors projet : réel non compté)' : dv(x.top_task) || '—', pj ? { href: '/pm_project.do?sys_id=' + pj } : null), C(dv(x.task) || '—'), C(dv(x.type) || '—'), C(fN(hr), { n: hr }), C(fN(ac), { n: ac }), C(NF.format(num(sv(x.allocated_hourly_rate))), { n: num(sv(x.allocated_hourly_rate)) })];
       if (P.costs) c.push(C(NF.format(cc), { n: cc }), C(NF.format(ca), { n: ca }));
       return { c: c, hr: hr, ac: ac, cc: cc, ca: ca, open: '/resource_allocation_daily.do?sys_id=' + sv(x.sys_id) };
     });
@@ -665,7 +681,7 @@
     var w = gran === 'w', bk = buckets(per.f, per.t, gran), lo = bk[0].lo, hi = bk[bk.length - 1].hi, col = w ? 'week_starts_on' : 'month_starts_on', U = 'user=' + uid;
     var r = await Promise.all([
       agg(w ? 'resource_aggregate_weekly' : 'resource_aggregate_monthly', U + '^' + col + '>=' + lo + '^' + col + '<=' + hi, { sum: ['hours', 'utilization'], group: [col, 'category'] }),
-      agg('resource_allocation_daily', U + '^date>=' + lo + '^date<=' + hi, { sum: ['hours', 'actual_hours'], group: ['date'] })
+      aggRAD(U + '^date>=' + lo + '^date<=' + hi, { sum: ['hours', 'actual_hours'], group: ['date'] })
     ]);
     return { ag: r[0], rad: r[1], bk: bk, col: col, gran: gran, lo: lo, hi: hi, per: per, uid: uid };
   }
