@@ -2,7 +2,7 @@
  * Source lisible ; le fichier servi est sn-user-resources.js (minifié : npm run build ou voir CONTEXT.md). */
 (function () {
   'use strict';
-  var VER = 'v2026-11-27.5';
+  var VER = 'v2026-11-27.6';
   var ID = 'snus-overlay', CSSID = 'snus-style', LS = 'snus.v1';
   var old = document.getElementById(ID);
   if (old) { old._close && old._close(); return; }
@@ -34,7 +34,7 @@
   function dv(o) { return o && typeof o === 'object' ? (o.display_value == null ? '' : String(o.display_value)) : (o == null ? '' : String(o)); }
 
   /* ---------- Préférences (localStorage, jamais bloquant) ---------- */
-  var P = { tab: 'ov', gran: 'm', sorts: {}, preset: 'cur', from: '', to: '', unit: 'h', costs: true, force: false };
+  var P = { tab: 'ov', gran: 'm', sorts: {}, preset: 'cur', from: '', to: '', unit: 'h', costs: true, force: false, hm: 'p' };
   try { var raw = localStorage.getItem(LS); if (raw) Object.assign(P, JSON.parse(raw)); } catch (e) {}
   function save() { try { localStorage.setItem(LS, JSON.stringify(P)); } catch (e) {} }
 
@@ -217,18 +217,32 @@
     return L.map(function (x) { return link(x[0] + ' ↗', x[1]); });
   }
 
-  function heatmap(d) {
-    var per = d.per, byDay = {}, a, b;
+  function heatmap(d, mode) {
+    var per = d.per, byDay = {}, today = ymd(new Date());
     d.rad.forEach(function (x) { var k = x.g.date; byDay[k] = byDay[k] || { h: 0, r: 0 }; byDay[k].h += x.sum.hours; byDay[k].r += x.sum.actual_hours; });
     var wrap = h('div', { cls: 'hm' });
     ['L', 'M', 'M', 'J', 'V', 'S', 'D'].forEach(function (x) { wrap.appendChild(h('div', { cls: 'hmh', text: x })); });
     var cur = mondayOf(pd(per.f)), end = addD(mondayOf(pd(per.t)), 6);
     for (; cur <= end; cur = addD(cur, 1)) {
-      var k = ymd(cur), v = byDay[k], inP = k >= per.f && k <= per.t, hr = v ? v.h : 0;
-      var cl = 'hc' + (inP ? '' : ' out') + (hr > 8 ? ' over' : hr > 4 ? ' l3' : hr > 0 ? (hr > 2 ? ' l2' : ' l1') : '') + ((cur.getDay() + 6) % 7 > 4 ? ' we' : '');
-      wrap.appendChild(h('div', { cls: cl, title: frDate(k) + ' : ' + NF.format(hr) + ' h alloué' + (v && v.r ? ' · ' + NF.format(v.r) + ' h réel' : ''), text: String(cur.getDate()) }));
+      var k = ymd(cur), v = byDay[k] || { h: 0, r: 0 }, inP = k >= per.f && k <= per.t, past = k <= today, e = v.r - v.h, hasE = past && (v.h || v.r), cl, val = '';
+      if (mode === 'e') { cl = hasE ? (Math.abs(e) < 0.005 ? ' ok' : e < 0 ? ' under' : ' over') : ''; val = hasE ? (Math.abs(e) < 0.005 ? '✓' : (e > 0 ? '+' : '') + fN(e)) : ''; }
+      else { var hr = mode === 'r' ? v.r : v.h; cl = hr > 8 ? ' over' : hr > 4 ? ' l3' : hr > 0 ? (hr > 2 ? ' l2' : ' l1') : ''; val = hr ? fN(hr) : ''; }
+      var tip = frDate(k) + ' : planifié ' + fH(v.h) + ' · réalisé ' + fH(v.r) + (hasE ? ' · écart ' + (e > 0 ? '+' : '') + fH(e) : past ? '' : ' (à venir)');
+      wrap.appendChild(h('div', { cls: 'hc' + (inP ? '' : ' out') + cl + ((cur.getDay() + 6) % 7 > 4 ? ' we' : ''), title: tip }, [h('span', { cls: 'hd', text: String(cur.getDate()) }), h('span', { cls: 'hv', text: val })]));
     }
     return wrap;
+  }
+  var HM_LEG = { p: 'Gris : rien · bleu : 0–2 h, 2–4 h, 4–8 h · rouge : plus de 8 h planifiées', r: 'Gris : rien · bleu : 0–2 h, 2–4 h, 4–8 h · rouge : plus de 8 h réalisées', e: 'Écart = réalisé − planifié (jours passés uniquement) · vert : ✓ conforme · orange : moins réalisé que planifié · rouge : plus réalisé que planifié' };
+  function heatCard(d) {
+    var box = h('div'), bar = h('div', { cls: 'tools' });
+    function draw() {
+      box.innerHTML = ''; bar.innerHTML = '';
+      [['p', 'Planifié'], ['r', 'Réalisé'], ['e', 'Écart']].forEach(function (m) { bar.appendChild(h('button', { cls: 'btn sm ' + (P.hm === m[0] ? 'on' : 'sec'), text: m[1], onclick: function () { P.hm = m[0]; save(); draw(); } })); });
+      box.appendChild(heatmap(d, P.hm));
+      box.appendChild(h('div', { cls: 'mt', text: HM_LEG[P.hm] + '. Planifié = heures allouées ; réalisé = heures réelles (actual_hours) des allocations quotidiennes ; l’infobulle donne les trois valeurs.' }));
+    }
+    draw();
+    return [bar, box];
   }
 
   function monthRows(d) {
@@ -327,8 +341,8 @@
     box.appendChild(ab);
 
     var days = (pd(per.t) - pd(per.f)) / 864e5 + 1;
-    var ld = h('div', { cls: 'card' }, [h('div', { cls: 'ct', text: 'Charge sur la période (heures allouées par jour)' })]);
-    if (days <= 92) { ld.appendChild(heatmap(d)); ld.appendChild(h('div', { cls: 'mt', text: 'Gris : rien · bleu : 0–2 h, 2–4 h, 4–8 h · rouge : plus de 8 h' })); }
+    var ld = h('div', { cls: 'card' }, [h('div', { cls: 'ct', text: 'Charge sur la période : planifié / réalisé / écart par jour' })]);
+    if (days <= 92) heatCard(d).forEach(function (n) { ld.appendChild(n); });
     else ld.appendChild(h('div', { cls: 'mt', text: 'Période longue : voir le détail par mois ci-dessous.' }));
     var R2 = mrs.map(function (r) {
       var diff = r.hasAgg && r.full ? r.al - r.aggAl : null, o = r.full && r.hasCap && r.cap > 0 ? r.al / r.cap * 100 : null;
@@ -686,9 +700,9 @@
     '.tile.bad .tv{color:#DC2626}.tile.good .tv{color:#16A34A}',
     '.al{padding:3px 0}.al.err{color:#B42318}.al.warn{color:#B45309}.al.ok{color:#16A34A}',
     '.mt{color:#6B7280;font-size:12px;margin:6px 0}.bad{color:#DC2626}.good{color:#16A34A}',
-    '.hm{display:grid;grid-template-columns:repeat(7,44px);gap:3px;margin:4px 0}.hmh{font-size:10px;color:#6B7280;text-align:center}',
-    '.hc{height:30px;border-radius:5px;background:#F3F4F6;font-size:10px;color:#6B7280;display:flex;align-items:flex-start;justify-content:flex-start;padding:2px 4px}',
-    '.hc.l1{background:#DBEAFE}.hc.l2{background:#93C5FD}.hc.l3{background:#3B82F6;color:#fff}.hc.over{background:#DC2626;color:#fff}.hc.out{opacity:.35}.hc.we{outline:1px dashed #D1D5DB}',
+    '.hm{display:grid;grid-template-columns:repeat(7,52px);gap:3px;margin:4px 0}.hmh{font-size:10px;color:#6B7280;text-align:center}',
+    '.hc{height:38px;border-radius:5px;background:#F3F4F6;font-size:10px;color:#6B7280;display:flex;flex-direction:column;justify-content:space-between;padding:2px 4px}.hc .hd{line-height:1}.hc .hv{font-size:11px;font-weight:600;text-align:right;line-height:1}',
+    '.hc.l1{background:#DBEAFE}.hc.l2{background:#93C5FD}.hc.l3{background:#3B82F6;color:#fff}.hc.over{background:#DC2626;color:#fff}.hc.ok{background:#D1FAE5;color:#065F46}.hc.under{background:#FED7AA;color:#9A3412}.hc.out{opacity:.35}.hc.we{outline:1px dashed #D1D5DB}',
     '.tw{overflow:auto;max-height:50vh;border:1px solid #E5E7EB;border-radius:6px;margin-top:8px}',
     '.tb{border-collapse:collapse;width:100%}.tb th{position:sticky;top:0;background:#F3F4F6;text-align:left;padding:6px 10px;border-bottom:1px solid #E5E7EB;font-size:12px;white-space:nowrap}',
     '.tb td{padding:5px 10px;border-bottom:1px solid #F3F4F6;white-space:nowrap}.n{text-align:right!important;font-variant-numeric:tabular-nums}',

@@ -138,7 +138,10 @@ Script de diagnostic à lancer dans la console :
 - **Purge jsDelivr** : `https://purge.jsdelivr.net/gh/sandraponard-lgtm/sn-bookmarklet@main/sn-user-resources.js` (ou épingler un commit : `@<sha>`).
 - Versions propres à ce fichier (`vAAAA-MM-JJ.N`, affichée dans l'en-tête).
 
-## Version courante : v2026-11-27.5 (ligne « sans allocation » + Écart des time cards explicable)
+## Version courante : v2026-11-27.6 (calendrier de charge : planifié / réalisé / écart)
+- v2026-11-27.6 : le calendrier de la vue d'ensemble a trois modes (Planifié, Réalisé, Écart ; choix mémorisé dans `hm`). Planifié = `hours` des allocations quotidiennes, réalisé = `actual_hours`, écart = réalisé − planifié (jours passés seulement ; ✓ vert si nul, orange si moins réalisé, rouge si plus). Chaque case affiche le jour et la valeur (suit l'unité h / j) ; l'infobulle donne les trois valeurs. Les seuils de couleur restent en heures.
+
+## v2026-11-27.5 (ligne « sans allocation » + Écart des time cards explicable)
 - v2026-11-27.5 : **Allocations** — la ligne issue des lignes quotidiennes à `allocation` vide s'appelle « Sans allocation (réel hors planification) » (plus de lien mort `resource_allocation.do?sys_id=`) ; son libellé est un lien vers la liste classique `resource_allocation_daily` filtrée `allocationISEMPTY` ; le détail quotidien accepte ce cas (option `__none__` → `^allocationISEMPTY`) et affiche une colonne **Projet** (top_task). **Time cards** — nouvelles colonnes **Réel alloc.** (actual_hours des allocations quotidiennes sur les 7 jours à partir de `week_starts_on`, lien vers la liste classique), **Lignes** (nombre de lignes quotidiennes) et **Base** (tâche / projet / utilisateur (semaine)) ; si la time card n'a ni projet ni tâche, l'Écart compare le total de toutes les time cards approuvées de la semaine au réel de l'utilisateur sur la semaine. Écart = total time card − Réel alloc. (Approved / Processed seulement).
 - Non vérifié : cas « sans allocation » et base « utilisateur (semaine) » non reproductibles sur ispconsultingdemo08 (pas de telles données) ; à confirmer sur l'instance cliente.
 
