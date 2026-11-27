@@ -15,7 +15,7 @@
 | `tn(n)` | Parser numérique générique (pour les minilistes) |
 | `tnCost(n)` | Parser coûts pour display dans ORDY tab |
 | `l(n)` | Parser numérique dans la fonction recon (closure locale) |
-| `T(url)` | fetch() wrapper → retourne directement le JSON parsé (pas une Response !) |
+| `T(url)` | fetch() wrapper → retourne une **Response** : toujours `await (await T(url)).json()` (tous les autres appels le font) |
 | `sn(...)` | Rendu d'une minilist |
 | `window.snfusOpenCostRecon` | Fonction réconciliation des coûts |
 
@@ -55,7 +55,7 @@ Les champs "project currency" simples (non-currency type) :
 1. **CSS real newlines** dans JS string → utiliser `\\n` (littéral deux caractères)
 2. **`D()` sur champs coûts** → retourne `"€7,315.9579"` → remplacé par `oC()` avec `Intl.NumberFormat`
 3. **Parser `dvStr`** : `"2,000"` interprété comme `2.0` → utiliser `value` directement
-4. **Recon `.json()` parasite** : `T()` retourne déjà du JSON parsé, ne pas appeler `.json()` dessus
+4. **Recon sans `.json()`** (cause des 0.00) : `T()` retourne une Response ; la réconciliation lisait `e.result` directement → toujours vide. Corrigé en v2026-11-27.2 (wrapper local `J` = `T(u).then(r=>r.json())`). L'ancienne note « T() retourne du JSON parsé » était fausse.
 
 ## Tables ServiceNow utilisées
 | Table | Usage | Champs clés |
@@ -92,7 +92,8 @@ resource_allocation_daily?sysparm_query=allocation.resource_assignment.top_task=
 - RAD : allocated_cost présent (162.5, 150… = heures × 50, `decimal` en USD), actual_cost = chaîne vide "" (projet futur)
 - Devise du projet = USD, devise fonctionnelle = USD, devise d'affichage de l'utilisateur = EUR
 
-## Version courante : v2026-11-27.1
+## Version courante : v2026-11-27.2
+- v2026-11-27.2 : réconciliation — résultats des requêtes enfin parsés (`.json()`), cause du 0.00 partout.
 - Réconciliation : la colonne work_cost est lue en devise projet (`actual_cost_project_currency`, currency2 → `currency_display_value`) au lieu de `work_cost` (EUR converti), pour être comparable à Σ EX et Σ CP (USD).
 - Réconciliation : Σ RAD filtre par `top_task` pour le projet et par `task` pour les tâches (comme les minilists).
 - Diagnostic SC_Pourpre (2026-11-27) : requêtes saines (EX=2000, CP=2000 USD, RAD alloué=10000, réel=2000).
