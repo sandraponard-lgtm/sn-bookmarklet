@@ -560,7 +560,7 @@
     var R = ld.rows.map(function (x) {
       var id = sv(x.time_card), c = CI[id], dt = sv(x.date), tw = num(sv(x.time_worked));
       if (!c) return { c: [C(frDate(dt), { d: dt }), C('(hors liste)', { href: '/time_card.do?sys_id=' + id }), C('—'), C('—'), C('—'), C(fN(tw), { n: tw }), C('—'), C('—'), C('—'), C('—')], tw: tw, cd: 0, ra: 0, diff: null, open: '/time_card_daily.do?sys_id=' + sv(x.sys_id) };
-      var off = Math.round((pd(dt) - pd(c.w0)) / 864e5), cd = off >= 0 && off < 7 ? c.days[off] : null, rf = radDay(c.mode, c.key, dt);
+      var off = Math.round((pd(dt) - pd(c.w0)) / 864e5), cd = off >= 0 && off < 7 ? c.days[(pd(dt).getDay() + 6) % 7] : null, rf = radDay(c.mode, c.key, dt);
       var cmp = c.mode === 'user' ? (dayAppr[dt] || 0) : tw, diff = c.approved ? cmp - rf.h : null, mism = cd != null && Math.abs(cd - tw) > 0.005;
       var cells = [C(frDate(dt), { d: dt }), C(frDate(c.w0), { href: '/time_card.do?sys_id=' + id, d: c.w0 }), C(c.tpL, c.tp ? { href: '/pm_project.do?sys_id=' + c.tp } : null), C(c.tkL, c.tk && c.tk !== c.tp ? { href: '/pm_project_task.do?sys_id=' + c.tk } : null), C(c.st, { cls: 'st st-' + (STC[c.st] || 'pend') }),
         C(fN(tw), { n: tw }), C(cd == null ? '—' : fN(cd), { n: cd, cls: mism ? 'bad' : '' }),
