@@ -138,7 +138,11 @@ Script de diagnostic à lancer dans la console :
 - **Purge jsDelivr** : `https://purge.jsdelivr.net/gh/sandraponard-lgtm/sn-bookmarklet@main/sn-user-resources.js` (ou épingler un commit : `@<sha>`).
 - Versions propres à ce fichier (`vAAAA-MM-JJ.N`, affichée dans l'en-tête).
 
-## Version courante : v2026-11-27.4 (lot 4 : finitions et recette)
+## Version courante : v2026-11-27.5 (ligne « sans allocation » + Écart des time cards explicable)
+- v2026-11-27.5 : **Allocations** — la ligne issue des lignes quotidiennes à `allocation` vide s'appelle « Sans allocation (réel hors planification) » (plus de lien mort `resource_allocation.do?sys_id=`) ; son libellé est un lien vers la liste classique `resource_allocation_daily` filtrée `allocationISEMPTY` ; le détail quotidien accepte ce cas (option `__none__` → `^allocationISEMPTY`) et affiche une colonne **Projet** (top_task). **Time cards** — nouvelles colonnes **Réel alloc.** (actual_hours des allocations quotidiennes sur les 7 jours à partir de `week_starts_on`, lien vers la liste classique), **Lignes** (nombre de lignes quotidiennes) et **Base** (tâche / projet / utilisateur (semaine)) ; si la time card n'a ni projet ni tâche, l'Écart compare le total de toutes les time cards approuvées de la semaine au réel de l'utilisateur sur la semaine. Écart = total time card − Réel alloc. (Approved / Processed seulement).
+- Non vérifié : cas « sans allocation » et base « utilisateur (semaine) » non reproductibles sur ispconsultingdemo08 (pas de telles données) ; à confirmer sur l'instance cliente.
+
+## v2026-11-27.4 (lot 4 : finitions et recette)
 - v2026-11-27.4 : tableau mensuel de la vue d'ensemble migré vers le tableau générique (tri, filtre, Σ, Copier, CSV) ; tri mémorisé par tableau (`sorts` dans `snus.v1`, retrouvé par libellé de colonne) ; focus visible, `role="dialog"`, `aria-label` sur la fermeture.
 - Recette (lecture seule, 2026-11-27) : détection de l'utilisateur dans l'URL du Next Experience (`/now/nav/ui/classic/params/target/sys_user.do%3Fsys_id%3D…`) OK ; ouverture utile (9 requêtes) en ~300–330 ms ; période annuelle en hebdomadaire OK (53 semaines, 64 colonnes) ; utilisateur enfant de groupe (Émilie Rousseau) sans double comptage ; mode ligne à ligne = mêmes valeurs ; constats détaillés dans le doc de projet `sn-tables-reference-utilisateur.md`.
 - Non mesuré : durée « avant » de l'ancien bookmarklet (test automatisé non concluant : 2 requêtes API en 31 s sans fin de chargement).

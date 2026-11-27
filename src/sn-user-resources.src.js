@@ -2,7 +2,7 @@
  * Source lisible ; le fichier servi est sn-user-resources.js (minifié : npm run build ou voir CONTEXT.md). */
 (function () {
   'use strict';
-  var VER = 'v2026-11-27.4';
+  var VER = 'v2026-11-27.5';
   var ID = 'snus-overlay', CSSID = 'snus-style', LS = 'snus.v1';
   var old = document.getElementById(ID);
   if (old) { old._close && old._close(); return; }
@@ -486,29 +486,38 @@
     return { tc: r[0].rows, partial: r[0].partial, rad: r[1], per: per, uid: uid };
   }
   function drawTC(box, d) {
-    function radFor(key, byTop, w0) {
-      var a = pd(w0), s = 0, lo = w0, hi = ymd(addD(a, 6));
-      d.rad.forEach(function (x) { if (x.g.date >= lo && x.g.date <= hi && (byTop ? x.g.top_task : x.g.task) === key) s += x.sum.actual_hours; });
-      return s;
+    function approvedSt(st) { return st === 'Approved' || st === 'Processed'; }
+    var apprWeek = {}; d.tc.forEach(function (x) { if (approvedSt(sv(x.state))) { var w = sv(x.week_starts_on); apprWeek[w] = (apprWeek[w] || 0) + num(sv(x.total)); } });
+    function radFor(mode, key, w0) {
+      var lo = w0, hi = ymd(addD(pd(w0), 6)), h1 = 0, n = 0;
+      d.rad.forEach(function (x) {
+        if (x.g.date < lo || x.g.date > hi) return;
+        if (mode === 'user' || (mode === 'top' ? x.g.top_task : x.g.task) === key) { h1 += x.sum.actual_hours; n += x.count; }
+      });
+      return { h: h1, n: n };
     }
     var R = d.tc.map(function (x) {
-      var w0 = sv(x.week_starts_on), st = sv(x.state), tot = num(sv(x.total)), tk = sv(x.task), tp = sv(x.top_task), approved = st === 'Approved' || st === 'Processed';
-      var diff = approved ? tot - radFor(tk === tp ? tp : tk, tk === tp, w0) : null, ts = sv(x.time_sheet);
+      var w0 = sv(x.week_starts_on), st = sv(x.state), tot = num(sv(x.total)), tk = sv(x.task), tp = sv(x.top_task), approved = approvedSt(st);
+      var mode = !tk && !tp ? 'user' : (!tk || tk === tp) ? 'top' : 'task', key = mode === 'top' ? tp : tk, rf = radFor(mode, key, w0);
+      var base = mode === 'user' ? 'utilisateur (semaine)' : mode === 'top' ? 'projet' : 'tâche';
+      var cmp = mode === 'user' ? (apprWeek[w0] || 0) : tot, diff = approved ? cmp - rf.h : null, ts = sv(x.time_sheet);
+      var q = 'user=' + d.uid + '^date>=' + w0 + '^date<=' + ymd(addD(pd(w0), 6)) + '^actual_hours>0' + (mode === 'top' ? '^top_task=' + tp : mode === 'task' ? '^task=' + tk : '');
       var days = DAYS.map(function (k) { var v = num(sv(x[k])); return C(v ? fN(v) : '', { n: v ? v : null }); });
       var c = [C(frDate(w0), { d: w0 }), C(dv(x.top_task) || '—', tp ? { href: '/pm_project.do?sys_id=' + tp } : null), C(dv(x.task) || '—', tk && tk !== tp ? { href: '/pm_project_task.do?sys_id=' + tk } : null)].concat(days,
         [C(fN(tot), { n: tot }), C(st, { cls: 'st st-' + (STC[st] || 'pend') }), C(dv(x.time_sheet) || '—', ts ? { href: '/time_sheet.do?sys_id=' + ts } : null), C(sv(x.approved_on) ? frDate(sv(x.approved_on).slice(0, 10)) + sv(x.approved_on).slice(10, 16) : '—', { d: sv(x.approved_on) }),
+          C(fN(rf.h), { n: rf.h, href: listLink('resource_allocation_daily', q) }), C(String(rf.n), { n: rf.n }), C(base),
           diff == null ? C('—') : Math.abs(diff) < 0.01 ? C('✓', { cls: 'good', n: 0 }) : C((diff > 0 ? '+' : '') + fN(diff), { cls: 'bad', n: diff })]);
       return { c: c, open: '/time_card.do?sys_id=' + sv(x.sys_id), days: DAYS.map(function (k) { return num(sv(x[k])); }), tot: tot, diff: diff };
     });
     var cols = [{ l: 'Semaine', href: listLink('time_card', 'user=' + d.uid + '^week_starts_on>=' + ymd(addD(pd(d.per.f), -6)) + '^week_starts_on<=' + d.per.t) }, { l: 'Projet' }, { l: 'Tâche' }]
-      .concat(DL.map(function (x) { return { l: x, num: 1 }; }), [{ l: 'Total' + uS(), num: 1 }, { l: 'État' }, { l: 'Time sheet' }, { l: 'Approuvée le' }, { l: 'Écart' + uS(), num: 1 }]);
+      .concat(DL.map(function (x) { return { l: x, num: 1 }; }), [{ l: 'Total' + uS(), num: 1 }, { l: 'État' }, { l: 'Time sheet' }, { l: 'Approuvée le' }, { l: 'Réel alloc.' + uS(), num: 1 }, { l: 'Lignes', num: 1 }, { l: 'Base' }, { l: 'Écart' + uS(), num: 1 }]);
     box.appendChild(h('div', { cls: 'card' }, [h('div', { cls: 'ct', text: 'Time cards (semaines chevauchant la période)' }),
-      h('div', { cls: 'mt', text: 'Écart : total d’une time card Approved / Processed moins les heures réelles des allocations quotidiennes de la même tâche et de la même semaine (7 jours à partir de « Semaine »). Les autres états ne sont pas comparés.' }),
+      h('div', { cls: 'mt', text: 'Réel alloc. : heures réelles (actual_hours) des allocations quotidiennes sur les 7 jours à partir de « Semaine » ; Lignes : nombre de lignes quotidiennes qui le composent ; le montant est un lien vers la liste classique correspondante. Base : tâche, projet ou, si la time card n’a ni projet ni tâche, tout le réel de l’utilisateur sur la semaine. Écart (Approved / Processed seulement) : total de la time card moins Réel alloc. ; en base « utilisateur », total de toutes les time cards approuvées de la semaine moins Réel alloc.' }),
       dtable({ name: 'time-cards', cols: cols, rows: R, note: d.partial ? 'partiel (40 pages)' : '', totals: function (vis) {
         var t = [C('Σ'), C(''), C('')], sd = [0, 0, 0, 0, 0, 0, 0], st = 0, sg = 0, any = false;
         vis.forEach(function (r) { r.days.forEach(function (v, i) { sd[i] += v; }); st += r.tot; if (r.diff != null) { sg += r.diff; any = true; } });
         sd.forEach(function (v) { t.push(C(v ? fN(v) : '')); });
-        t.push(C(fN(st)), C(''), C(''), C(''), C(!any ? '—' : Math.abs(sg) < 0.01 ? '✓' : (sg > 0 ? '+' : '') + fN(sg), { cls: any ? (Math.abs(sg) < 0.01 ? 'good' : 'bad') : '' }));
+        t.push(C(fN(st)), C(''), C(''), C(''), C(''), C(''), C(''), C(!any ? '—' : Math.abs(sg) < 0.01 ? '✓' : (sg > 0 ? '+' : '') + fN(sg), { cls: any ? (Math.abs(sg) < 0.01 ? 'good' : 'bad') : '' }));
         return t; } })]));
   }
 
@@ -543,15 +552,16 @@
     });
     var ids = d.al.map(function (x) { return sv(x.sys_id); });
     Object.keys(byAl).forEach(function (k) { if (ids.indexOf(k) < 0) ids.push(k); });
+    var NONE = '__none__', noneLink = listLink('resource_allocation_daily', 'user=' + d.uid + '^date>=' + d.per.f + '^date<=' + d.per.t + '^allocationISEMPTY');
     var R = ids.map(function (id) {
       var x = info[id], o = byAl[id] || { b: {}, h: 0, a: 0, c: 0, ca: 0 }, pj = x ? sv(x['resource_assignment.top_task']) : '', tk = x ? sv(x.task) : '';
-      var c = [C(x ? sv(x.number) : 'Allocation ' + id.slice(0, 6) + '…', { href: '/resource_allocation.do?sys_id=' + id }), C(x ? dv(x['resource_assignment.top_task']) || '—' : '—', pj ? { href: '/pm_project.do?sys_id=' + pj } : null),
-        C(x ? dv(x.task) || '—' : '—', tk ? { href: '/pm_project_task.do?sys_id=' + tk } : null), C(x ? dv(x.resource_assignment) || '—' : '(sans assignation)'), C(x ? dv(x.resource_plan) || '—' : '—'),
+      var c = [id === '' ? C('Sans allocation (réel hors planification)', { href: noneLink, cls: 'bad' }) : C(x ? sv(x.number) : 'Allocation ' + id.slice(0, 6) + '…', { href: '/resource_allocation.do?sys_id=' + id }), C(x ? dv(x['resource_assignment.top_task']) || '—' : '—', pj ? { href: '/pm_project.do?sys_id=' + pj } : null),
+        C(x ? dv(x.task) || '—' : '—', tk ? { href: '/pm_project_task.do?sys_id=' + tk } : null), C(x ? dv(x.resource_assignment) || '—' : id === '' ? '—' : '(sans assignation)'), C(x ? dv(x.resource_plan) || '—' : '—'),
         C(x ? frDate(sv(x.start_date)) : '—', { d: x ? sv(x.start_date) : '' }), C(x ? frDate(sv(x.end_date)) : '—', { d: x ? sv(x.end_date) : '' })];
       bk.forEach(function (b) { var v = o.b[b.k] || 0; c.push(C(v ? fN(v) : '', { n: v ? v : null })); });
       c.push(C(fN(o.h), { n: o.h }), C(fN(o.a), { n: o.a }));
       if (P.costs) c.push(C(NF.format(o.c), { n: o.c }), C(NF.format(o.ca), { n: o.ca }));
-      return { c: c, o: o, id: id };
+      return { c: c, o: o, id: id === '' ? NONE : id };
     });
     var cols = [{ l: 'N°', href: listLink('resource_allocation', 'resource_assignment.user_resource=' + d.uid) }, { l: 'Projet' }, { l: 'Tâche' }, { l: 'Assignation' }, { l: 'Plan' }, { l: 'Début' }, { l: 'Fin' }]
       .concat(bk.map(function (b) { return { l: b.l, num: 1 }; }), [{ l: 'Σ Alloué' + uS(), num: 1, href: listLink('resource_allocation_daily', 'user=' + d.uid + '^date>=' + d.per.f + '^date<=' + d.per.t) }, { l: 'Σ Réel' + uS(), num: 1 }]);
@@ -571,10 +581,11 @@
     var sel = h('select', { cls: 'fld sm' }, [h('option', { value: '', text: 'Toutes les allocations' })].concat(R.map(function (r) { return h('option', { value: r.id, text: r.c[0].t + (r.c[2].t !== '—' ? ' · ' + r.c[2].t : '') }); })));
     var out = h('div'), dBtn = h('button', { cls: 'btn sm', text: 'Charger le détail quotidien', onclick: async function () {
       var al = sel.value, key = [d.uid, 'rld', d.per.f, d.per.t, al, P.force].join('|'), ld = S.cache[key];
+      var alQ = al === NONE ? '^allocationISEMPTY' : al ? '^allocation=' + al : '';
       out.textContent = ''; out.appendChild(phLine('Chargement…')); dBtn.disabled = true;
       try {
-        if (!ld) ld = S.cache[key] = (await rows('resource_allocation_daily', 'user=' + d.uid + '^date>=' + d.per.f + '^date<=' + d.per.t + (al ? '^allocation=' + al : '') + '^ORDERBYdate',
-          ['sys_id', 'date', 'allocation', 'task', 'type', 'hours', 'actual_hours', 'allocated_hourly_rate', 'allocated_cost', 'actual_cost'], true));
+        if (!ld) ld = S.cache[key] = (await rows('resource_allocation_daily', 'user=' + d.uid + '^date>=' + d.per.f + '^date<=' + d.per.t + alQ + '^ORDERBYdate',
+          ['sys_id', 'date', 'allocation', 'top_task', 'task', 'type', 'hours', 'actual_hours', 'allocated_hourly_rate', 'allocated_cost', 'actual_cost'], true));
         out.textContent = ''; out.appendChild(drawDaily(ld, d, info));
       } catch (e) { out.textContent = ''; out.appendChild(h('div', { cls: 'err-box', text: e.message + (e.status ? ' [' + e.status + ']' : '') })); }
       dBtn.disabled = false;
@@ -583,16 +594,16 @@
   }
   function drawDaily(ld, d, info) {
     var R = ld.rows.map(function (x) {
-      var hr = num(sv(x.hours)), ac = num(sv(x.actual_hours)), cc = num(sv(x.allocated_cost)), ca = num(sv(x.actual_cost)), al = sv(x.allocation), nb = info[al] ? sv(info[al].number) : '—', dt = sv(x.date);
-      var c = [C(frDate(dt), { d: dt }), C(nb, al ? { href: '/resource_allocation.do?sys_id=' + al } : null), C(dv(x.task) || '—'), C(dv(x.type) || '—'), C(fN(hr), { n: hr }), C(fN(ac), { n: ac }), C(NF.format(num(sv(x.allocated_hourly_rate))), { n: num(sv(x.allocated_hourly_rate)) })];
+      var hr = num(sv(x.hours)), ac = num(sv(x.actual_hours)), cc = num(sv(x.allocated_cost)), ca = num(sv(x.actual_cost)), al = sv(x.allocation), nb = !al ? 'Sans allocation' : info[al] ? sv(info[al].number) : 'Allocation ' + al.slice(0, 6) + '…', dt = sv(x.date), pj = sv(x.top_task);
+      var c = [C(frDate(dt), { d: dt }), C(nb, al ? { href: '/resource_allocation.do?sys_id=' + al } : { cls: 'bad' }), C(dv(x.top_task) || '—', pj ? { href: '/pm_project.do?sys_id=' + pj } : null), C(dv(x.task) || '—'), C(dv(x.type) || '—'), C(fN(hr), { n: hr }), C(fN(ac), { n: ac }), C(NF.format(num(sv(x.allocated_hourly_rate))), { n: num(sv(x.allocated_hourly_rate)) })];
       if (P.costs) c.push(C(NF.format(cc), { n: cc }), C(NF.format(ca), { n: ca }));
       return { c: c, hr: hr, ac: ac, cc: cc, ca: ca, open: '/resource_allocation_daily.do?sys_id=' + sv(x.sys_id) };
     });
-    var cols = [{ l: 'Date' }, { l: 'Allocation' }, { l: 'Tâche' }, { l: 'Type' }, { l: 'Alloué' + uS(), num: 1 }, { l: 'Réel' + uS(), num: 1 }, { l: 'Taux horaire', num: 1 }];
+    var cols = [{ l: 'Date' }, { l: 'Allocation' }, { l: 'Projet' }, { l: 'Tâche' }, { l: 'Type' }, { l: 'Alloué' + uS(), num: 1 }, { l: 'Réel' + uS(), num: 1 }, { l: 'Taux horaire', num: 1 }];
     if (P.costs) cols.push({ l: 'Coût alloué', num: 1 }, { l: 'Coût réel', num: 1 });
     return dtable({ name: 'allocations-quotidiennes', cols: cols, rows: R, note: ld.partial ? 'partiel (40 pages)' : '', totals: function (vis) {
       var a = 0, b = 0, c = 0, e = 0; vis.forEach(function (r) { a += r.hr; b += r.ac; c += r.cc; e += r.ca; });
-      var t = [C('Σ'), C(''), C(''), C(''), C(fN(a)), C(fN(b)), C('')]; if (P.costs) t.push(C(NF.format(c)), C(NF.format(e))); return t; } });
+      var t = [C('Σ'), C(''), C(''), C(''), C(''), C(fN(a)), C(fN(b)), C('')]; if (P.costs) t.push(C(NF.format(c)), C(NF.format(e))); return t; } });
   }
 
   /* ---------- Onglet Agrégats ---------- */
