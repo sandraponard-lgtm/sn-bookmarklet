@@ -2,7 +2,7 @@
  * Source lisible ; le fichier servi est sn-user-resources.js (minifié : npm run build ou voir CONTEXT.md). */
 (function () {
   'use strict';
-  var VER = 'v2026-11-27.1';
+  var VER = 'v2026-11-27.2';
   var ID = 'snus-overlay', CSSID = 'snus-style', LS = 'snus.v1';
   var old = document.getElementById(ID);
   if (old) { old._close && old._close(); return; }
@@ -166,7 +166,7 @@
     var key = [uid, 'ov', per.f, per.t, P.force].join('|');
     if (S.cache[key]) return S.cache[key];
     var t0 = performance.now(), r0 = REQ, U = 'user=' + uid;
-    var wkF = ymd(mondayOf(pd(per.f))), wkT = ymd(addD(mondayOf(pd(per.t)), 6)), moF = per.f.slice(0, 7) + '-01';
+    var wkF = ymd(addD(pd(per.f), -6)), wkT = ymd(addD(pd(per.t), 6)), moF = per.f.slice(0, 7) + '-01';
     var res = await Promise.all([
       J(TBL + 'sys_user/' + uid + '?sysparm_fields=name,user_name,email,title,manager,department,active&sysparm_display_value=all' + EXC),
       J(TBL + 'sys_user_grmember?sysparm_query=' + enc(U) + '&sysparm_fields=group&sysparm_display_value=all&sysparm_limit=100' + EXC),
@@ -371,6 +371,153 @@
     }
   }
 
+  /* ---------- Tableau générique : tri, filtre, totaux, export, en-têtes ↗ ---------- */
+  function norm(x) { return String(x).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase(); }
+  function fN(hrs) { return NF.format(P.unit === 'j' ? hrs / 8 : hrs); }
+  function uS() { return P.unit === 'j' ? ' (j)' : ' (h)'; }
+  function C(t, o) { var c = { t: t == null ? '' : String(t) }; if (o) for (var k in o) c[k] = o[k]; return c; }
+  function empty(c) { return c.t === '' || c.t === '—'; }
+  function dtable(o) {
+    var stt = { sort: null, asc: true, q: '' }, wrap = h('div'), tw = h('div', { cls: 'tw' }), cnt = h('span', { cls: 'mt' });
+    var fq = h('input', { cls: 'fld sm', type: 'search', placeholder: 'Filtrer…', oninput: function () { stt.q = fq.value; draw(); } });
+    var vis = [];
+    function lines() {
+      var L = [o.cols.map(function (c) { return c.l; })];
+      vis.forEach(function (r) { L.push(r.c.map(function (c) { return c.t.replace(/ /g, ' '); })); });
+      if (o.totals) L.push(o.totals(vis).map(function (c) { return c.t.replace(/ /g, ' '); }));
+      return L;
+    }
+    function copy(txt) {
+      try { navigator.clipboard.writeText(txt); } catch (e) { var ta = h('textarea'); ta.value = txt; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); } catch (e2) {} ta.remove(); }
+    }
+    var tools = h('div', { cls: 'tools' }, [o.rows.length > 3 ? fq : null, cnt, h('span', { cls: 'sp' }),
+      h('button', { cls: 'btn sec sm', text: 'Copier', title: 'TSV, collable dans Excel', onclick: function (e) { copy(lines().map(function (l) { return l.join('\t'); }).join('\n')); e.target.textContent = 'Copié ✓'; setTimeout(function () { e.target.textContent = 'Copier'; }, 1200); } }),
+      h('button', { cls: 'btn sec sm', text: 'CSV', onclick: function () {
+        var csv = '﻿' + lines().map(function (l) { return l.map(function (v) { return '"' + v.replace(/"/g, '""') + '"'; }).join(';'); }).join('\r\n');
+        var a = h('a', { href: URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })), download: (o.name || 'export') + '.csv' }); document.body.appendChild(a); a.click(); a.remove();
+      } })]);
+    function cmp(a, b) {
+      var x = a.c[stt.sort], y = b.c[stt.sort];
+      if (empty(x) !== empty(y)) return empty(x) ? 1 : -1;      // vides toujours en bas
+      if (empty(x)) return 0;
+      var r = x.n != null && y.n != null ? x.n - y.n : x.d && y.d ? (x.d < y.d ? -1 : x.d > y.d ? 1 : 0) : x.t.localeCompare(y.t, 'fr', { numeric: true });
+      return stt.asc ? r : -r;
+    }
+    function draw() {
+      var q = norm(stt.q);
+      vis = o.rows.filter(function (r) { return !q || r.c.some(function (c) { return norm(c.t).indexOf(q) >= 0; }); });
+      if (stt.sort != null) {
+        var emp = [], ok = [];
+        vis.forEach(function (r) { (empty(r.c[stt.sort]) ? emp : ok).push(r); });
+        ok.sort(cmp); vis = ok.concat(emp);
+      }
+      var tr = h('tr');
+      o.cols.forEach(function (c, i) {
+        var th = h('th', { cls: c.num ? 'n' : '', text: c.l + (stt.sort === i ? (stt.asc ? ' ▲' : ' ▼') : ''), onclick: function () { if (stt.sort === i) stt.asc = !stt.asc; else { stt.sort = i; stt.asc = true; } draw(); } });
+        if (c.href) th.appendChild(h('a', { cls: 'hl', href: c.href, target: '_blank', rel: 'noopener', title: 'Ouvrir la liste classique filtrée', text: '↗', onclick: function (e) { e.stopPropagation(); } }));
+        tr.appendChild(th);
+      });
+      var tb = h('tbody');
+      vis.forEach(function (r) {
+        var row = h('tr');
+        r.c.forEach(function (c, i) {
+          var td = h('td', { cls: (o.cols[i].num ? 'n ' : '') + (c.cls || ''), title: c.t });
+          td.appendChild(c.href ? h('a', { cls: 'cl', href: c.href, target: '_blank', rel: 'noopener', text: c.t }) : document.createTextNode(c.t));
+          if (i === 0 && r.open) td.appendChild(h('a', { cls: 'ro', href: r.open, target: '_blank', rel: 'noopener', title: 'Ouvrir', text: '↗' }));
+          row.appendChild(td);
+        });
+        tb.appendChild(row);
+      });
+      var tf = h('tfoot');
+      if (o.totals) { var fr = h('tr'); o.totals(vis).forEach(function (c, i) { fr.appendChild(h('td', { cls: (o.cols[i].num ? 'n ' : '') + (c.cls || ''), text: c.t })); }); tf.appendChild(fr); }
+      tw.textContent = ''; tw.appendChild(h('table', { cls: 'tb' }, [h('thead', null, [tr]), tb, tf]));
+      cnt.textContent = vis.length + ' / ' + o.rows.length + ' ligne(s)' + (o.note ? ' · ' + o.note : '');
+    }
+    draw(); wrap.appendChild(tools); wrap.appendChild(tw); return wrap;
+  }
+  function phLine(t) { return h('div', { cls: 'ph', text: t }); }
+
+  /* ---------- Onglet Assignations ---------- */
+  async function loadRA(uid, per) {
+    var r = await Promise.all([
+      rows('sn_plng_att_core_resource_assignment', 'user_resource=' + uid + '^assignment_type=user^start_date<=' + per.t + '^end_date>=' + per.f,
+        ['number', 'top_task', 'task', 'parent', 'group_resource', 'effort', 'effort_type', 'start_date', 'end_date', 'resource_status', 'resource_allocation', 'sys_id'], true),
+      agg('resource_allocation_daily', 'user=' + uid + '^date>=' + per.f + '^date<=' + per.t, { sum: ['hours', 'actual_hours', 'allocated_cost', 'actual_cost'], group: ['allocation'] })
+    ]);
+    var byAl = {}; r[1].forEach(function (x) { byAl[x.g.allocation] = x.sum; });
+    return { ra: r[0].rows, partial: r[0].partial, byAl: byAl, per: per, uid: uid };
+  }
+  function drawRA(box, d) {
+    var rowsT = d.ra.map(function (x) {
+      var al = d.byAl[sv(x.resource_allocation)] || { hours: 0, actual_hours: 0, allocated_cost: 0, actual_cost: 0 }, pj = sv(x.top_task), tk = sv(x.task), ef = num(sv(x.effort));
+      var c = [C(sv(x.number)), C(dv(x.top_task) || '—', pj ? { href: '/pm_project.do?sys_id=' + pj } : null), C(dv(x.task) || '—', tk ? { href: '/pm_project_task.do?sys_id=' + tk } : null),
+        C(dv(x.group_resource) || '—'), C(dv(x.parent) || '—'), C(NF.format(ef), { n: ef }), C(dv(x.effort_type) || '—'), C(frDate(sv(x.start_date)), { d: sv(x.start_date) }), C(frDate(sv(x.end_date)), { d: sv(x.end_date) }),
+        C(dv(x.resource_status) || '—'), C(fN(al.hours), { n: al.hours }), C(fN(al.actual_hours), { n: al.actual_hours })];
+      if (P.costs) c.push(C(NF.format(al.allocated_cost), { n: al.allocated_cost }), C(NF.format(al.actual_cost), { n: al.actual_cost }));
+      return { c: c, open: '/sn_plng_att_core_resource_assignment.do?sys_id=' + sv(x.sys_id), al: al, ef: ef, et: dv(x.effort_type) };
+    });
+    var cols = [{ l: 'N°', href: listLink('sn_plng_att_core_resource_assignment', 'user_resource=' + d.uid + '^assignment_type=user') }, { l: 'Projet' }, { l: 'Tâche' }, { l: 'Groupe' }, { l: 'Parent' }, { l: 'Effort', num: 1 }, { l: 'Type d’effort' }, { l: 'Début' }, { l: 'Fin' }, { l: 'Statut' },
+      { l: 'Alloué' + uS(), num: 1, href: listLink('resource_allocation_daily', 'user=' + d.uid + '^date>=' + d.per.f + '^date<=' + d.per.t) }, { l: 'Réel' + uS(), num: 1 }];
+    if (P.costs) cols.push({ l: 'Coût alloué', num: 1 }, { l: 'Coût réel', num: 1 });
+    box.appendChild(h('div', { cls: 'card' }, [h('div', { cls: 'ct', text: 'Assignations de niveau Utilisateur chevauchant la période' }), h('div', { cls: 'mt', text: 'Alloué / réel : allocations quotidiennes de la période, rattachées à chaque assignation. Les assignations de niveau Groupe sont exclues (double comptage).' }),
+      dtable({ name: 'assignations', cols: cols, rows: rowsT, note: d.partial ? 'partiel (40 pages)' : '', totals: function (vis) {
+        var t = [C('Σ'), C(''), C(''), C(''), C(''), C(''), C(''), C(''), C(''), C('')], types = {};
+        vis.forEach(function (r) { types[r.et] = (types[r.et] || 0) + r.ef; });
+        var ks = Object.keys(types); if (ks.length === 1) t[5] = C(NF.format(types[ks[0]]), { n: types[ks[0]] }); else if (ks.length > 1) t[5] = C(ks.length + ' types');
+        var sh = 0, sa = 0, sc = 0, sr = 0; vis.forEach(function (r) { sh += r.al.hours; sa += r.al.actual_hours; sc += r.al.allocated_cost; sr += r.al.actual_cost; });
+        t.push(C(fN(sh)), C(fN(sa))); if (P.costs) t.push(C(NF.format(sc)), C(NF.format(sr)));
+        return t; } })]));
+  }
+
+  /* ---------- Onglet Time cards ---------- */
+  var DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'], DL = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+  var STC = { Pending: 'pend', Submitted: 'subm', Approved: 'appr', Processed: 'proc', Rejected: 'rej', Recalled: 'rec' };
+  async function loadTC(uid, per) {
+    var lo = ymd(addD(pd(per.f), -6)), hi = ymd(addD(pd(per.t), 6));
+    var r = await Promise.all([
+      rows('time_card', 'user=' + uid + '^week_starts_on>=' + lo + '^week_starts_on<=' + per.t, ['sys_id', 'week_starts_on', 'task', 'top_task', 'state', 'total', 'time_sheet', 'approved_on'].concat(DAYS), true),
+      agg('resource_allocation_daily', 'user=' + uid + '^actual_hours>0^date>=' + lo + '^date<=' + hi, { sum: ['actual_hours'], group: ['task', 'top_task', 'date'] })
+    ]);
+    return { tc: r[0].rows, partial: r[0].partial, rad: r[1], per: per, uid: uid };
+  }
+  function drawTC(box, d) {
+    function radFor(key, byTop, w0) {
+      var a = pd(w0), s = 0, lo = w0, hi = ymd(addD(a, 6));
+      d.rad.forEach(function (x) { if (x.g.date >= lo && x.g.date <= hi && (byTop ? x.g.top_task : x.g.task) === key) s += x.sum.actual_hours; });
+      return s;
+    }
+    var R = d.tc.map(function (x) {
+      var w0 = sv(x.week_starts_on), st = sv(x.state), tot = num(sv(x.total)), tk = sv(x.task), tp = sv(x.top_task), approved = st === 'Approved' || st === 'Processed';
+      var diff = approved ? tot - radFor(tk === tp ? tp : tk, tk === tp, w0) : null, ts = sv(x.time_sheet);
+      var days = DAYS.map(function (k) { var v = num(sv(x[k])); return C(v ? fN(v) : '', { n: v ? v : null }); });
+      var c = [C(frDate(w0), { d: w0 }), C(dv(x.top_task) || '—', tp ? { href: '/pm_project.do?sys_id=' + tp } : null), C(dv(x.task) || '—', tk && tk !== tp ? { href: '/pm_project_task.do?sys_id=' + tk } : null)].concat(days,
+        [C(fN(tot), { n: tot }), C(st, { cls: 'st st-' + (STC[st] || 'pend') }), C(dv(x.time_sheet) || '—', ts ? { href: '/time_sheet.do?sys_id=' + ts } : null), C(sv(x.approved_on) ? frDate(sv(x.approved_on).slice(0, 10)) + sv(x.approved_on).slice(10, 16) : '—', { d: sv(x.approved_on) }),
+          diff == null ? C('—') : Math.abs(diff) < 0.01 ? C('✓', { cls: 'good', n: 0 }) : C((diff > 0 ? '+' : '') + fN(diff), { cls: 'bad', n: diff })]);
+      return { c: c, open: '/time_card.do?sys_id=' + sv(x.sys_id), days: DAYS.map(function (k) { return num(sv(x[k])); }), tot: tot, diff: diff };
+    });
+    var cols = [{ l: 'Semaine', href: listLink('time_card', 'user=' + d.uid + '^week_starts_on>=' + ymd(addD(pd(d.per.f), -6)) + '^week_starts_on<=' + d.per.t) }, { l: 'Projet' }, { l: 'Tâche' }]
+      .concat(DL.map(function (x) { return { l: x, num: 1 }; }), [{ l: 'Total' + uS(), num: 1 }, { l: 'État' }, { l: 'Time sheet' }, { l: 'Approuvée le' }, { l: 'Écart' + uS(), num: 1 }]);
+    box.appendChild(h('div', { cls: 'card' }, [h('div', { cls: 'ct', text: 'Time cards (semaines chevauchant la période)' }),
+      h('div', { cls: 'mt', text: 'Écart : total d’une time card Approved / Processed moins les heures réelles des allocations quotidiennes de la même tâche et de la même semaine (7 jours à partir de « Semaine »). Les autres états ne sont pas comparés.' }),
+      dtable({ name: 'time-cards', cols: cols, rows: R, note: d.partial ? 'partiel (40 pages)' : '', totals: function (vis) {
+        var t = [C('Σ'), C(''), C('')], sd = [0, 0, 0, 0, 0, 0, 0], st = 0, sg = 0, any = false;
+        vis.forEach(function (r) { r.days.forEach(function (v, i) { sd[i] += v; }); st += r.tot; if (r.diff != null) { sg += r.diff; any = true; } });
+        sd.forEach(function (v) { t.push(C(v ? fN(v) : '')); });
+        t.push(C(fN(st)), C(''), C(''), C(''), C(!any ? '—' : Math.abs(sg) < 0.01 ? '✓' : (sg > 0 ? '+' : '') + fN(sg), { cls: any ? (Math.abs(sg) < 0.01 ? 'good' : 'bad') : '' }));
+        return t; } })]));
+  }
+  var LOADERS = { ra: loadRA, tc: loadTC }, DRAW = { ra: drawRA, tc: drawTC };
+  async function renderTab(tab) {
+    var per = S.data.per, key = [S.uid, tab.k, per.f, per.t, P.force].join('|'), ld = S.cache[key], t0 = performance.now(), r0 = REQ;
+    if (!ld) {
+      main.textContent = ''; main.appendChild(phLine('Chargement…'));
+      try { ld = S.cache[key] = await LOADERS[tab.k](S.uid, per); console.debug('[snus] ' + tab.t + ' : ' + (REQ - r0) + ' requêtes, ' + Math.round(performance.now() - t0) + ' ms, mode ' + modeUsed); }
+      catch (e) { if (S.tab === tab.k) errBox(e, function () { delete S.cache[key]; renderTab(tab); }); return; }
+    }
+    if (S.tab !== tab.k || !S.data || ld.uid !== S.uid) return;
+    main.textContent = ''; DRAW[tab.k](main, ld); mode.textContent = 'Mode : ' + modeUsed + (fallbackWhy ? ' (' + fallbackWhy + ')' : '') + ' · ' + REQ + ' requêtes cumulées';
+  }
+
   /* ---------- Coque : overlay, barre du haut, onglets ---------- */
   var CSS = [
     '#snus-overlay{position:fixed;inset:0;z-index:2147483647;display:flex;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;background:rgba(9,14,52,.40);backdrop-filter:blur(4px);padding:16px}',
@@ -408,7 +555,13 @@
     '.tb td{padding:5px 10px;border-bottom:1px solid #F3F4F6;white-space:nowrap}.n{text-align:right!important;font-variant-numeric:tabular-nums}',
     '.pick{padding:8px 12px;border:1px solid #E5E7EB;border-radius:8px;background:#fff;margin-bottom:6px;cursor:pointer}.pick:hover{background:#EEF2FF;border-color:#3758F9}',
     '.err-box{background:#FEF2F2;border:1px solid #FECACA;color:#B42318;border-radius:8px;padding:10px 12px;margin-bottom:10px}',
-    '.ph{color:#6B7280;margin-bottom:10px}'
+    '.ph{color:#6B7280;margin-bottom:10px}',
+    '.fld.sm,.btn.sm{padding:4px 8px;font-size:12px}',
+    '.tools{display:flex;gap:8px;align-items:center;margin:6px 0 0}',
+    '.tb tfoot td{position:sticky;bottom:0;background:#F3F4F6;font-weight:700;border-top:2px solid #D1D5DB}.tb th{cursor:pointer;user-select:none}',
+    '.hl{margin-left:4px;color:#3758F9;text-decoration:none;font-weight:700}.cl{color:#3758F9;text-decoration:none}.cl:hover{text-decoration:underline}',
+    '.ro{margin-left:6px;color:#3758F9;text-decoration:none;visibility:hidden;font-size:11px}.tb tr:hover .ro{visibility:visible}.tb tbody tr:hover td{background:#F7FAFC}',
+    '.st{font-weight:600}.st-pend{color:#6B7280}.st-subm{color:#B45309}.st-appr{color:#16A34A}.st-proc{color:#0E7490}.st-rej{color:#DC2626}.st-rec{color:#C2410C}'
   ].join('');
 
   var st = h('style', { id: CSSID }); st.textContent = CSS;
@@ -458,7 +611,8 @@
     if (!S.data) return;
     var tab = TABS.filter(function (x) { return x.k === S.tab; })[0] || TABS[0];
     if (tab.k === 'ov') return renderOverview(main, S.data);
-    main.appendChild(h('div', { cls: 'ph', text: tab.t + ' : ' + NF0.format(S.data.cnt[tab.cnt]) + ' enregistrement(s) sur la période (' + frDate(S.data.per.f) + ' → ' + frDate(S.data.per.t) + '). Détail intégré dans un lot suivant ; en attendant, liens vers les listes classiques :' }));
+    if (LOADERS[tab.k]) return renderTab(tab);
+    main.appendChild(h('div', { cls: 'ph', text: tab.t + ' : ' + NF0.format(S.data.cnt[tab.cnt]) + ' enregistrement(s) sur la période (' + frDate(S.data.per.f) + ' → ' + frDate(S.data.per.t) + '). Détail intégré au lot 3 ; en attendant, liens vers les listes classiques :' }));
     main.appendChild(h('div', { cls: 'card' }, quickLinks(tab.k, S.uid, S.data.per)));
   }
   async function refresh(clear) {

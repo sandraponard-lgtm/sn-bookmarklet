@@ -138,7 +138,12 @@ Script de diagnostic à lancer dans la console :
 - **Purge jsDelivr** : `https://purge.jsdelivr.net/gh/sandraponard-lgtm/sn-bookmarklet@main/sn-user-resources.js` (ou épingler un commit : `@<sha>`).
 - Versions propres à ce fichier (`vAAAA-MM-JJ.N`, affichée dans l'en-tête).
 
-## Version courante : v2026-11-27.1 (lot 1 : socle + vue d'ensemble)
+## Version courante : v2026-11-27.2 (lot 2 : Assignations + Time cards)
+- v2026-11-27.2 : tableau générique `dtable` (en-têtes triables ▲/▼, vides en bas, nombres fr, dates, texte naturel ; filtre accent/casse insensible avec compteur n / N au-dessus de 3 lignes ; ligne Σ recalculée sur les lignes filtrées ; en-têtes ↗ vers listes classiques ; boutons Copier (TSV) et CSV (`;`, BOM)). Onglet **Assignations** (assignment_type=user chevauchant la période ; alloué / réel / coûts de la période via RAD groupées par `allocation`). Onglet **Time cards** (une ligne par time card, colonnes Lun→Dim, état coloré, lien time sheet, **Écart** = total Approved/Processed − heures réelles RAD de la même tâche et semaine). Chargement à l'ouverture de l'onglet, mis en cache. Requêtes de semaine élargies de 6 jours (voir constat ci-dessous).
+- Constat : sur l'instance, `time_card.week_starts_on` peut être un **dimanche** (22-11-2026) alors que les champs jour restent nommés lundi→dimanche (lundi = 23-11) ; les semaines sont donc lues à partir de `week_starts_on` sur 7 jours, sans supposer le lundi.
+- Constat : une même semaine peut porter deux time cards pour la même tâche (Submitted + Processed, 40 h chacune) ; la ligne Σ les additionne toutes (tous états confondus).
+
+## v2026-11-27.1 (lot 1 : socle + vue d'ensemble)
 - Overlay plein écran, détection de l'utilisateur (g_form / URL, iframe `gsft_main`), recherche par nom / e-mail / sys_id, onglets (Vue d'ensemble active ; Assignations, Allocations, Time cards, Agrégats = compteurs + liens vers listes classiques, détail aux lots 2 et 3).
 - Sélecteur de période commun (mois courant par défaut, précédent, trimestre, année civile, personnalisé), unité h / jours-homme, coûts oui/non, mémorisés (`localStorage` `snus.v1`, try/catch).
 - Données : 9 requêtes en parallèle (`/api/now/stats` pour RAD, time cards, agrégats ; `sys_user`, `sys_user_grmember`, assignations). Cache par (utilisateur, onglet, période, mode) ; « Recalculer » le vide. Repli automatique ligne à ligne (500/page, `^ORDERBYsys_id`, 40 pages) si l'agrégation échoue ; bouton « Forcer ligne à ligne » pour le tester ; mode, nombre de requêtes et durée affichés (et `console.debug`).
