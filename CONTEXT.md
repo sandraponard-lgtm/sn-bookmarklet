@@ -138,7 +138,12 @@ Script de diagnostic à lancer dans la console :
 - **Purge jsDelivr** : `https://purge.jsdelivr.net/gh/sandraponard-lgtm/sn-bookmarklet@main/sn-user-resources.js` (ou épingler un commit : `@<sha>`).
 - Versions propres à ce fichier (`vAAAA-MM-JJ.N`, affichée dans l'en-tête).
 
-## Version courante : v2026-11-27.7 (détail quotidien des time cards + signe des écarts unifié)
+## Version courante : v2026-11-27.8 (réel hors projet non compté)
+- v2026-11-27.8 : le réel (`actual_hours`) et les coûts réels (`actual_cost`) des lignes `resource_allocation_daily` **sans projet** (`top_task` vide) ne sont plus comptés nulle part (vue d'ensemble, allocations, assignations, time cards, agrégats, fiabilité, détail quotidien) ; l'alloué reste complet. Décision de Sandra : critère « sans projet uniquement » (pas le type KTLO), périmètre « partout ». Implémentation : `aggRAD()` lance deux stats (`top_taskISNOTEMPTY` / `top_taskISEMPTY`, réel remis à 0 pour la seconde), fusionne par clé de groupe et expose le réel exclu dans `list.hp` (affiché en information dans la carte Alertes, avec lien vers la liste classique) ; les requêtes « réel seul » filtrent `top_taskISNOTEMPTY`. Coût : deux requêtes au lieu d'une pour chaque stats de RAD.
+- Détail quotidien des allocations : le réel d'une ligne sans projet est affiché 0 avec la mention « hors projet : réel non compté ». La ligne « Sans allocation » ne porte plus « réel hors planification » si son réel (hors projet exclu) est nul.
+- Motivation : les agrégats (`project_actual`) ne portent que le réel de projet ; le réel sans projet créait un faux Écart réel (ex. −22 j sur un mois).
+
+## v2026-11-27.7 (détail quotidien des time cards + signe des écarts unifié)
 - v2026-11-27.7 : onglet **Time cards** — bouton « Charger le détail quotidien » (à la demande, filtre optionnel par time card) : lignes de `time_card_daily` (`date`, `time_card`, `time_worked`) avec Projet / Tâche / État, **Jour de la carte** (valeur du même jour dans la time card, rouge si ≠ Heures), **Réel alloc.** du jour (mêmes règles de base que le tableau des semaines) et **Écart** (Approved / Processed seulement ; base « utilisateur » : somme des time cards approuvées du jour). **Signe des écarts unifié** : agrégat − allocations quotidiennes partout (tableau mensuel de la vue d'ensemble, onglet Agrégats, bloc Fiabilité) ; un écart négatif = manque dans les agrégats.
 - Constat : les champs monday…sunday d'une time card correspondent aux vrais jours de la semaine, même si `week_starts_on` est un dimanche (le dimanche de la semaine est le premier jour). `time_card_daily` n'a que `date`, `time_card`, `time_worked` (heures) ; filtrable par `time_card.user`.
 
